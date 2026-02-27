@@ -113,7 +113,6 @@ const WorkCompletionModal = ({ isOpen, onClose, job, onComplete, loading }) => {
                       <input
                         type="file"
                         accept="image/*"
-                        capture="environment"
                         multiple
                         onChange={handlePhotoUpload}
                         className="hidden"

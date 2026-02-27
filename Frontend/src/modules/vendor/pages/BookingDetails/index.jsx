@@ -510,10 +510,10 @@ export default function BookingDetails() {
 
 
 
-  const handleCompleteWork = async () => {
+  const handleCompleteWork = async (photos) => {
     try {
       setActionLoading(true);
-      await completeSelfJob(id, { workPhotos: ['https://placehold.co/600x400'] });
+      await completeSelfJob(id, { workPhotos: photos || [] });
       toast.success('Work marked done');
       setIsWorkDoneModalOpen(false);
       window.location.reload();
@@ -964,32 +964,41 @@ export default function BookingDetails() {
             )}
           </div>
 
-          {/* Vendor Earnings Footer */}
-          <div className="bg-emerald-50 px-6 py-4 border-t border-emerald-100">
-            <div className="space-y-2 mb-3 text-sm">
-              <div className="flex justify-between items-center text-emerald-700">
-                <span>Service Earnings</span>
-                <span className="font-bold">₹{(bill?.serviceEarnings || (booking.vendorEarnings || 0) * 0.9 || 0).toFixed(2)}</span>
-              </div>
-              {(parts.length > 0 || customItems.length > 0) && (
+          {/* Vendor Earnings Footer - ONLY SHOW WHEN COMPLETED */}
+          {booking.status === 'completed' ? (
+            <div className="bg-emerald-50 px-6 py-4 border-t border-emerald-100">
+              <div className="space-y-2 mb-3 text-sm">
                 <div className="flex justify-between items-center text-emerald-700">
-                  <span>Parts Earnings</span>
-                  <span className="font-bold">₹{(bill?.partsEarnings || 0).toFixed(2)}</span>
+                  <span>Service Earnings</span>
+                  <span className="font-bold">₹{(bill?.serviceEarnings || (booking.vendorEarnings || 0) * 0.9 || 0).toFixed(2)}</span>
                 </div>
-              )}
-            </div>
-            <div className="flex justify-between items-center pt-2 border-t border-emerald-200/50">
-              <span className="text-emerald-800 font-bold text-xs uppercase tracking-wider">Total Net Earnings</span>
-              <span className="text-emerald-700 font-black text-xl">
-                ₹{(bill?.vendorEarnings || booking.vendorEarnings || 0).toFixed(2)}
-              </span>
-            </div>
+                {(parts.length > 0 || customItems.length > 0) && (
+                  <div className="flex justify-between items-center text-emerald-700">
+                    <span>Parts Earnings</span>
+                    <span className="font-bold">₹{(bill?.partsEarnings || 0).toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-emerald-200/50">
+                <span className="text-emerald-800 font-bold text-xs uppercase tracking-wider">Total Net Earnings</span>
+                <span className="text-emerald-700 font-black text-xl">
+                  ₹{(bill?.vendorEarnings || booking.vendorEarnings || 0).toFixed(2)}
+                </span>
+              </div>
 
-            <div className="flex justify-between text-emerald-600/70 text-[10px] mt-2">
-              <span>Platform Commission</span>
-              <span>-₹{(booking.adminCommission || booking.platformCommission || 0).toFixed(2)}</span>
+              <div className="flex justify-between text-emerald-600/70 text-[10px] mt-2">
+                <span>Platform Commission</span>
+                <span>-₹{(booking.adminCommission || booking.platformCommission || 0).toFixed(2)}</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-100/50 text-center">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center justify-center gap-2">
+                <FiAlertCircle className="w-3 h-3" />
+                Net Earnings will be visible once completed
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Work Photos (after completion) */}
