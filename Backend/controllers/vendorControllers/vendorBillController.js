@@ -43,8 +43,10 @@ const createOrUpdateBill = async (req, res) => {
     // ═══════════════════════════════════════
     // 1. ORIGINAL SERVICE (from booking)
     // ═══════════════════════════════════════
-    const originalServiceBase = booking.basePrice || 0;
-    const originalGST = parseFloat(((originalServiceBase * serviceGstPct) / 100).toFixed(2));
+    const isPlanBooking = booking.paymentMethod === 'plan_benefit';
+    const originalServiceBaseForBill = isPlanBooking ? 0 : (booking.basePrice || 0);
+    const originalServiceBaseForEarnings = booking.basePrice || 0;
+    const originalGST = isPlanBooking ? 0 : parseFloat(((originalServiceBaseForBill * serviceGstPct) / 100).toFixed(2));
     const visitingCharges = Number(booking.visitingCharges) || 0;
 
     // ═══════════════════════════════════════
@@ -157,17 +159,18 @@ const createOrUpdateBill = async (req, res) => {
     // ═══════════════════════════════════════
     // 4. AGGREGATION
     // ═══════════════════════════════════════
-    const totalServiceBase = parseFloat((originalServiceBase + vendorServiceBase).toFixed(2));
+    const totalServiceBaseForBill = parseFloat((originalServiceBaseForBill + vendorServiceBase).toFixed(2));
+    const totalServiceBaseForEarnings = parseFloat((originalServiceBaseForEarnings + vendorServiceBase).toFixed(2));
     totalPartsBase = parseFloat(totalPartsBase.toFixed(2));
 
     const totalGST = parseFloat((originalGST + vendorServiceGST + partsGST).toFixed(2));
     const finalTransportCharges = Number(transportCharges) || 0;
-    const grandTotal = parseFloat((totalServiceBase + totalPartsBase + totalGST + visitingCharges + finalTransportCharges).toFixed(2));
+    const grandTotal = parseFloat((totalServiceBaseForBill + totalPartsBase + totalGST + visitingCharges + finalTransportCharges).toFixed(2));
 
     // ═══════════════════════════════════════
     // 5. REVENUE SPLIT (% applied on BASE only)
     // ═══════════════════════════════════════
-    const vendorServiceEarning = parseFloat(((totalServiceBase * serviceSplitPct) / 100).toFixed(2));
+    const vendorServiceEarning = parseFloat(((totalServiceBaseForEarnings * serviceSplitPct) / 100).toFixed(2));
     const vendorPartsEarning = parseFloat(((totalPartsBase * partsSplitPct) / 100).toFixed(2));
     const vendorTotalEarning = parseFloat((vendorServiceEarning + vendorPartsEarning).toFixed(2));
     const companyRevenue = parseFloat((grandTotal - vendorTotalEarning).toFixed(2));
@@ -178,11 +181,11 @@ const createOrUpdateBill = async (req, res) => {
     const allServices = [
       {
         name: booking.serviceName || 'Original Service',
-        price: originalServiceBase,
+        price: originalServiceBaseForBill,
         gstPercentage: serviceGstPct,
         quantity: 1,
         gstAmount: originalGST,
-        total: parseFloat((originalServiceBase + originalGST).toFixed(2)),
+        total: parseFloat((originalServiceBaseForBill + originalGST).toFixed(2)),
         isOriginal: true
       },
       ...processedServices
@@ -198,9 +201,9 @@ const createOrUpdateBill = async (req, res) => {
       services: allServices,
       parts: processedParts,
       customItems: processedCustomItems,
-      originalServiceBase,
+      originalServiceBase: originalServiceBaseForBill,
       vendorServiceBase: parseFloat(vendorServiceBase.toFixed(2)),
-      totalServiceBase,
+      totalServiceBase: totalServiceBaseForBill,
       totalPartsBase,
       originalGST,
       vendorServiceGST: parseFloat(vendorServiceGST.toFixed(2)),
@@ -247,7 +250,7 @@ const createOrUpdateBill = async (req, res) => {
         vendorTotalEarning,
         companyRevenue,
         breakdown: {
-          serviceBase: totalServiceBase,
+          serviceBase: totalServiceBaseForBill,
           partsBase: totalPartsBase,
           totalGST
         }

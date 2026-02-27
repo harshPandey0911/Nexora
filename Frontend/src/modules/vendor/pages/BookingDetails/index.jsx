@@ -108,9 +108,11 @@ export default function BookingDetails() {
           discount: parseFloat(apiData.discount || 0),
           platformCommission: parseFloat(apiData.adminCommission || apiData.platformFee || apiData.commission || 0),
           finalAmount: parseFloat(apiData.finalAmount || 0),
-          vendorEarnings: parseFloat(apiData.vendorEarnings ||
+          vendorEarnings: parseFloat(
+            billData?.vendorTotalEarning ||
+            apiData.vendorEarnings ||
             (apiData.paymentMethod === 'plan_benefit'
-              ? (Number(apiData.basePrice || 0) * 0.9) // Fallback for plan bookings: Base - 10%
+              ? (Number(apiData.basePrice || 0) * 0.7) // Fallback: 70% share from base
               : (apiData.finalAmount ? apiData.finalAmount - (apiData.commission || 0) : 0)
             )
           ),
@@ -962,27 +964,41 @@ export default function BookingDetails() {
                 </div>
               </div>
             )}
+
+            {/* Transport Charges */}
+            {bill?.transportCharges > 0 && (
+              <div className="mt-4">
+                <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
+                  <span className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><FiPackage /></span>
+                  Transport Charges
+                </h4>
+                <div className="flex justify-between pl-2 font-bold text-gray-800">
+                  <span>Transport/Travel</span>
+                  <span>₹{(bill.transportCharges).toFixed(2)}</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Vendor Earnings Footer - ONLY SHOW WHEN COMPLETED */}
-          {booking.status === 'completed' ? (
+          {(booking.status === 'completed' || booking.status === 'work_done' || booking.cashCollected) ? (
             <div className="bg-emerald-50 px-6 py-4 border-t border-emerald-100">
               <div className="space-y-2 mb-3 text-sm">
                 <div className="flex justify-between items-center text-emerald-700">
-                  <span>Service Earnings</span>
-                  <span className="font-bold">₹{(bill?.serviceEarnings || (booking.vendorEarnings || 0) * 0.9 || 0).toFixed(2)}</span>
+                  <span>Service Earnings ({bill?.payoutConfig?.serviceSplitPercentage || 70}%)</span>
+                  <span className="font-bold">₹{(bill?.vendorServiceEarning || (booking.vendorEarnings || 0)).toFixed(2)}</span>
                 </div>
-                {(parts.length > 0 || customItems.length > 0) && (
+                {(parts.length > 0 || customItems.length > 0 || bill?.vendorPartsEarning > 0) && (
                   <div className="flex justify-between items-center text-emerald-700">
-                    <span>Parts Earnings</span>
-                    <span className="font-bold">₹{(bill?.partsEarnings || 0).toFixed(2)}</span>
+                    <span>Parts Earnings ({bill?.payoutConfig?.partsSplitPercentage || 10}%)</span>
+                    <span className="font-bold">₹{(bill?.vendorPartsEarning || 0).toFixed(2)}</span>
                   </div>
                 )}
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-emerald-200/50">
                 <span className="text-emerald-800 font-bold text-xs uppercase tracking-wider">Total Net Earnings</span>
                 <span className="text-emerald-700 font-black text-xl">
-                  ₹{(bill?.vendorEarnings || booking.vendorEarnings || 0).toFixed(2)}
+                  ₹{(bill?.vendorTotalEarning || booking.vendorEarnings || 0).toFixed(2)}
                 </span>
               </div>
 

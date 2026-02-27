@@ -229,6 +229,18 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
                   </div>
                 </div>
               )}
+
+              {/* 4. Transport Charges */}
+              {(bill?.transportCharges > 0) && (
+                <div className="mt-2 pt-2 border-t border-slate-100">
+                  <div className="flex justify-between text-xs font-bold text-slate-600">
+                    <span className="flex items-center gap-2 uppercase tracking-wide">
+                      <FiPackage className="w-3.5 h-3.5 text-blue-400" /> Transport Charges
+                    </span>
+                    <span className="font-mono">₹{(bill.transportCharges).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Actions */}

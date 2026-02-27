@@ -1254,6 +1254,18 @@ const BookingDetails = () => {
                       </div>
                     )}
 
+                    {/* Transport Charges */}
+                    {bill?.transportCharges > 0 && (
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <div className="flex justify-between text-xs font-bold text-gray-600">
+                          <span className="flex items-center gap-2 uppercase tracking-wide">
+                            <FiPackage className="w-3.5 h-3.5 text-blue-400" /> Transport Charges
+                          </span>
+                          <span className="font-mono">₹{(bill.transportCharges).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="pt-4 mt-2 border-t-2 border-gray-100 flex justify-between items-center">
                       <span className="font-bold text-gray-900 text-lg">Grand Total</span>
                       <span className="font-black text-teal-700 text-2xl">

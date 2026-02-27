@@ -324,8 +324,9 @@ const BillingPage = () => {
     const { serviceGstPct, partsGstPct, servicePayoutPct, partsPayoutPct } = payoutSettings;
 
     // Original booking base (service)
-    const originalBase = booking.basePrice || 0;
-    const originalServiceGST = parseFloat(((originalBase * serviceGstPct) / 100).toFixed(2));
+    const isPlanBooking = booking.paymentMethod === 'plan_benefit';
+    const originalBase = isPlanBooking ? 0 : (booking.basePrice || 0);
+    const originalServiceGST = isPlanBooking ? 0 : parseFloat(((originalBase * serviceGstPct) / 100).toFixed(2));
 
     // Extra Services: price is base, GST calculated separately
     let extraServiceBase = 0;
@@ -882,7 +883,14 @@ const BillingPage = () => {
                     Services
                   </h4>
                   <div className="space-y-2 text-sm pl-2">
-                    <div className="flex justify-between text-gray-600"><span>Original Booking : {booking.serviceName || 'Service'}</span><span>₹{calculations.originalBase.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Original Booking : {booking.serviceName || 'Service'}</span>
+                      {booking.paymentMethod === 'plan_benefit' ? (
+                        <span className="text-green-600 font-bold">FREE (PLAN)</span>
+                      ) : (
+                        <span>₹{calculations.originalBase.toFixed(2)}</span>
+                      )}
+                    </div>
                     {selectedServices.map(s => <div key={s.catalogId} className="flex justify-between text-gray-600"><span>{s.name} x {s.quantity}</span><span>₹{(s.price * s.quantity).toFixed(2)}</span></div>)}
 
                     <div className="flex justify-between text-xs text-gray-500 border-t border-dashed border-gray-100 pt-1 mt-1">
@@ -1029,7 +1037,7 @@ const BillingPage = () => {
               Back
             </button>
 
-            {booking.paymentMethod === 'cash' || booking.paymentMethod === 'pay_at_home' ? (
+            {booking.paymentMethod === 'cash' || booking.paymentMethod === 'pay_at_home' || booking.paymentMethod === 'plan_benefit' ? (
               isOtpSent ? (
                 <button
                   onClick={() => setShowOtpModal(true)}
