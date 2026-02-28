@@ -141,6 +141,7 @@ const VendorPayments = () => {
       case 'cash_collected': return 'text-amber-600 bg-amber-50 border-amber-100';
       case 'tds_deduction': return 'text-pink-600 bg-pink-50 border-pink-100';
       case 'settlement': return 'text-blue-600 bg-blue-50 border-blue-100';
+      case 'platform_fee': return 'text-rose-600 bg-rose-50 border-rose-100';
       default: return 'text-gray-600 bg-gray-50 border-gray-100';
     }
   };
@@ -271,6 +272,7 @@ const VendorPayments = () => {
             <option value="settlement">Settlement</option>
             <option value="withdrawal">Withdrawal</option>
             <option value="tds_deduction">TDS Deduction</option>
+            <option value="platform_fee">Platform Charge</option>
           </select>
 
           <button

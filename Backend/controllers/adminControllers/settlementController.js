@@ -559,8 +559,14 @@ module.exports = {
   approveWithdrawal: async (req, res) => {
     try {
       const { withdrawalId } = req.params;
-      const { transactionReference, notes, tdsRate = 2 } = req.body; // Default 2% TDS
+      const { transactionReference, notes } = req.body;
       const adminId = req.user.id;
+
+      // Fetch global settings for rates
+      const Settings = require('../../models/Settings');
+      const settings = await Settings.findOne({ type: 'global' });
+      const tdsRate = settings?.tdsPercentage || 1;
+      const platformFeeRate = settings?.platformFeePercentage || 1;
 
       const withdrawal = await Withdrawal.findById(withdrawalId);
       if (!withdrawal) return res.status(404).json({ success: false, message: 'Withdrawal not found' });
@@ -576,17 +582,18 @@ module.exports = {
         });
       }
 
-      // Calculate TDS
+      // Calculate Deductions
       const grossAmount = withdrawal.amount;
       const tdsAmount = Math.round((grossAmount * tdsRate) / 100);
-      const netAmount = grossAmount - tdsAmount;
+      const platformFeeAmount = Math.round((grossAmount * platformFeeRate) / 100);
+      const netAmount = grossAmount - tdsAmount - platformFeeAmount;
 
       // Deduct full amount from vendor earnings (gross)
       vendor.wallet.earnings -= grossAmount;
       vendor.wallet.totalWithdrawn = (vendor.wallet.totalWithdrawn || 0) + grossAmount;
       await vendor.save();
 
-      // Update withdrawal with TDS details
+      // Update withdrawal with details
       withdrawal.status = 'approved';
       withdrawal.processedBy = adminId;
       withdrawal.processedDate = new Date();
@@ -594,6 +601,8 @@ module.exports = {
       withdrawal.adminNotes = notes;
       withdrawal.tdsRate = tdsRate;
       withdrawal.tdsAmount = tdsAmount;
+      withdrawal.platformFeeRate = platformFeeRate;
+      withdrawal.platformFeeAmount = platformFeeAmount;
       withdrawal.netAmount = netAmount;
       await withdrawal.save();
 
@@ -614,11 +623,13 @@ module.exports = {
           withdrawalId: withdrawal._id,
           tdsRate,
           tdsAmount,
+          platformFeeRate,
+          platformFeeAmount,
           netAmount
         }
       });
 
-      // Transaction 2: TDS Deduction (For transparency)
+      // Transaction 2: TDS Deduction
       await Transaction.create({
         vendorId: vendor._id,
         type: 'tds_deduction',
@@ -635,13 +646,32 @@ module.exports = {
         }
       });
 
+      // Transaction 3: Platform Fee Deduction
+      await Transaction.create({
+        vendorId: vendor._id,
+        type: 'platform_fee',
+        amount: platformFeeAmount,
+        status: 'completed',
+        paymentMethod: 'system',
+        description: `Platform Charge Fee (${platformFeeRate}%) on withdrawal of ₹${grossAmount}`,
+        referenceId: transactionReference,
+        metadata: {
+          withdrawalId: withdrawal._id,
+          grossAmount,
+          platformFeeRate,
+          netAmountTransferred: netAmount
+        }
+      });
+
       res.status(200).json({
         success: true,
-        message: 'Withdrawal approved with TDS deduction',
+        message: 'Withdrawal approved with deductions',
         data: {
           grossAmount,
           tdsRate,
           tdsAmount,
+          platformFeeRate,
+          platformFeeAmount,
           netAmount,
           transactionReference
         }
@@ -651,6 +681,7 @@ module.exports = {
       res.status(500).json({ success: false, message: error.message });
     }
   },
+
 
   rejectWithdrawal: async (req, res) => {
     try {

@@ -88,6 +88,8 @@ const Wallet = () => {
         return <FiAlertCircle className="w-5 h-5 text-amber-500" />;
       case 'commission':
         return <FiDollarSign className="w-5 h-5 text-orange-500" />;
+      case 'platform_fee':
+        return <FiAlertCircle className="w-5 h-5 text-rose-500" />;
       default:
         return <FiDollarSign className="w-5 h-5 text-gray-500" />;
     }
@@ -107,6 +109,8 @@ const Wallet = () => {
         return 'TDS Deduction';
       case 'commission':
         return 'Commission';
+      case 'platform_fee':
+        return 'Platform Charge';
       default:
         return type;
     }
@@ -263,6 +267,7 @@ const Wallet = () => {
             { id: 'settlement', label: 'Settlements' },
             { id: 'withdrawal', label: 'Withdrawals' },
             { id: 'tds_deduction', label: 'TDS' },
+            { id: 'platform_fee', label: 'Platform Fees' },
           ].map((filterOption) => (
             <button
               key={filterOption.id}
@@ -307,7 +312,8 @@ const Wallet = () => {
                       txn.type === 'cash_collected' ? '#DC2626' :
                         txn.type === 'settlement' ? '#10B981' :
                           txn.type === 'withdrawal' ? '#8B5CF6' :
-                            txn.type === 'tds_deduction' ? '#F59E0B' : '#F97316'
+                            txn.type === 'tds_deduction' ? '#F59E0B' :
+                              txn.type === 'platform_fee' ? '#E11D48' : '#F97316'
                   }}
                 >
                   <div className="flex items-center gap-3">
@@ -318,7 +324,8 @@ const Wallet = () => {
                           txn.type === 'cash_collected' ? '#FEE2E2' :
                             txn.type === 'settlement' ? '#D1FAE5' :
                               txn.type === 'withdrawal' ? '#EDE9FE' :
-                                txn.type === 'tds_deduction' ? '#FEF3C7' : '#FFEDD5'
+                                txn.type === 'tds_deduction' ? '#FEF3C7' :
+                                  txn.type === 'platform_fee' ? '#FFF1F2' : '#FFEDD5'
                       }}
                     >
                       {getTransactionIcon(txn.type)}
@@ -329,11 +336,11 @@ const Wallet = () => {
                         <p className="font-bold text-gray-900 text-sm">
                           {getTransactionLabel(txn.type)}
                         </p>
-                        <p className={`text-lg font-bold ${txn.type === 'cash_collected' || txn.type === 'tds_deduction' || txn.type === 'withdrawal'
+                        <p className={`text-lg font-bold ${['cash_collected', 'tds_deduction', 'withdrawal', 'platform_fee'].includes(txn.type)
                           ? 'text-red-600'
                           : 'text-green-600'
                           }`}>
-                          {['cash_collected', 'tds_deduction', 'withdrawal'].includes(txn.type) ? '-' : '+'}₹{Math.abs(txn.amount).toLocaleString()}
+                          {['cash_collected', 'tds_deduction', 'withdrawal', 'platform_fee'].includes(txn.type) ? '-' : '+'}₹{Math.abs(txn.amount).toLocaleString()}
                         </p>
                       </div>
 

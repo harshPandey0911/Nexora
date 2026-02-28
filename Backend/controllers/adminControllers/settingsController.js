@@ -34,6 +34,7 @@ exports.updateSettings = async (req, res, next) => {
       servicePayoutPercentage,
       partsPayoutPercentage,
       tdsPercentage,
+      platformFeePercentage,
       vendorCashLimit, // Add this
       cancellationPenalty,
       razorpayKeyId,
@@ -59,6 +60,7 @@ exports.updateSettings = async (req, res, next) => {
         servicePayoutPercentage,
         partsPayoutPercentage,
         tdsPercentage,
+        platformFeePercentage,
         vendorCashLimit, // Add this
         cancellationPenalty,
         razorpayKeyId,
@@ -76,6 +78,7 @@ exports.updateSettings = async (req, res, next) => {
       if (servicePayoutPercentage !== undefined) settings.servicePayoutPercentage = servicePayoutPercentage;
       if (partsPayoutPercentage !== undefined) settings.partsPayoutPercentage = partsPayoutPercentage;
       if (tdsPercentage !== undefined) settings.tdsPercentage = tdsPercentage;
+      if (platformFeePercentage !== undefined) settings.platformFeePercentage = platformFeePercentage;
       if (vendorCashLimit !== undefined) settings.vendorCashLimit = vendorCashLimit; // Add this
       if (cancellationPenalty !== undefined) settings.cancellationPenalty = cancellationPenalty;
       if (razorpayKeyId !== undefined) settings.razorpayKeyId = razorpayKeyId;

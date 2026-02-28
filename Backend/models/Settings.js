@@ -41,6 +41,12 @@ const settingsSchema = new mongoose.Schema({
     min: 0,
     max: 100
   },
+  platformFeePercentage: {
+    type: Number,
+    default: 1, // 1% default platform fee
+    min: 0,
+    max: 100
+  },
   vendorCashLimit: {
     type: Number,
     default: 10000,

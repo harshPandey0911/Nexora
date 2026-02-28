@@ -19,7 +19,8 @@ const AdminSettings = () => {
     partsPayoutPercentage: 100,
     vendorCashLimit: 10000,
     cancellationPenalty: 49,
-    tdsPercentage: 1
+    tdsPercentage: 1,
+    platformFeePercentage: 1
   });
 
   // Billing Configuration State
@@ -112,6 +113,7 @@ const AdminSettings = () => {
             servicePayoutPercentage: res.settings.servicePayoutPercentage ?? 90,
             partsPayoutPercentage: res.settings.partsPayoutPercentage ?? 100,
             tdsPercentage: res.settings.tdsPercentage || 1,
+            platformFeePercentage: res.settings.platformFeePercentage || 1,
             vendorCashLimit: res.settings.vendorCashLimit || 10000,
             cancellationPenalty: res.settings.cancellationPenalty !== undefined ? res.settings.cancellationPenalty : 49
           });
@@ -613,6 +615,12 @@ const AdminSettings = () => {
                       <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">TDS Percentage (%)</label>
                       <input type="number" name="tdsPercentage" value={financialSettings.tdsPercentage} onChange={handleFinancialChange}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Platform Fee (%)</label>
+                      <input type="number" name="platformFeePercentage" value={financialSettings.platformFeePercentage} onChange={handleFinancialChange}
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
+                      <p className="text-[10px] text-gray-400 mt-1">Fee charged on vendor withdrawals</p>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Cancellation Penalty (₹)</label>

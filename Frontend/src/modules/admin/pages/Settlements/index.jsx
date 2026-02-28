@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import Modal from '../../components/Modal';
 import Button from '../../components/Button';
 import adminSettlementService from '../../../../services/adminSettlementService';
+import { getSettings } from '../../services/settingsService';
 import { exportToCSV } from '../../../../utils/csvExport';
 
 const SettlementManagement = () => {
@@ -18,6 +19,7 @@ const SettlementManagement = () => {
   const [history, setHistory] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [actionLoading, setActionLoading] = useState(false);
+  const [settings, setSettings] = useState(null);
 
   // Modal State
   const [activeModal, setActiveModal] = useState(null);
@@ -61,6 +63,10 @@ const SettlementManagement = () => {
       } else if (activeTab === 'withdrawals') {
         const res = await adminSettlementService.getWithdrawalRequests();
         if (res.success) setWithdrawals(res.data || []);
+
+        // Load settings for fee calculation
+        const setRes = await getSettings();
+        if (setRes.success) setSettings(setRes.settings);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -957,6 +963,39 @@ const SettlementManagement = () => {
             <div>
               <p className="font-bold text-gray-900 text-sm">{selectedItem?.vendorId?.name}</p>
               <p className="text-xs text-gray-500">{selectedItem?.vendorId?.businessName}</p>
+            </div>
+          </div>
+
+          {/* Fee Breakdown */}
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-3">
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Payout Breakdown</h4>
+
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-600">Gross Amount</span>
+              <span className="font-bold text-gray-900">₹{selectedItem?.amount?.toLocaleString()}</span>
+            </div>
+
+            <div className="flex justify-between items-center text-sm">
+              <div className="flex items-center gap-1">
+                <span className="text-gray-600">TDS Deduction</span>
+                <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">{settings?.tdsPercentage || 1}%</span>
+              </div>
+              <span className="font-bold text-red-600">-₹{Math.round((selectedItem?.amount * (settings?.tdsPercentage || 1)) / 100).toLocaleString()}</span>
+            </div>
+
+            <div className="flex justify-between items-center text-sm">
+              <div className="flex items-center gap-1">
+                <span className="text-gray-600">Platform Charge</span>
+                <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold">{settings?.platformFeePercentage || 1}%</span>
+              </div>
+              <span className="font-bold text-red-600">-₹{Math.round((selectedItem?.amount * (settings?.platformFeePercentage || 1)) / 100).toLocaleString()}</span>
+            </div>
+
+            <div className="pt-3 border-t border-gray-200 flex justify-between items-center">
+              <span className="font-bold text-gray-800">Final Net Payout</span>
+              <span className="text-xl font-black text-green-600">
+                ₹{Math.round(selectedItem?.amount - (selectedItem?.amount * (settings?.tdsPercentage || 1) / 100) - (selectedItem?.amount * (settings?.platformFeePercentage || 1) / 100)).toLocaleString()}
+              </span>
             </div>
           </div>
 
