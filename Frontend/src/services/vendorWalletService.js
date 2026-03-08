@@ -60,6 +60,14 @@ const vendorWalletService = {
   },
 
   /**
+   * Manually confirm online collection (For fallback Manual QR)
+   */
+  confirmManualOnlineCollection: async (bookingId, otp) => {
+    const response = await api.post(`/bookings/cash/${bookingId}/confirm-manual-online`, { otp });
+    return response.data;
+  },
+
+  /**
    * Confirm cash collection
    */
   confirmCashCollection: async (bookingId, amount, otp = '', extraItems = []) => {

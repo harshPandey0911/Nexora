@@ -209,47 +209,51 @@ const createQRCode = async (amount, bookingNumber, notes = {}) => {
           console.warn('⚠️ All Razorpay QR APIs failed, trying manual UPI Intent QR...', e3.response?.data || e3.message);
 
           // Fallback 3: Manual UPI Intent QR (Scan -> UPI App -> Auto-filled amount)
-          try {
-            const QRCode = require('qrcode');
-            const upiId = process.env.MERCHANT_UPI_ID || "merchant@razorpay";
-            const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent("Homster Service")}&am=${amount}&cu=INR&tn=${bookingNumber}`;
-            const qrImage = await QRCode.toDataURL(upiLink);
+          // Only attempt IF merchant upi id is configured
+          if (process.env.MERCHANT_UPI_ID) {
+            try {
+              const QRCode = require('qrcode');
+              const upiId = process.env.MERCHANT_UPI_ID;
+              const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent("Homster Service")}&am=${amount}&cu=INR&tn=${bookingNumber}`;
+              const qrImage = await QRCode.toDataURL(upiLink);
 
-            console.log('✅ Manual UPI QR generated successfully');
-            return {
-              success: true,
-              qrImage, // Base64 data URL
-              imageUrl: qrImage, // For backwards compatibility
-              upiLink,
-              isManualUpi: true,
-              qrCodeId: `manual_${bookingNumber}_${Date.now()}`
-            };
-          } catch (e4) {
-            console.warn('⚠️ Manual UPI QR generation failed, falling back to Payment Link...', e4.message);
+              console.log('✅ Manual UPI QR generated successfully');
+              return {
+                success: true,
+                qrImage,
+                imageUrl: qrImage,
+                upiLink,
+                isManualUpi: true,
+                qrCodeId: `manual_${bookingNumber}_${Date.now()}`
+              };
+            } catch (e4) {
+              console.warn('⚠️ Manual UPI QR generation failed, falling back to Payment Link...', e4.message);
+            }
+          } else {
+            console.warn('⚠️ MERCHANT_UPI_ID missing in .env, skipping manual QR fallback.');
+          }
 
-            // Fallback 4: Create a Payment Link
-            const linkPayload = {
-              amount: Math.round(amount * 100),
-              currency: 'INR',
-              description: `Payment for Booking #${bookingNumber}`,
-              notes,
-              notify: { sms: false, email: false }
-            };
+          // Fallback 4: Create a Payment Link
+          const linkPayload = {
+            amount: Math.round(amount * 100),
+            currency: 'INR',
+            description: `Payment for Booking #${bookingNumber}`,
+            notes,
+            notify: { sms: false, email: false }
+          };
 
-            const linkResponse = await axios.post('https://api.razorpay.com/v1/payment_links', linkPayload, {
-              headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json' }
-            });
+          const linkResponse = await axios.post('https://api.razorpay.com/v1/payment_links', linkPayload, {
+            headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json' }
+          });
 
-            const link = linkResponse.data;
-            console.log('✅ Payment Link created as fallback');
+          const link = linkResponse.data;
+          console.log('✅ Payment Link created as fallback');
 
-            return {
-              success: true,
-              qrCodeId: link.id,
-              imageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(link.short_url)}`,
-              paymentUrl: link.short_url,
-              isFallback: true
-            };
+          return {
+            success: true,
+            qrCodeId: link.id,
+            imageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(link.short_url)}`,
+            paymentUrl: link.short_url,
           }
         }
       }
@@ -268,6 +272,17 @@ const getQRCodePayments = async (id) => {
   try {
     if (!razorpay) {
       return { success: false, error: 'Razorpay not initialized' };
+    }
+
+    // If it's a manual QR (fallback case)
+    if (id && id.startsWith('manual_')) {
+      console.log(`[QR Service] ID ${id} is a manual UPI QR. Auto-verification not possible.`);
+      return {
+        success: true,
+        isManual: true,
+        payments: [],
+        message: 'Manual UPI payments must be verified manually by the vendor'
+      };
     }
 
     // If it's a payment link (fallback case)

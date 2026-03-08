@@ -67,6 +67,7 @@ const BillingPage = () => {
   const [onlinePaymentData, setOnlinePaymentData] = useState(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrLoading, setQrLoading] = useState(false);
+  const [isManualVerification, setIsManualVerification] = useState(false);
 
   // Fetch Data
   useEffect(() => {
@@ -488,29 +489,28 @@ const BillingPage = () => {
   const handleVerifyOTP = async (code) => {
     try {
       setOtpLoading(true);
-      const res = await vendorWalletService.confirmCashCollection(
-        id,
-        calculations.finalBillAmount,
-        code,
-        [...selectedParts, ...customItems]
-      );
+
+      let res;
+      if (isManualVerification) {
+        res = await vendorWalletService.confirmManualOnlineCollection(id, code);
+      } else {
+        res = await vendorWalletService.confirmCashCollection(
+          id,
+          calculations.finalBillAmount,
+          code,
+          [...selectedParts, ...customItems]
+        );
+      }
 
       if (res.success) {
         setShowOtpModal(false);
-        toast.success('Payment verified successfully!');
+        toast.success(isManualVerification ? 'Online payment verified manually!' : 'Cash payment verified successfully!');
         localStorage.removeItem(`billing_step_${id}`);
         localStorage.removeItem(`billing_max_step_${id}`);
         localStorage.removeItem(`billing_data_${id}`);
         navigate(`/vendor/booking/${id}`);
       } else {
         toast.error(res.message || 'Invalid OTP');
-        // Do NOT close modal, allow retry.
-        // OTP input in modal will remain filled? Or clear it? 
-        // Ideally clear it so user can type again, but we removed `otp` state from parent.
-        // Modal manages `otp`. If this Promise resolves, maybe Modal can clear?
-        // Or we rely on user manually clearing. 
-        // User request: "if filas again should comes with toast showing incorrect".
-        // This is handled here.
       }
     } catch (error) {
       console.error('Verify OTP error:', error);
@@ -523,6 +523,7 @@ const BillingPage = () => {
   const handleOnlinePayment = async () => {
     try {
       setQrLoading(true);
+      setIsManualVerification(false);
       // First save the bill to ensure backend has latest amounts
       await vendorBillService.createOrUpdateBill(id, {
         services: selectedServices,
@@ -1216,13 +1217,26 @@ const BillingPage = () => {
               </div>
 
               <div className="space-y-3">
-                <button
-                  onClick={checkPaymentStatus}
-                  className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  <FiCheckCircle className="w-5 h-5" />
-                  Paid? Check Status
-                </button>
+                {onlinePaymentData.isManualUpi ? (
+                  <button
+                    onClick={() => {
+                      setIsManualVerification(true);
+                      setShowOtpModal(true);
+                    }}
+                    className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <FiCheckCircle className="w-5 h-5" />
+                    Verify Manually (Enter OTP)
+                  </button>
+                ) : (
+                  <button
+                    onClick={checkPaymentStatus}
+                    className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <FiCheckCircle className="w-5 h-5" />
+                    Paid? Check Status
+                  </button>
+                )}
                 <button
                   onClick={() => setShowQrModal(false)}
                   className="w-full py-3 text-gray-500 font-bold hover:text-gray-700 transition-colors"

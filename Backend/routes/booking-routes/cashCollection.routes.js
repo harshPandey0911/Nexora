@@ -5,6 +5,7 @@ const {
   initiateCashCollection,
   initiateOnlineCollection,
   verifyOnlinePayment,
+  confirmManualOnlinePayment,
   confirmCashCollection,
   customerConfirmPayment,
   getCashCollectionStatus
@@ -20,6 +21,7 @@ router.post('/:id/confirm', confirmCashCollection);
 
 // Explicit verification route
 router.post('/:id/verify-online', verifyOnlinePayment);
+router.post('/:id/confirm-manual-online', confirmManualOnlinePayment);
 
 // Customer route
 router.post('/:id/customer-confirm', customerConfirmPayment);

@@ -65,20 +65,49 @@ exports.initiateOnlineCollection = async (req, res) => {
       return res.status(500).json({ success: false, message: qrResult.error });
     }
 
+    // Generate OTP for manual verification if needed
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    booking.customerConfirmationOTP = otp;
+    booking.paymentOtp = otp;
+
     // Store QR ID to track later
     booking.razorpayQrId = qrResult.qrCodeId;
     booking.paymentMethod = 'online'; // Mark as online as soon as QR is shown
     await booking.save();
 
-    // Emit socket event to user with full bill details
+    // Emit socket event to user with full bill details & OTP
     const io = req.app.get('io');
     if (io) {
       io.to(`user_${booking.userId}`).emit('booking_updated', {
         bookingId: booking._id,
         finalAmount: booking.finalAmount,
         workDoneDetails: booking.workDoneDetails,
-        qrPaymentInitiated: true
+        qrPaymentInitiated: true,
+        customerConfirmationOTP: otp,
+        paymentOtp: otp
       });
+    }
+
+    // Send Push Notification with OTP
+    try {
+      const { createNotification } = require('../notificationControllers/notificationController');
+      await createNotification({
+        userId: booking.userId,
+        type: 'work_done',
+        title: 'Payment Request & Bill Ready',
+        message: `Bill: ₹${booking.finalAmount}. OTP: ${otp}. Please verify bill and pay online or share OTP.`,
+        relatedId: booking._id,
+        relatedType: 'booking',
+        priority: 'high',
+        pushData: {
+          type: 'work_done',
+          bookingId: booking._id.toString(),
+          paymentOtp: otp,
+          link: `/user/booking/${booking._id}`
+        }
+      });
+    } catch (notificationError) {
+      console.error('Notification error in initiateOnlineCollection:', notificationError);
     }
 
     res.status(200).json({
@@ -87,7 +116,8 @@ exports.initiateOnlineCollection = async (req, res) => {
       data: {
         qrImageUrl: qrResult.imageUrl,
         paymentUrl: qrResult.paymentUrl,
-        amount: booking.finalAmount
+        amount: booking.finalAmount,
+        isManualUpi: qrResult.isManualUpi || false
       }
     });
   } catch (error) {
@@ -579,6 +609,128 @@ exports.verifyOnlinePayment = async (req, res) => {
   } catch (error) {
     console.error('Verify online payment error:', error);
     res.status(500).json({ success: false, message: 'Verification failed' });
+  }
+};
+
+/**
+ * Manually Confirm Online Payment (For Manual QR Fallback)
+ * POST /api/bookings/cash/:id/confirm-manual-online
+ */
+exports.confirmManualOnlinePayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { otp } = req.body;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+
+    const booking = await Booking.findById(id);
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    // OTP Verification (Mandatory for manual confirmation to prevent accidents)
+    if (booking.customerConfirmationOTP && otp && booking.customerConfirmationOTP !== otp) {
+      if (process.env.NODE_ENV !== 'development' || otp !== '0000') {
+        return res.status(400).json({ success: false, message: 'Invalid OTP. Please enter the code sent to the customer.' });
+      }
+    }
+
+    // prevent race conditions
+    if (booking.status === BOOKING_STATUS.COMPLETED) {
+      return res.status(400).json({ success: false, message: 'Booking already completed' });
+    }
+
+    console.log(`[Manual QR Confirm] Finalizing booking ${booking.bookingNumber} manually`);
+
+    // 1. Update Booking
+    booking.paymentStatus = PAYMENT_STATUS.SUCCESS;
+    booking.paymentMethod = 'online';
+    booking.cashCollected = false;
+    booking.paymentId = `manual_conf_${Date.now()}`;
+    booking.status = BOOKING_STATUS.COMPLETED;
+    booking.completedAt = new Date();
+    await booking.save();
+
+    // 2. Handle Earnings & Wallet (Reuse logic)
+    const VendorBill = require('../../models/VendorBill');
+    const bill = await VendorBill.findOne({ bookingId: booking._id });
+
+    let vendorEarning = 0;
+    if (bill) {
+      vendorEarning = bill.vendorTotalEarning;
+      bill.status = 'paid';
+      bill.paidAt = new Date();
+      await bill.save();
+    } else {
+      vendorEarning = booking.finalAmount * 0.8;
+    }
+
+    const vendorId = booking.vendorId;
+    await Vendor.findByIdAndUpdate(vendorId, {
+      $inc: { 'wallet.earnings': vendorEarning }
+    });
+
+    // 3. Transactions
+    await Transaction.create({
+      userId: booking.userId,
+      bookingId: booking._id,
+      amount: booking.finalAmount,
+      type: 'payment',
+      paymentMethod: 'online',
+      status: 'completed',
+      description: `Manual confirmation of UPI QR payment for booking #${booking.bookingNumber}`,
+      referenceId: booking.paymentId,
+      metadata: { source: 'manual_vendor_confirm' }
+    });
+
+    if (vendorEarning > 0) {
+      await Transaction.create({
+        vendorId: booking.vendorId,
+        bookingId: booking._id,
+        amount: vendorEarning,
+        type: 'earnings_credit',
+        paymentMethod: 'system',
+        status: 'completed',
+        description: `Earnings credited for manual online booking #${booking.bookingNumber}`,
+        metadata: { type: 'online_earning', billId: bill?._id?.toString() }
+      });
+    }
+
+    // 4. Record Stats
+    recordBookingEarning({
+      date: new Date(),
+      totalRevenue: bill ? bill.grandTotal : booking.finalAmount,
+      platformCommission: bill ? bill.companyRevenue : (booking.finalAmount * 0.2),
+      vendorEarnings: vendorEarning,
+      totalGST: bill ? bill.totalGST : 0,
+      totalTDS: 0
+    });
+
+    // 5. Notify & Socket
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user_${booking.userId}`).emit('booking_updated', {
+        bookingId: booking._id,
+        status: 'completed',
+        paymentStatus: 'success'
+      });
+      io.to(`vendor_${booking.vendorId}`).emit('booking_updated', {
+        bookingId: booking._id,
+        status: 'completed',
+        paymentMethod: 'online'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment confirmed manually and job completed',
+      status: 'completed'
+    });
+
+  } catch (error) {
+    console.error('Confirm manual online payment error:', error);
+    res.status(500).json({ success: false, message: 'Manual confirmation failed' });
   }
 };
 
