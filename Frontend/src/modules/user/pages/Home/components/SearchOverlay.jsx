@@ -132,18 +132,30 @@ const SearchOverlay = ({ isOpen, onClose, categories = [], onCategoryClick }) =>
       return;
     }
 
-    // 2. Handle Service Click
-    if (item.categoryId || item.targetCategoryId) {
-      const catId = item.categoryId || item.targetCategoryId;
-      const cat = categories.find(c => (c.id === catId || c._id === catId));
-      if (cat) {
-        onCategoryClick(cat);
-      }
-    } else if (item.category) {
-      const cat = categories.find(c => c.title === item.category);
-      if (cat) {
-        onCategoryClick(cat);
-      }
+    // 2. Handle Service/Brand Click
+    let catId = item.categoryId || item.targetCategoryId || item.categoryId;
+    let category = null;
+
+    if (catId) {
+      category = categories.find(c => (c.id === catId || c._id === catId));
+    }
+
+    if (!category && item.category) {
+      category = categories.find(c => c.title === item.category);
+    }
+
+    if (category) {
+      // If it's a service match, tell the modal to open THIS brand immediately
+      const initialBrand = item.brandId ? {
+        id: item.brandId,
+        title: item.brandName || item.category,
+        iconUrl: item.brandIcon || item.icon
+      } : (item.id && !item.isCategory ? item : null);
+
+      onCategoryClick({
+        ...category,
+        initialBrand: initialBrand
+      });
     }
   };
 
@@ -208,28 +220,43 @@ const SearchOverlay = ({ isOpen, onClose, categories = [], onCategoryClick }) =>
                   </div>
                 ) : results.length > 0 ? (
                   <>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Services</p>
-                    {results.map((service) => (
+                    <div className="flex items-center justify-between mb-4 mt-2">
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Search Results</p>
+                      <span className="text-[10px] text-gray-400 font-medium bg-gray-100 px-2 py-0.5 rounded-full">{results.length} found</span>
+                    </div>
+                    {results.map((item) => (
                       <div
-                        key={service.id}
-                        onClick={() => handleResultClick(service)}
-                        className="flex items-center gap-3 p-3 bg-white rounded-xl active:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-100 shadow-sm"
+                        key={item.id}
+                        onClick={() => handleResultClick(item)}
+                        className="flex items-center gap-4 p-4 bg-white rounded-2xl active:scale-[0.98] active:bg-gray-50 transition-all cursor-pointer border border-gray-100 hover:border-primary-100 shadow-sm group"
                       >
-                        <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
-                          {service.icon || service.imageUrl ? (
-                            <img src={toAssetUrl(service.icon || service.imageUrl)} alt="" className="w-8 h-8 object-contain" />
+                        <div className="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden shrink-0 border border-gray-100 group-hover:bg-primary-50/30 transition-colors">
+                          {(item.icon || item.imageUrl || item.brandIcon) ? (
+                            <img
+                              src={toAssetUrl(item.icon || item.brandIcon || item.imageUrl)}
+                              alt=""
+                              className="w-10 h-10 object-contain group-hover:scale-110 transition-transform duration-300"
+                            />
                           ) : (
-                            <FiLayers className="w-6 h-6 text-gray-300" />
+                            <FiLayers className="w-7 h-7 text-gray-300" />
                           )}
                         </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 flex items-center">
-                            {service.title}
-                            <FiChevronRight className="w-4 h-4 ml-auto text-gray-300" />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-gray-900 text-[15px] truncate group-hover:text-primary-600 transition-colors">
+                            {item.title}
                           </h4>
-                          <p className="text-xs text-gray-500">
-                            {service.isCategory ? 'Category' : 'Service'}
-                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {item.isCategory ? (
+                              <span className="text-[10px] font-bold bg-blue-50 text-blue-500 px-2 py-0.5 rounded-md uppercase tracking-tighter">Category</span>
+                            ) : (
+                              <span className="text-[11px] font-semibold text-gray-500 flex items-center gap-1">
+                                {item.brandName || item.category || 'Service'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
+                          <FiChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
                         </div>
                       </div>
                     ))}

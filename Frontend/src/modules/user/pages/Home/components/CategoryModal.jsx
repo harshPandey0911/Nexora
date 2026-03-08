@@ -47,7 +47,14 @@ const CategoryModal = React.memo(({ isOpen, onClose, category, location, cartCou
         setIsRedirecting(false);
       }, 300);
     } else if (category?.id) {
-      // Fetch Brands for this category
+      if (category.initialBrand) {
+        // Direct to brand services if initialBrand is provided (from search)
+        const brand = category.initialBrand;
+        setSelectedBrand(brand);
+        setView('services');
+        fetchServices(brand.id || brand._id);
+      }
+      // Always fetch brands for this category to populate the background/back-navigation
       fetchBrands();
     }
   }, [isOpen, category?.id, cityId]);

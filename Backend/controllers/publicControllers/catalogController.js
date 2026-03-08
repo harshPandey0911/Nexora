@@ -245,7 +245,15 @@ const getPublicServices = async (req, res) => {
       query.categoryId = categoryId;
     }
 
-    const services = await Service.find(query).sort({ createdAt: 1 }).lean();
+    if (req.query.search) {
+      const escapedSearch = req.query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.title = { $regex: escapedSearch, $options: 'i' };
+    }
+
+    const services = await Service.find(query)
+      .populate('brandId', 'title iconUrl')
+      .sort({ createdAt: 1 })
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -256,7 +264,10 @@ const getPublicServices = async (req, res) => {
         icon: svc.iconUrl,
         basePrice: svc.basePrice,
         gstPercentage: svc.gstPercentage,
-        description: svc.description
+        description: svc.description,
+        brandId: svc.brandId?._id,
+        brandName: svc.brandId?.title,
+        brandIcon: svc.brandId?.iconUrl
       }))
     });
   } catch (error) {
