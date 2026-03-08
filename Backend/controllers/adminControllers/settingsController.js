@@ -46,7 +46,9 @@ exports.updateSettings = async (req, res, next) => {
       // Billing Settings
       companyName, companyGSTIN, companyPAN, companyAddress, companyCity, companyState, companyPincode, companyPhone, companyEmail, invoicePrefix, sacCode,
       // Support Settings
-      supportEmail, supportPhone, supportWhatsapp
+      supportEmail, supportPhone, supportWhatsapp,
+      // Booking Timing
+      maxSearchTime, waveDuration
     } = req.body;
 
     let settings = await Settings.findOne({ type: 'global' });
@@ -107,6 +109,10 @@ exports.updateSettings = async (req, res, next) => {
       if (supportEmail !== undefined) settings.supportEmail = supportEmail;
       if (supportPhone !== undefined) settings.supportPhone = supportPhone;
       if (supportWhatsapp !== undefined) settings.supportWhatsapp = supportWhatsapp;
+
+      // Booking Timing update
+      if (maxSearchTime !== undefined) settings.maxSearchTime = maxSearchTime;
+      if (waveDuration !== undefined) settings.waveDuration = waveDuration;
 
       await settings.save();
     }

@@ -67,6 +67,7 @@ exports.initiateOnlineCollection = async (req, res) => {
 
     // Store QR ID to track later
     booking.razorpayQrId = qrResult.qrCodeId;
+    booking.paymentMethod = 'online'; // Mark as online as soon as QR is shown
     await booking.save();
 
     // Emit socket event to user with full bill details
@@ -474,6 +475,7 @@ exports.verifyOnlinePayment = async (req, res) => {
         // 1. Update Booking
         booking.paymentStatus = PAYMENT_STATUS.SUCCESS;
         booking.paymentMethod = 'online';
+        booking.cashCollected = false; // Ensure it's not counted as cash
         booking.razorpayPaymentId = capturedPayment.id;
         booking.paymentId = capturedPayment.id;
 
@@ -512,8 +514,12 @@ exports.verifyOnlinePayment = async (req, res) => {
           type: 'payment',
           paymentMethod: 'online',
           status: 'completed',
-          description: `QR payment for booking ${booking.bookingNumber}`,
-          referenceId: capturedPayment.id
+          description: `Online QR payment for booking #${booking.bookingNumber}`,
+          referenceId: capturedPayment.id,
+          metadata: {
+            source: 'vendor_qr',
+            razorpayPaymentId: capturedPayment.id
+          }
         });
 
         if (vendorEarning > 0) {
@@ -524,8 +530,11 @@ exports.verifyOnlinePayment = async (req, res) => {
             type: 'earnings_credit',
             paymentMethod: 'system',
             status: 'completed',
-            description: `Earnings for booking ${booking.bookingNumber}`,
-            metadata: { type: 'qr_payment_earning' }
+            description: `Earnings credited for online booking #${booking.bookingNumber}`,
+            metadata: {
+              type: 'online_earning',
+              billId: bill?._id?.toString()
+            }
           });
         }
 

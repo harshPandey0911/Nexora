@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, memo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FiBriefcase, FiUsers, FiBell, FiArrowRight, FiUser, FiClock, FiMapPin, FiCheckCircle, FiTrendingUp, FiChevronRight } from 'react-icons/fi';
 import { FaWallet } from 'react-icons/fa';
 import { vendorTheme as themeColors } from '../../../../theme';
@@ -14,12 +14,15 @@ import { registerFCMToken } from '../../../../services/pushNotificationService';
 import LogoLoader from '../../../../components/common/LogoLoader';
 import StatsCards from './components/StatsCards';
 import PendingBookings from './components/PendingBookings';
+import BookingAlertModal from '../../components/bookings/BookingAlertModal';
+import { playAlertRing, stopAlertRing } from '../../../../utils/notificationSound';
 
 
 const SOCKET_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, '') || 'http://localhost:5000';
 
 const Dashboard = memo(() => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Helper function to convert hex to rgba
   const hexToRgba = (hex, alpha) => {
@@ -49,6 +52,7 @@ const Dashboard = memo(() => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeAlertBookings, setActiveAlertBookings] = useState([]);
+  const [globalConfig, setGlobalConfig] = useState({ maxSearchTime: 5, waveDuration: 60 });
 
   const ignoredBookingIds = useRef(new Set());
 
@@ -77,7 +81,8 @@ const Dashboard = memo(() => {
   const processApiResponse = useCallback((response) => {
     if (!response.success) return;
 
-    const { stats: apiStats, recentBookings } = response.data;
+    const { stats: apiStats, recentBookings, config } = response.data;
+    if (config) setGlobalConfig(config);
 
     // Separate requested/searching bookings from other bookings
     const requestedBookings = (recentBookings || []).filter(booking => {
@@ -111,7 +116,8 @@ const Dashboard = memo(() => {
       mergedMap.set(id, {
         ...b, // Spread first!
         id,
-        serviceType: b.serviceId?.title || 'Service Request',
+        serviceName: b.serviceName || b.serviceId?.title || 'New Booking Request',
+        serviceCategory: b.serviceCategory || b.serviceId?.categoryId?.title || 'General Service',
         customerName: b.userId?.name || 'Customer',
         location: {
           address: b.address?.addressLine1 || 'Address not available',
@@ -124,7 +130,8 @@ const Dashboard = memo(() => {
           date: new Date(b.scheduledDate).toLocaleDateString(),
           time: b.scheduledTime || 'Time not set'
         },
-        status: b.status
+        status: b.status,
+        expiresAt: b.expiresAt || (b.createdAt && config ? new Date(new Date(b.createdAt).getTime() + (config.maxSearchTime || 5) * 60000).toISOString() : null)
       });
     });
 
@@ -144,12 +151,22 @@ const Dashboard = memo(() => {
     localPending.forEach(localJob => {
       const id = String(localJob.id || localJob._id);
       if (!mergedPending.find(job => String(job.id || job._id) === id) && !ignoredBookingIds.current.has(id)) {
-        // ... (existing logic) result of filter
+
         const createdAt = localJob.createdAt ? new Date(localJob.createdAt).getTime() : Date.now();
-        const age = Date.now() - createdAt;
+        const expiresAt = localJob.expiresAt || (localJob.createdAt && config ? new Date(createdAt + (config.maxSearchTime || 5) * 60000).toISOString() : null);
+        const isExpired = (expiresAt && new Date(expiresAt) <= new Date()) || (Date.now() - createdAt > 300000);
+
         const lowerStatus = String(localJob.status || '').toLowerCase();
-        if (age < 120000 && (lowerStatus === 'requested' || lowerStatus === 'searching')) {
-          mergedPending.push(localJob);
+
+        if (!isExpired && (lowerStatus === 'requested' || lowerStatus === 'searching')) {
+          mergedPending.push({
+            ...localJob,
+            id,
+            serviceName: localJob.serviceName || localJob.serviceId?.title || 'New Booking Request',
+            serviceCategory: localJob.serviceCategory || localJob.serviceId?.categoryId?.title || 'General Service',
+            customerName: localJob.customerName || localJob.userId?.name || 'Customer',
+            expiresAt
+          });
         }
       }
     });
@@ -211,15 +228,29 @@ const Dashboard = memo(() => {
     }
   }, [processApiResponse]);
 
-  // Initial load
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
 
+  // Check for redirected state (to open a specific alert modal)
+  useEffect(() => {
+    if (location.state?.openBookingId && pendingBookings.length > 0) {
+      const bId = String(location.state.openBookingId);
+      const booking = pendingBookings.find(b => String(b.id || b._id) === bId);
+      if (booking) {
+        setActiveAlertBookings(prev => {
+          if (prev.find(p => String(p.id || p._id) === bId)) return prev;
+          return [...prev, booking];
+        });
+        // Clear state to avoid reopening on refresh
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.state, pendingBookings, navigate]);
+
   // Listen for real-time updates via window events (dispatched by useAppNotifications)
   useEffect(() => {
     const handleUpdate = () => {
-      console.log('🔄 Dashboard: Refreshing data due to real-time update');
       loadDashboardData(false); // false = don't show spinner for background refresh
     };
 
@@ -257,6 +288,11 @@ const Dashboard = memo(() => {
 
         // Remove from recent jobs state
         setRecentJobs(prev => prev.filter(b => String(b.id || b._id) !== idToRemove));
+
+        // Remove from localStorage
+        const pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
+        const updatedPending = pendingJobs.filter(job => String(job.id || job._id) !== idToRemove);
+        localStorage.setItem('vendorPendingJobs', JSON.stringify(updatedPending));
       }
     };
 
@@ -272,6 +308,67 @@ const Dashboard = memo(() => {
       window.removeEventListener('removeVendorBooking', handleRemoveBooking);
     };
   }, [loadDashboardData]);
+
+  // Handle Sound Trigger when alerts appear
+  useEffect(() => {
+    if (activeAlertBookings.length > 0) {
+      playAlertRing(true);
+    } else {
+      stopAlertRing();
+    }
+    return () => stopAlertRing();
+  }, [activeAlertBookings.length]);
+
+  // Alert Action Handlers
+  const handleAcceptAlert = async (bookingId) => {
+    try {
+      const response = await acceptBooking(bookingId);
+      if (response.success) {
+        stopAlertRing();
+        toast.success('Booking accepted successfully!');
+        setActiveAlertBookings(prev => prev.filter(b => String(b.id || b._id) !== String(bookingId)));
+        setPendingBookings(prev => prev.filter(b => String(b.id || b._id) !== String(bookingId)));
+
+        // Sync localStorage
+        const pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
+        const updated = pendingJobs.filter(b => String(b.id || b._id) !== String(bookingId));
+        localStorage.setItem('vendorPendingJobs', JSON.stringify(updated));
+
+        window.dispatchEvent(new CustomEvent('removeVendorBooking', { detail: { id: bookingId } }));
+        window.dispatchEvent(new Event('vendorStatsUpdated'));
+      }
+    } catch (error) {
+      console.error('Error accepting:', error);
+      toast.error('Failed to accept booking');
+    }
+  };
+
+  const handleRejectAlert = async (bookingId) => {
+    try {
+      const response = await rejectBooking(bookingId);
+      if (response.success) {
+        stopAlertRing();
+        toast.success('Booking rejected');
+        setActiveAlertBookings(prev => prev.filter(b => String(b.id || b._id) !== String(bookingId)));
+        setPendingBookings(prev => prev.filter(b => String(b.id || b._id) !== String(bookingId)));
+
+        // Sync localStorage
+        const pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
+        const updated = pendingJobs.filter(b => String(b.id || b._id) !== String(bookingId));
+        localStorage.setItem('vendorPendingJobs', JSON.stringify(updated));
+
+        window.dispatchEvent(new CustomEvent('removeVendorBooking', { detail: { id: bookingId } }));
+      }
+    } catch (error) {
+      console.error('Error rejecting:', error);
+      toast.error('Failed to reject booking');
+    }
+  };
+
+  const handleAssignAlert = async (bookingId) => {
+    setActiveAlertBookings(prev => prev.filter(b => String(b.id || b._id) !== String(bookingId)));
+    navigate('/vendor/workers', { state: { bookingId } });
+  };
 
   // Memoize quickActions to prevent recreation on every render
   const quickActions = useMemo(() => [
@@ -487,11 +584,13 @@ const Dashboard = memo(() => {
           {/* Pending Booking Alerts - Optimized Component */}
           <PendingBookings
             bookings={pendingBookings}
+            maxSearchTimeMins={globalConfig.maxSearchTime}
             setPendingBookings={setPendingBookings}
             setActiveAlertBooking={(booking) => {
               setActiveAlertBookings(prev => {
-                if (prev.find(b => String(b.id || b._id) === String(booking.id || booking._id))) return prev;
-                return [booking, ...prev];
+                const bId = String(booking.id || booking._id);
+                if (prev.find(b => String(b.id || b._id) === bId)) return prev;
+                return [...prev, booking];
               });
             }}
           />
@@ -756,6 +855,17 @@ const Dashboard = memo(() => {
           </div>
         </div>
       </main>
+
+      {/* Booking Alert Modal */}
+      <BookingAlertModal
+        isOpen={activeAlertBookings.length > 0}
+        bookings={activeAlertBookings}
+        onAccept={handleAcceptAlert}
+        onReject={handleRejectAlert}
+        onAssign={handleAssignAlert}
+        onMinimize={() => setActiveAlertBookings([])}
+        maxSearchTimeMins={globalConfig.maxSearchTime}
+      />
     </div>
   );
 });

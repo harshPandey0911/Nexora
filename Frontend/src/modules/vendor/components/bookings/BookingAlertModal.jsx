@@ -4,8 +4,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { vendorTheme as themeColors } from '../../../../theme';
 import { playAlertRing, stopAlertRing } from '../../../../utils/notificationSound';
 
-const BookingAlertCard = ({ booking, onAccept, onReject, onAssign, initialTimeLeft = 60 }) => {
-  const [timeLeft, setTimeLeft] = useState(initialTimeLeft);
+const BookingAlertCard = ({ booking, onAccept, onReject, onAssign, maxSearchTimeMins = 5 }) => {
+  // Calculate initial time synchronously instead of relying solely on useEffect
+  const calculateInitialRemaining = () => {
+    try {
+      if (booking?.expiresAt) {
+        const end = new Date(booking.expiresAt).getTime();
+        if (!isNaN(end)) {
+          const left = Math.floor((end - Date.now()) / 1000);
+          return Math.max(0, left);
+        }
+      }
+
+      const totalDurationMins = Number(maxSearchTimeMins) || 5;
+      const initialDurationSecs = totalDurationMins * 60;
+
+      if (booking?.createdAt) {
+        const start = new Date(booking.createdAt).getTime();
+        if (!isNaN(start)) {
+          const elapsed = Math.floor((Date.now() - start) / 1000);
+          return Math.max(0, initialDurationSecs - elapsed);
+        }
+      }
+
+      return initialDurationSecs;
+    } catch {
+      return (Number(maxSearchTimeMins) || 5) * 60;
+    }
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateInitialRemaining());
   const [loadingAction, setLoadingAction] = useState(null);
 
   const handleAction = async (actionFn, actionType) => {
@@ -29,47 +57,62 @@ const BookingAlertCard = ({ booking, onAccept, onReject, onAssign, initialTimeLe
     if (!booking) return;
 
     const bookingId = booking.id || booking._id;
-    const storageKey = `alert_start_${bookingId}`;
-    let startTime = parseInt(localStorage.getItem(storageKey));
+    const totalDurationMins = Number(maxSearchTimeMins) || 5;
+    const initialDurationSecs = totalDurationMins * 60;
 
-    if (!startTime) {
-      startTime = Date.now();
-      localStorage.setItem(storageKey, startTime.toString());
-      setTimeLeft(initialTimeLeft);
-    } else {
-      const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-      const remaining = initialTimeLeft - elapsedSeconds;
+    const calculateRemaining = () => {
+      try {
+        if (booking.expiresAt) {
+          const end = new Date(booking.expiresAt).getTime();
+          if (!isNaN(end)) {
+            const left = Math.floor((end - Date.now()) / 1000);
+            return Math.max(0, left);
+          }
+        }
 
-      if (remaining <= 0) {
-        setTimeLeft(0);
-        onReject?.(bookingId);
-        localStorage.removeItem(storageKey);
-        return;
+        if (booking.createdAt) {
+          const start = new Date(booking.createdAt).getTime();
+          if (!isNaN(start)) {
+            const elapsed = Math.floor((Date.now() - start) / 1000);
+            return Math.max(0, initialDurationSecs - elapsed);
+          }
+        }
+
+        return initialDurationSecs;
+      } catch (err) {
+        console.error("Timer calculation error:", err);
+        return 0;
       }
-      setTimeLeft(remaining);
+    };
+
+    const remaining = calculateRemaining();
+    setTimeLeft(remaining);
+
+    if (remaining <= 0) {
+      onReject?.(bookingId);
+      window.dispatchEvent(new CustomEvent('removeVendorBooking', { detail: { id: bookingId } }));
+      return;
     }
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        const currentElapsed = Math.floor((Date.now() - startTime) / 1000);
-        const currentRemaining = initialTimeLeft - currentElapsed;
+      const currentRemaining = calculateRemaining();
+      setTimeLeft(currentRemaining);
 
-        if (currentRemaining <= 0) {
-          clearInterval(timer);
-          onReject?.(bookingId);
-          localStorage.removeItem(storageKey);
-          return 0;
-        }
-        return currentRemaining;
-      });
+      if (currentRemaining <= 0) {
+        clearInterval(timer);
+        onReject?.(bookingId);
+        window.dispatchEvent(new CustomEvent('removeVendorBooking', { detail: { id: bookingId } }));
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [booking, onReject, initialTimeLeft]);
+  }, [booking, onReject, booking.expiresAt, booking.createdAt, maxSearchTimeMins]);
 
   const radius = 24;
   const circumference = 2 * Math.PI * radius;
-  const progress = (timeLeft / 60) * circumference;
+  // Progress relative to the total max search time to ensure the circle shrinks correctly
+  const totalDurationSecs = (Number(maxSearchTimeMins) || 5) * 60;
+  const progress = (timeLeft / totalDurationSecs) * circumference;
   const dashoffset = circumference - progress;
 
   return (
@@ -138,7 +181,7 @@ const BookingAlertCard = ({ booking, onAccept, onReject, onAssign, initialTimeLe
                 <span className="w-4 h-4 flex items-center justify-center bg-gray-200 rounded-full text-[9px]">⚡</span>
               )}
               <span className="text-[10px] font-black tracking-widest text-gray-700 uppercase line-clamp-1 max-w-[120px]">
-                {booking.serviceCategory || 'Category'}
+                {booking.serviceCategory || booking.serviceId?.categoryId?.title || booking.serviceId?.category?.title || booking.categoryName || 'General Service'}
               </span>
             </div>
             <div className="bg-red-50 border border-red-100 px-1.5 py-1 rounded-md">
@@ -153,7 +196,7 @@ const BookingAlertCard = ({ booking, onAccept, onReject, onAssign, initialTimeLe
             <div className="absolute top-0 left-0 w-1 h-full bg-teal-500" />
             <div className="pl-2">
               <h4 className="text-[14px] font-black text-gray-900 leading-tight">
-                {booking.serviceName || booking.serviceType || 'Service Request'}
+                {booking.serviceName || booking.serviceType || booking.serviceId?.title || 'Service Request'}
               </h4>
               {(booking.brandName || booking.brandIcon) && (
                 <div className="flex items-center gap-1.5 mt-1.5 opacity-80">
@@ -204,7 +247,7 @@ const BookingAlertCard = ({ booking, onAccept, onReject, onAssign, initialTimeLe
   );
 };
 
-const BookingAlertModal = ({ isOpen, booking, bookings, onAccept, onReject, onAssign, onMinimize, timeLeft = 60 }) => {
+const BookingAlertModal = ({ isOpen, booking, bookings, onAccept, onReject, onAssign, onMinimize, maxSearchTimeMins = 5 }) => {
   const alertsArray = bookings || (booking ? [booking] : []);
 
   useEffect(() => {
@@ -216,38 +259,47 @@ const BookingAlertModal = ({ isOpen, booking, bookings, onAccept, onReject, onAs
     return () => stopAlertRing();
   }, [isOpen, alertsArray.length]);
 
-  if (!isOpen || alertsArray.length === 0) return null;
-
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md">
-        {onMinimize && (
-          <button onClick={() => { stopAlertRing(); onMinimize(); }} className="absolute top-4 right-4 z-50 p-2 bg-black/20 hover:bg-black/30 backdrop-blur-md rounded-full text-white transition-all active:scale-95" title="Minimize Alert">
-            <FiMinimize2 className="w-5 h-5" />
-          </button>
-        )}
+      {isOpen && alertsArray.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md"
+        >
+          {onMinimize && (
+            <button
+              onClick={() => { stopAlertRing(); onMinimize(); }}
+              className="absolute top-4 right-4 z-50 p-2 bg-black/20 hover:bg-black/30 backdrop-blur-md rounded-full text-white transition-all active:scale-95"
+              title="Minimize Alert"
+            >
+              <FiMinimize2 className="w-5 h-5" />
+            </button>
+          )}
 
-        <div className="w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide flex gap-4 px-8 items-center h-full">
-          <div className="flex gap-4 m-auto">
-            {alertsArray.map(b => (
-              <BookingAlertCard
-                key={b.id || b._id}
-                booking={b}
-                onAccept={onAccept}
-                onReject={onReject}
-                onAssign={onAssign}
-                initialTimeLeft={timeLeft}
-              />
-            ))}
+          <div className="w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide flex gap-4 px-8 items-center h-full">
+            <div className="flex gap-4 m-auto">
+              {alertsArray.map(b => (
+                <BookingAlertCard
+                  key={b.id || b._id}
+                  booking={b}
+                  onAccept={onAccept}
+                  onReject={onReject}
+                  onAssign={onAssign}
+                  maxSearchTimeMins={maxSearchTimeMins}
+                />
+              ))}
+            </div>
           </div>
-        </div>
 
-        {alertsArray.length > 1 && (
-          <div className="absolute bottom-10 left-0 right-0 flex justify-center text-white text-sm font-medium animate-pulse drop-shadow-lg">
-            Swipe to see all {alertsArray.length} alerts →
-          </div>
-        )}
-      </div>
+          {alertsArray.length > 1 && (
+            <div className="absolute bottom-10 left-0 right-0 flex justify-center text-white text-sm font-medium animate-pulse drop-shadow-lg">
+              Swipe to see all {alertsArray.length} alerts →
+            </div>
+          )}
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 };

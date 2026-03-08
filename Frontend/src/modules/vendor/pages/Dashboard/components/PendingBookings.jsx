@@ -1,11 +1,11 @@
 import React, { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiClock, FiMapPin, FiBell } from 'react-icons/fi';
 import { vendorTheme as themeColors } from '../../../../../theme';
 import { toast } from 'react-hot-toast';
 import { acceptBooking, rejectBooking } from '../../../services/bookingService';
+import PendingJobCard from '../../../components/bookings/PendingJobCard';
 
-const PendingBookings = memo(({ bookings, setPendingBookings, setActiveAlertBooking }) => {
+const PendingBookings = memo(({ bookings, setPendingBookings, setActiveAlertBooking, maxSearchTimeMins = 5 }) => {
   const navigate = useNavigate();
   const [loadingAction, setLoadingAction] = React.useState({ id: null, type: null });
 
@@ -15,24 +15,20 @@ const PendingBookings = memo(({ bookings, setPendingBookings, setActiveAlertBook
 
   const handleAcceptBooking = async (e, booking) => {
     e.stopPropagation();
+    const bId = booking.id || booking._id;
     if (loadingAction.id) return;
-    setLoadingAction({ id: booking.id, type: 'accept' });
+    setLoadingAction({ id: bId, type: 'accept' });
     try {
-      const response = await acceptBooking(booking.id);
+      const response = await acceptBooking(bId);
 
       if (response.success) {
-        // Only remove if successful
-        setPendingBookings(prev => prev.filter(b => b.id !== booking.id));
+        setPendingBookings(prev => prev.filter(b => String(b.id || b._id) !== String(bId)));
 
-        // Sync localStorage
         const pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
-        const updated = pendingJobs.filter(b => b.id !== booking.id);
+        const updated = pendingJobs.filter(b => String(b.id || b._id) !== String(bId));
         localStorage.setItem('vendorPendingJobs', JSON.stringify(updated));
 
-        // Remove from everywhere immediately
-        window.dispatchEvent(new CustomEvent('removeVendorBooking', { detail: { id: booking.id } }));
-
-        // Dispatch stats update event
+        window.dispatchEvent(new CustomEvent('removeVendorBooking', { detail: { id: bId } }));
         window.dispatchEvent(new Event('vendorStatsUpdated'));
         toast.success('Booking accepted successfully!');
       }
@@ -40,34 +36,33 @@ const PendingBookings = memo(({ bookings, setPendingBookings, setActiveAlertBook
       console.error('Error accepting:', error);
       toast.error('Failed to accept booking');
     } finally {
-      if (typeof window !== 'undefined') setLoadingAction({ id: null, type: null });
+      setLoadingAction({ id: null, type: null });
     }
   };
 
   const handleRejectBooking = async (e, booking) => {
     e.stopPropagation();
+    const bId = booking.id || booking._id;
     if (loadingAction.id) return;
-    setLoadingAction({ id: booking.id, type: 'reject' });
+    setLoadingAction({ id: bId, type: 'reject' });
     try {
-      const response = await rejectBooking(booking.id, 'Vendor Dashboard Reject');
+      const response = await rejectBooking(bId, 'Vendor Dashboard Reject');
 
       if (response.success) {
-        setPendingBookings(prev => prev.filter(b => b.id !== booking.id));
+        setPendingBookings(prev => prev.filter(b => String(b.id || b._id) !== String(bId)));
 
-        // Sync localStorage
         const pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
-        const updated = pendingJobs.filter(b => b.id !== booking.id);
+        const updated = pendingJobs.filter(b => String(b.id || b._id) !== String(bId));
         localStorage.setItem('vendorPendingJobs', JSON.stringify(updated));
 
-        // Remove from everywhere immediately
-        window.dispatchEvent(new CustomEvent('removeVendorBooking', { detail: { id: booking.id } }));
+        window.dispatchEvent(new CustomEvent('removeVendorBooking', { detail: { id: bId } }));
         toast.success('Booking rejected');
       }
     } catch (error) {
       console.error('Error rejecting:', error);
       toast.error('Failed to reject booking');
     } finally {
-      if (typeof window !== 'undefined') setLoadingAction({ id: null, type: null });
+      setLoadingAction({ id: null, type: null });
     }
   };
 
@@ -85,91 +80,16 @@ const PendingBookings = memo(({ bookings, setPendingBookings, setActiveAlertBook
       </div>
       <div className="space-y-3">
         {bookings.map((booking) => (
-          <div
-            key={booking.id}
+          <PendingJobCard
+            key={booking.id || booking._id}
+            booking={booking}
+            onAccept={handleAcceptBooking}
+            onReject={handleRejectBooking}
             onClick={() => setActiveAlertBooking(booking)}
-            className="bg-white rounded-xl p-4 shadow-md cursor-pointer active:scale-98 transition-transform border-l-4"
-            style={{
-              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.15)',
-              borderLeftColor: '#F59E0B',
-              borderTop: '1px solid rgba(245, 158, 11, 0.2)',
-              borderRight: '1px solid rgba(245, 158, 11, 0.2)',
-              borderBottom: '1px solid rgba(245, 158, 11, 0.2)',
-            }}
-          >
-            <div className="flex items-start justify-between mb-2 gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-0.5">
-                  {booking.serviceCategory || 'Service Category'}
-                </p>
-                <div className="flex items-start gap-2 mb-1">
-                  <p className="font-bold text-gray-800 text-sm leading-tight line-clamp-2">{booking.serviceName || booking.serviceType || 'New Booking Request'}</p>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-yellow-100 text-yellow-600 uppercase tracking-widest shrink-0 mt-0.5">
-                    REQ
-                  </span>
-                </div>
-                {booking.brandName && (
-                  <div className="flex items-center gap-1.5 mb-1.5 bg-gray-50 border border-gray-100 px-1.5 py-0.5 rounded-md w-fit">
-                    {booking.brandIcon && (
-                      <img src={booking.brandIcon} alt={booking.brandName} className="w-3 h-3 object-contain" />
-                    )}
-                    <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wide">{booking.brandName}</span>
-                  </div>
-                )}
-                <p className="text-xs text-gray-500 font-medium line-clamp-1">{booking.customerName || 'Customer'} • {booking.location?.address || 'Location'}</p>
-              </div>
-              <div className="flex flex-col items-center shrink-0">
-                {booking.categoryIcon ? (
-                  <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden shadow-sm flex items-center justify-center p-0.5">
-                    <img src={booking.categoryIcon} className="max-w-full max-h-full object-contain" alt="Category" />
-                  </div>
-                ) : (
-                  <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center">
-                    <FiBell className="w-5 h-5 animate-pulse" style={{ color: '#F59E0B' }} />
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center justify-between mt-3">
-              <div className="flex items-center gap-1 text-xs text-gray-500">
-                <FiClock className="w-4 h-4" />
-                <span>
-                  {booking.timeSlot?.date || (booking.scheduledDate ? new Date(booking.scheduledDate).toLocaleDateString() : '')}
-                  {(booking.timeSlot?.date || booking.scheduledDate) ? ' • ' : ''}
-                  {booking.timeSlot?.time || booking.scheduledTime || 'N/A'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-gray-500">
-                <FiMapPin className="w-4 h-4" />
-                <span>
-                  {(() => {
-                    const dist = booking.location?.distance || booking.distance;
-                    if (!dist || dist === 'N/A') return 'N/A';
-                    return String(dist).includes('km') ? dist : `${dist} km`;
-                  })()}
-                </span>
-              </div>
-              <div className="text-sm font-bold text-gray-800">
-                ₹{booking.price || 0}
-              </div>
-            </div>
-            <div className="flex gap-2 mt-3">
-              <button
-                disabled={!!loadingAction.id}
-                onClick={(e) => handleAcceptBooking(e, booking)}
-                className="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors disabled:opacity-50"
-              >
-                {loadingAction.id === booking.id && loadingAction.type === 'accept' ? 'Accepting...' : 'Accept'}
-              </button>
-              <button
-                disabled={!!loadingAction.id}
-                onClick={(e) => handleRejectBooking(e, booking)}
-                className="flex-1 bg-red-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
-              >
-                {loadingAction.id === booking.id && loadingAction.type === 'reject' ? 'Rejecting...' : 'Reject'}
-              </button>
-            </div>
-          </div>
+            loadingAction={loadingAction.id === (booking.id || booking._id) ? loadingAction.type : null}
+            showTimer={true}
+            maxSearchTimeMins={maxSearchTimeMins}
+          />
         ))}
       </div>
     </div>

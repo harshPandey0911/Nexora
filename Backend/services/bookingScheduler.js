@@ -19,13 +19,17 @@ const Vendor = require('../models/Vendor');
 const { BOOKING_STATUS } = require('../utils/constants');
 const { createNotification } = require('../controllers/notificationControllers/notificationController');
 
+const Settings = require('../models/Settings');
+
 // Wave configuration
-const WAVE_CONFIG = {
-  1: { count: 3, duration: 15000 }, // Wave 1: 3 vendors, 15s
-  2: { count: 3, duration: 15000 }, // Wave 2: 3 vendors, 15s
-  3: { count: 4, duration: 15000 }, // Wave 3: 4 vendors, 15s
-  4: { count: Infinity, duration: 0 } // Wave 4: All remaining
+let WAVE_CONFIG = {
+  1: { count: 3, duration: 60000 },
+  2: { count: 3, duration: 60000 },
+  3: { count: 4, duration: 60000 },
+  4: { count: Infinity, duration: 0 }
 };
+
+let MAX_SEARCH_TIME_MS = 5 * 60 * 1000; // 5 mins fallback
 
 const ACTIVE_INTERVAL_MS = 5000;  // Poll every 5s when bookings exist
 const IDLE_INTERVAL_MS = 30000;   // Poll every 30s when no active bookings (circuit breaker)
@@ -85,6 +89,23 @@ class BookingScheduler {
     try {
       const BookingRequest = require('../models/BookingRequest');
 
+      // --- REFRESH SETTINGS ---
+      try {
+        const globalSettings = await Settings.findOne({ type: 'global' }).lean();
+        if (globalSettings) {
+          const waveDur = (globalSettings.waveDuration || 60) * 1000;
+          WAVE_CONFIG = {
+            1: { count: 3, duration: waveDur },
+            2: { count: 3, duration: waveDur },
+            3: { count: 4, duration: waveDur },
+            4: { count: Infinity, duration: 0 }
+          };
+          MAX_SEARCH_TIME_MS = (globalSettings.maxSearchTime || 5) * 60 * 1000;
+        }
+      } catch (sErr) {
+        console.error('[BookingScheduler] Settings fetch error:', sErr);
+      }
+
       // --- CIRCUIT BREAKER: Fast query to detect if any work is needed ---
       const activeBookings = await Booking.find(
         {
@@ -92,7 +113,7 @@ class BookingScheduler {
           waveStartedAt: { $ne: null },
           potentialVendors: { $exists: true, $not: { $size: 0 } }
         },
-        '_id currentWave waveStartedAt potentialVendors notifiedVendors bookingNumber' // Minimal projection
+        '_id currentWave waveStartedAt potentialVendors notifiedVendors bookingNumber createdAt userId expiresAt' // Added createdAt, userId, expiresAt
       ).lean();
 
       if (activeBookings.length === 0) {
@@ -107,10 +128,47 @@ class BookingScheduler {
           try {
             const currentWave = booking.currentWave || 1;
             const waveConfig = WAVE_CONFIG[currentWave] || WAVE_CONFIG[4];
-            const elapsed = now - new Date(booking.waveStartedAt).getTime();
+            const startTime = new Date(booking.createdAt || booking.waveStartedAt).getTime();
+            const totalElapsed = now - startTime;
 
+            // --- PERSISTENCE: Save expiresAt to DB if missing ---
+            if (!booking.expiresAt) {
+              const expiresAtDate = new Date(startTime + MAX_SEARCH_TIME_MS);
+              await Booking.findByIdAndUpdate(booking._id, { $set: { expiresAt: expiresAtDate } });
+            }
+
+            // --- EXPIRY CHECK ---
+            if (totalElapsed > MAX_SEARCH_TIME_MS) {
+              console.log(`[BookingScheduler] ${booking.bookingNumber}: Search timed out. Cancelling.`);
+
+              await Booking.findByIdAndUpdate(booking._id, {
+                $set: {
+                  status: BOOKING_STATUS.NO_VENDORS,
+                  cancellationReason: 'No vendor accepted within time limit'
+                }
+              });
+
+              // Notify User
+              if (this.io) {
+                this.io.to(`user_${booking.userId}`).emit('booking_search_failed', {
+                  bookingId: booking._id,
+                  message: 'No vendors available at the moment. Please try again later.'
+                });
+              }
+
+              // Remove from all notified vendors
+              if (booking.notifiedVendors && booking.notifiedVendors.length > 0) {
+                booking.notifiedVendors.forEach(vId => {
+                  this.io.to(`vendor_${vId}`).emit('removeVendorBooking', { id: booking._id });
+                });
+              }
+
+              return;
+            }
+
+            const waveElapsed = now - new Date(booking.waveStartedAt).getTime();
             // Only process if this booking's wave timer has expired
-            if (waveConfig.duration === 0 || elapsed < waveConfig.duration) return;
+            if (waveConfig.duration === 0 || waveElapsed < waveConfig.duration) return;
 
             const nextWave = currentWave + 1;
             const { start, end } = getVendorRange(nextWave);
@@ -155,7 +213,7 @@ class BookingScheduler {
               bookingId: booking._id,
               vendorId: v.vendorId,
               status: 'PENDING',
-              wave: nextWave,
+              createdAt: booking.createdAt || new Date(),
               distance: v.distance || null,
               sentAt: new Date(),
               expiresAt: new Date(Date.now() + 60 * 60 * 1000)
@@ -208,6 +266,12 @@ class BookingScheduler {
               price: populatedBooking.finalAmount,
               address: populatedBooking.address,
               distance: v.distance,
+              serviceCategory: populatedBooking.serviceCategory,
+              brandName: populatedBooking.brandName,
+              brandIcon: populatedBooking.brandIcon,
+              categoryIcon: populatedBooking.categoryIcon,
+              createdAt: populatedBooking.createdAt,
+              expiresAt: new Date(new Date(populatedBooking.createdAt).getTime() + MAX_SEARCH_TIME_MS).toISOString(),
               playSound: true,
               message: `New booking request within ${v.distance?.toFixed(1) || '?'}km!`
             });

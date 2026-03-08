@@ -9,52 +9,29 @@ import { vendorDashboardService } from '../../services/dashboardService';
 import { acceptBooking, rejectBooking, getBookings } from '../../services/bookingService';
 import { useSocket } from '../../../../context/SocketContext';
 
-// Timer Component
-const CountdownTimer = ({ durationSeconds, onExpire }) => {
-  const [timeLeft, setTimeLeft] = useState(durationSeconds);
-
-  useEffect(() => {
-    if (timeLeft <= 0) {
-      onExpire && onExpire();
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setTimeLeft(prev => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timeLeft, onExpire]);
-
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-
-  // Color changes based on urgency
-  const getTimerColor = () => {
-    if (timeLeft < 30) return '#EF4444'; // Red for < 30s
-    if (timeLeft < 60) return '#F59E0B'; // Orange for < 1m
-    return '#10B981'; // Green otherwise
-  };
-
-  return (
-    <div className="flex items-center gap-1 font-mono font-bold text-sm" style={{ color: getTimerColor() }}>
-      <FiClock className="w-4 h-4" />
-      <span>{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}</span>
-    </div>
-  );
-};
+import PendingJobCard from '../../components/bookings/PendingJobCard';
 
 const BookingAlerts = () => {
   const navigate = useNavigate();
-  const socket = useSocket(); // Use shared socket from SocketContext
+  const socket = useSocket();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState({ id: null, type: null });
+  const [globalConfig, setGlobalConfig] = useState({ maxSearchTime: 5 });
 
   // Fetch pending alerts
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
         setLoading(true);
+        // Fetch stats to get global config (maxSearchTime)
+        const statsRes = await vendorDashboardService.getDashboardStats();
+        let localConfig = { maxSearchTime: 5 };
+        if (statsRes.success && statsRes.data?.config) {
+          localConfig = statsRes.data.config;
+          setGlobalConfig(localConfig);
+        }
+
         const response = await getBookings();
 
         if (response.success && response.data) {
@@ -70,19 +47,30 @@ const BookingAlerts = () => {
             return isRelevantStatus && isAssignedToMe;
           });
 
-          const apiIds = new Set(bookings.map(b => String(b._id || b.id)));
-
-          const localPending = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
-
           // Merge logic: Keep if in API OR if added recently (last 2 mins)
-          const mergedPending = [...bookings.map(b => ({ ...b, id: b._id || b.id }))];
+          const mergedPending = [];
+
+          // Add active bookings from API, skipping expired ones
+          bookings.forEach(b => {
+            const bId = b._id || b.id;
+            const expiresAt = b.expiresAt || (b.createdAt && localConfig ? new Date(new Date(b.createdAt).getTime() + (localConfig.maxSearchTime || 5) * 60000).toISOString() : null);
+            const isExpired = expiresAt && new Date(expiresAt) <= new Date();
+            if (!isExpired) {
+              mergedPending.push({ ...b, id: bId, expiresAt });
+            }
+          });
+
+          const apiIds = new Set(mergedPending.map(b => String(b.id)));
+          const localPending = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
 
           localPending.forEach(localB => {
             const id = String(localB.id || localB._id);
             if (!apiIds.has(id)) {
               const createdAt = localB.createdAt ? new Date(localB.createdAt).getTime() : Date.now();
-              const age = Date.now() - createdAt;
-              if (age < 120000 && (localB.status === 'requested' || localB.status === 'searching')) {
+              const expiresAt = localB.expiresAt || (localB.createdAt && localConfig ? new Date(createdAt + (localConfig.maxSearchTime || 5) * 60000).toISOString() : null);
+              const isExpired = (expiresAt && new Date(expiresAt) <= new Date()) || (Date.now() - createdAt > 300000);
+
+              if (!isExpired && (localB.status === 'requested' || localB.status === 'searching')) {
                 mergedPending.push(localB);
               }
             }
@@ -90,7 +78,15 @@ const BookingAlerts = () => {
 
           localStorage.setItem('vendorPendingJobs', JSON.stringify(mergedPending));
 
-          setAlerts(bookings);
+          // Map for PendingJobCard parity (now using already calculated/filtered results)
+          const mappedAlerts = mergedPending.map(b => ({
+            ...b,
+            serviceName: b.serviceName || b.serviceId?.title || 'New Booking Request',
+            serviceCategory: b.serviceCategory || b.serviceId?.categoryId?.title || 'General Service',
+            customerName: b.userId?.name || 'Customer'
+          }));
+
+          setAlerts(mappedAlerts);
         }
       } catch (error) {
         console.error('Error fetching alerts:', error);
@@ -152,16 +148,38 @@ const BookingAlerts = () => {
     };
   }, [socket]);
 
-  const handleAccept = async (bookingId) => {
+  // Listen for local remove events (like timer expiration)
+  useEffect(() => {
+    const handleRemove = (e) => {
+      const idToRemove = String(e.detail?.id);
+      if (!idToRemove) return;
+
+      setAlerts(prev => prev.filter(a => String(a._id || a.id) !== idToRemove));
+
+      // Also clean up localStorage
+      const pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
+      const updatedPending = pendingJobs.filter(job => String(job.id || job._id) !== idToRemove);
+      localStorage.setItem('vendorPendingJobs', JSON.stringify(updatedPending));
+    };
+
+    window.addEventListener('removeVendorBooking', handleRemove);
+    return () => window.removeEventListener('removeVendorBooking', handleRemove);
+  }, []);
+
+  const handleAccept = async (e, booking) => {
+    e?.stopPropagation();
+    const bookingId = booking._id || booking.id;
+    if (loadingAction.id) return;
+    setLoadingAction({ id: bookingId, type: 'accept' });
     try {
       await acceptBooking(bookingId);
       toast.success('Booking accepted!');
       // Remove from list
-      setAlerts(prev => prev.filter(a => a._id !== bookingId));
+      setAlerts(prev => prev.filter(a => (a._id || a.id) !== bookingId));
 
       // Remove from localStorage
       const pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
-      const updatedPending = pendingJobs.filter(job => job.id !== bookingId && job._id !== bookingId);
+      const updatedPending = pendingJobs.filter(job => (job.id || job._id) !== bookingId);
       localStorage.setItem('vendorPendingJobs', JSON.stringify(updatedPending));
 
       // Trigger global update
@@ -170,18 +188,24 @@ const BookingAlerts = () => {
     } catch (error) {
       console.error('Accept error:', error);
       toast.error('Failed to accept booking');
+    } finally {
+      setLoadingAction({ id: null, type: null });
     }
   };
 
-  const handleReject = async (bookingId) => {
+  const handleReject = async (e, booking) => {
+    e?.stopPropagation();
+    const bookingId = booking._id || booking.id;
+    if (loadingAction.id) return;
+    setLoadingAction({ id: bookingId, type: 'reject' });
     try {
       await rejectBooking(bookingId);
       toast.success('Booking rejected');
-      setAlerts(prev => prev.filter(a => a._id !== bookingId));
+      setAlerts(prev => prev.filter(a => (a._id || a.id) !== bookingId));
 
       // Remove from localStorage
       const pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
-      const updatedPending = pendingJobs.filter(job => job.id !== bookingId && job._id !== bookingId);
+      const updatedPending = pendingJobs.filter(job => (job.id || job._id) !== bookingId);
       localStorage.setItem('vendorPendingJobs', JSON.stringify(updatedPending));
 
       window.dispatchEvent(new Event('vendorStatsUpdated'));
@@ -189,6 +213,8 @@ const BookingAlerts = () => {
     } catch (error) {
       console.error('Reject error:', error);
       toast.error('Failed to reject booking');
+    } finally {
+      setLoadingAction({ id: null, type: null });
     }
   };
 
@@ -218,76 +244,16 @@ const BookingAlerts = () => {
           </div>
         ) : (
           alerts.map(alert => (
-            <div
-              key={alert._id}
-              className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 animate-slide-up"
-            >
-              {/* Header with Timer */}
-              <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                <span className={`text-xs font-bold uppercase tracking-wide flex items-center gap-1 ${alert.bookingType === 'instant' ? 'text-red-500 animate-pulse' : 'text-gray-500'}`}>
-                  {alert.bookingType === 'instant' && <span className="text-sm">⚡</span>}
-                  {alert.bookingType === 'instant' ? 'INSTANT Request' : 'New Request'}
-                </span>
-                {/* Fake timer for demo - purely visual urgency as requested "with timer" */}
-                {/* In real app, calculate actual remaining time from createdAt */}
-                <CountdownTimer durationSeconds={300} onExpire={() => { }} />
-              </div>
-
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">
-                      {alert.serviceId?.title || 'Service Request'}
-                    </h3>
-                    <p className="text-sm text-gray-500 font-medium">
-                      {alert.userId?.name || 'Customer'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Details Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="bg-gray-50 p-2.5 rounded-lg">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1">
-                      <FiClock /> Scheduled For
-                    </div>
-                    <p className="text-sm font-semibold text-gray-700">
-                      {new Date(alert.scheduledDate).toLocaleDateString()}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {alert.scheduledTimeSlot || 'ASAP'}
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 p-2.5 rounded-lg">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1">
-                      <FiMapPin /> Location
-                    </div>
-                    <p className="text-sm font-semibold text-gray-700 line-clamp-2">
-                      {alert.address?.addressLine1 || 'View Map'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleReject(alert._id)}
-                    className="flex-1 py-3.5 rounded-xl border border-red-100 text-red-500 font-bold text-sm hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <FiXCircle /> Decline
-                  </button>
-                  <button
-                    onClick={() => handleAccept(alert._id)}
-                    className="flex-1 py-3.5 rounded-xl text-white font-bold text-sm shadow-lg shadow-green-200 hover:shadow-green-300 transition-all flex items-center justify-center gap-2 transform active:scale-95"
-                    style={{
-                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                    }}
-                  >
-                    <FiCheckCircle /> Accept Job
-                  </button>
-                </div>
-              </div>
-            </div>
+            <PendingJobCard
+              key={alert._id || alert.id}
+              booking={alert}
+              onAccept={handleAccept}
+              onReject={handleReject}
+              onClick={() => navigate('/vendor/dashboard', { state: { openBookingId: alert._id || alert.id } })}
+              loadingAction={loadingAction.id === (alert._id || alert.id) ? loadingAction.type : null}
+              showTimer={true}
+              maxSearchTimeMins={globalConfig.maxSearchTime}
+            />
           ))
         )}
       </main>

@@ -257,7 +257,11 @@ export const SocketProvider = ({ children }) => {
             distance: data.distance ? `${data.distance.toFixed(1)} km` : 'Near you'
           },
           price: data.price,
-          vendorEarnings: data.vendorEarnings, // Add this
+          vendorEarnings: data.vendorEarnings,
+          serviceCategory: data.serviceCategory,
+          brandName: data.brandName,
+          brandIcon: data.brandIcon,
+          categoryIcon: data.categoryIcon,
           scheduledDate: data.scheduledDate,
           scheduledTime: data.scheduledTime,
           timeSlot: {
@@ -265,7 +269,8 @@ export const SocketProvider = ({ children }) => {
             time: data.scheduledTime
           },
           status: 'requested',
-          createdAt: new Date().toISOString()
+          createdAt: data.createdAt || new Date().toISOString(),
+          expiresAt: data.expiresAt
         };
 
         const pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
@@ -316,6 +321,28 @@ export const SocketProvider = ({ children }) => {
         window.dispatchEvent(new CustomEvent('removeVendorBooking', { detail: { id: takenBookingId } }));
 
         // Notify app components to refresh
+        window.dispatchEvent(new Event('vendorJobsUpdated'));
+        window.dispatchEvent(new Event('vendorStatsUpdated'));
+      });
+
+      // Listen for removeVendorBooking - generic removal (timeout, cancellation, etc.)
+      newSocket.on('removeVendorBooking', (data) => {
+        const bookingId = String(data.bookingId || data.id);
+
+        // Remove from localStorage
+        const pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
+        const updatedPending = pendingJobs.filter(job => String(job.id || job._id) !== bookingId);
+        localStorage.setItem('vendorPendingJobs', JSON.stringify(updatedPending));
+
+        // Update stats
+        const stats = JSON.parse(localStorage.getItem('vendorStats') || '{}');
+        if (stats.pendingAlerts > 0) {
+          stats.pendingAlerts = Math.max(0, (stats.pendingAlerts || 0) - 1);
+          localStorage.setItem('vendorStats', JSON.stringify(stats));
+        }
+
+        // Dispatch specific remove event for instant UI update
+        window.dispatchEvent(new CustomEvent('removeVendorBooking', { detail: { id: bookingId } }));
         window.dispatchEvent(new Event('vendorJobsUpdated'));
         window.dispatchEvent(new Event('vendorStatsUpdated'));
       });

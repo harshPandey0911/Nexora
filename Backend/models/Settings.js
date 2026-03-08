@@ -57,6 +57,16 @@ const settingsSchema = new mongoose.Schema({
     default: 49,
     min: 0
   },
+  maxSearchTime: {
+    type: Number,
+    default: 5, // 5 minutes default
+    min: 1
+  },
+  waveDuration: {
+    type: Number,
+    default: 60, // 60 seconds per wave default
+    min: 10
+  },
   // Razorpay Settings
   razorpayKeyId: {
     type: String,

@@ -441,6 +441,30 @@ const Checkout = () => {
       }
     });
 
+    socket.on('booking_search_failed', (data) => {
+      if (data.bookingId === bookingRequest._id) {
+        setSearchingVendors(false);
+        setCurrentStep('failed');
+        toast.error(data.message || 'No vendors available at the moment.');
+
+        // Auto-cancel and refresh on failure
+        const handleAutoCancel = async () => {
+          try {
+            await bookingService.cancel(bookingRequest._id, 'No vendors found after search timeout');
+            setTimeout(() => {
+              window.location.reload();
+            }, 3000); // 3 second delay to let the user see the error
+          } catch (err) {
+            console.error('Auto-cancel failed:', err);
+            setTimeout(() => {
+              window.location.reload();
+            }, 3000);
+          }
+        };
+        handleAutoCancel();
+      }
+    });
+
     return () => {
       socket.disconnect();
     };
@@ -598,7 +622,7 @@ const Checkout = () => {
         }
       }
 
-      // If no vendors found, redirect to confirmation page immediately
+      // If no vendors found, redirect or refresh immediately
       if (bookingResponse.noVendorsFound) {
         toast.dismiss();
         const bookingId = booking?._id || booking?.id;
@@ -608,14 +632,26 @@ const Checkout = () => {
         setShowVendorModal(false);
 
         if (bookingId) {
-          navigate(`/user/booking/${bookingId}`, {
-            replace: true,
-            state: { noVendorsFound: true }
-          });
+          toast.error('No vendors currently available for this service.');
+
+          // Auto-cancel and refresh
+          const cancelAndRefresh = async () => {
+            try {
+              await bookingService.cancel(bookingId, 'Initial search found no available vendors');
+              setTimeout(() => {
+                window.location.reload();
+              }, 2000);
+            } catch (err) {
+              console.error('Auto-cancel failed:', err);
+              window.location.reload();
+            }
+          };
+          cancelAndRefresh();
         } else {
           // Fallback if ID is missing for some reason
           setCurrentStep('details');
-          toast.error('Booking created but ID missing. Check My Bookings.');
+          toast.error('Search failed. Please try again.');
+          setTimeout(() => window.location.reload(), 2000);
         }
       } else {
         // Move to waiting state - alerts sent to nearby vendors

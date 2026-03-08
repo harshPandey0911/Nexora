@@ -2,6 +2,7 @@ const Booking = require('../../models/Booking');
 const VendorBill = require('../../models/VendorBill');
 const Worker = require('../../models/Worker');
 const Service = require('../../models/UserService');
+const Settings = require('../../models/Settings');
 const { BOOKING_STATUS, PAYMENT_STATUS, WORKER_STATUS } = require('../../utils/constants');
 
 /**
@@ -104,7 +105,13 @@ const getDashboardStats = async (req, res) => {
                   userId: 1,
                   workerId: 1,
                   serviceId: 1,
-                  potentialVendors: 1
+                  potentialVendors: 1,
+                  serviceCategory: 1,
+                  brandName: 1,
+                  brandIcon: 1,
+                  categoryIcon: 1,
+                  createdAt: 1,
+                  expiresAt: 1
                 }
               }
             ]
@@ -133,12 +140,24 @@ const getDashboardStats = async (req, res) => {
     await Booking.populate(recentBookings, [
       { path: 'userId', select: 'name phone', options: { lean: true } },
       { path: 'workerId', select: 'name', options: { lean: true } },
-      { path: 'serviceId', select: 'title iconUrl', options: { lean: true } }
+      {
+        path: 'serviceId',
+        select: 'title iconUrl categoryId',
+        populate: { path: 'categoryId', select: 'title' },
+        options: { lean: true }
+      }
     ]);
+
+    // 5. Fetch Global Settings for Timing
+    const globalSettings = await Settings.findOne({ type: 'global' }).lean();
 
     res.status(200).json({
       success: true,
       data: {
+        config: {
+          maxSearchTime: globalSettings?.maxSearchTime || 5, // mins
+          waveDuration: globalSettings?.waveDuration || 60  // secs
+        },
         stats: {
           totalBookings: counts.total,
           pendingBookings: counts.pending,

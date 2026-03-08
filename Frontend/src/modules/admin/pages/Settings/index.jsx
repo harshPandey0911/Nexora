@@ -20,7 +20,9 @@ const AdminSettings = () => {
     vendorCashLimit: 10000,
     cancellationPenalty: 49,
     tdsPercentage: 1,
-    platformFeePercentage: 1
+    platformFeePercentage: 1,
+    maxSearchTime: 5,
+    waveDuration: 60
   });
 
   // Billing Configuration State
@@ -115,7 +117,9 @@ const AdminSettings = () => {
             tdsPercentage: res.settings.tdsPercentage || 1,
             platformFeePercentage: res.settings.platformFeePercentage || 1,
             vendorCashLimit: res.settings.vendorCashLimit || 10000,
-            cancellationPenalty: res.settings.cancellationPenalty !== undefined ? res.settings.cancellationPenalty : 49
+            cancellationPenalty: res.settings.cancellationPenalty !== undefined ? res.settings.cancellationPenalty : 49,
+            maxSearchTime: res.settings.maxSearchTime || 5,
+            waveDuration: res.settings.waveDuration || 60
           });
           // Load billing settings
           setBillingSettings({
@@ -626,6 +630,23 @@ const AdminSettings = () => {
                       <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Cancellation Penalty (₹)</label>
                       <input type="number" name="cancellationPenalty" value={financialSettings.cancellationPenalty} onChange={handleFinancialChange}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
+                    </div>
+                    <div className="pt-4 border-t border-gray-100 md:col-span-2">
+                      <h4 className="text-xs font-bold text-gray-700 uppercase mb-3">Booking Timing & Waves</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Max Global Search Time (Mins)</label>
+                          <input type="number" name="maxSearchTime" value={financialSettings.maxSearchTime} onChange={handleFinancialChange}
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
+                          <p className="text-[10px] text-gray-400 mt-1">Total time to find a vendor before search is auto-cancelled</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Wave Alert Threshold (Secs)</label>
+                          <input type="number" name="waveDuration" value={financialSettings.waveDuration} onChange={handleFinancialChange}
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
+                          <p className="text-[10px] text-gray-400 mt-1">Time waited before alerting the next batch of vendors</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="flex justify-end pt-2">

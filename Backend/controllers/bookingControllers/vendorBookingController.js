@@ -108,7 +108,10 @@ const getVendorBookings = async (req, res) => {
                 workerId: 1,
                 serviceId: 1,
                 acceptedAt: 1,
-                assignedAt: 1
+                assignedAt: 1,
+                brandName: 1,
+                brandIcon: 1,
+                expiresAt: 1
               }
             }
           ],
@@ -123,7 +126,13 @@ const getVendorBookings = async (req, res) => {
     // ── Populate only required fields ──
     await Booking.populate(bookings, [
       { path: 'userId', select: 'name phone', options: { lean: true } },
-      { path: 'workerId', select: 'name', options: { lean: true } }
+      { path: 'workerId', select: 'name', options: { lean: true } },
+      {
+        path: 'serviceId',
+        select: 'title iconUrl categoryId',
+        populate: { path: 'categoryId', select: 'title' },
+        options: { lean: true }
+      }
     ]);
 
     res.status(200).json({
@@ -1539,7 +1548,11 @@ const getPendingBookings = async (req, res) => {
         match: { status: BOOKING_STATUS.SEARCHING, vendorId: null },
         populate: [
           { path: 'userId', select: 'name phone' },
-          { path: 'serviceId', select: 'title iconUrl' }
+          {
+            path: 'serviceId',
+            select: 'title iconUrl categoryId',
+            populate: { path: 'categoryId', select: 'title' }
+          }
         ]
       })
       .sort({ sentAt: -1 })
@@ -1563,7 +1576,13 @@ const getPendingBookings = async (req, res) => {
       distance: req.distance,
       wave: req.wave,
       sentAt: req.sentAt,
-      status: req.status
+      status: req.status,
+      serviceCategory: req.bookingId.serviceCategory,
+      brandName: req.bookingId.brandName,
+      brandIcon: req.bookingId.brandIcon,
+      categoryIcon: req.bookingId.categoryIcon,
+      createdAt: req.bookingId.createdAt,
+      expiresAt: req.bookingId.expiresAt
     }));
 
     res.status(200).json({

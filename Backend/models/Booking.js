@@ -53,6 +53,10 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  expiresAt: {
+    type: Date,
+    default: null
+  },
 
   // ==========================================
   // 2. SERVICE INFORMATION
