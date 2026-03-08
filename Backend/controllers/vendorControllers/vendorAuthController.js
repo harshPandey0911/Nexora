@@ -121,9 +121,14 @@ const verifyLogin = async (req, res) => {
         });
       }
 
+      // SINGLE DEVICE LOGIN: Update Session ID
+      const loginSessionId = Date.now().toString();
+      await Vendor.findByIdAndUpdate(vendor._id, { loginSessionId });
+
       const tokens = generateTokenPair({
         userId: vendor._id,
-        role: USER_ROLES.VENDOR
+        role: USER_ROLES.VENDOR,
+        loginSessionId
       });
 
       return res.status(200).json({
@@ -349,10 +354,15 @@ const login = async (req, res) => {
       });
     }
 
+    // SINGLE DEVICE LOGIN: Update Session ID
+    const loginSessionId = Date.now().toString();
+    await Vendor.findByIdAndUpdate(vendor._id, { loginSessionId });
+
     // Generate JWT tokens
     const tokens = generateTokenPair({
       userId: vendor._id,
-      role: USER_ROLES.VENDOR
+      role: USER_ROLES.VENDOR,
+      loginSessionId
     });
 
     res.status(200).json({
@@ -387,8 +397,8 @@ const logout = async (req, res) => {
     // Clear FCM tokens based on platform
     if (req.user && req.user._id) {
       const updateQuery = platform === 'mobile'
-        ? { $set: { fcmTokenMobile: [] } }
-        : { $set: { fcmTokens: [] } };
+        ? { $set: { fcmTokenMobile: [], loginSessionId: null } }
+        : { $set: { fcmTokens: [], loginSessionId: null } };
 
       await Vendor.findByIdAndUpdate(req.user._id, updateQuery);
       console.log(`[AUTH] ✅ ${platform} FCM tokens cleared for vendor: ${req.user._id}`);
@@ -447,10 +457,19 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    // Generate new token pair
+    // Verify Session ID for Vendor
+    if (decoded.loginSessionId !== vendor.loginSessionId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account logged in on a new device. Please login again.'
+      });
+    }
+
+    // Generate new token pair with same session ID
     const tokens = generateTokenPair({
       userId: vendor._id,
-      role: USER_ROLES.VENDOR
+      role: USER_ROLES.VENDOR,
+      loginSessionId: vendor.loginSessionId
     });
 
     res.status(200).json({

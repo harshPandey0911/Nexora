@@ -53,6 +53,14 @@ const authenticate = async (req, res, next) => {
             message: 'Your vendor account is pending approval or has been rejected.'
           });
         }
+
+        // SINGLE DEVICE LOGOUT Logic: Check if token's session ID matches DB
+        if (user && user.loginSessionId && decoded.loginSessionId && user.loginSessionId !== decoded.loginSessionId) {
+          return res.status(401).json({
+            success: false,
+            message: 'Account logged in on another device. Please login again.'
+          });
+        }
         break;
       case USER_ROLES.WORKER:
         user = await Worker.findById(decoded.userId).select('-password').lean();
