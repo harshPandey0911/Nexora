@@ -10,7 +10,7 @@ const connectDB = require('./config/db');
 const rateLimiter = require('./middleware/rateLimiter');
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Connect to database
 connectDB();

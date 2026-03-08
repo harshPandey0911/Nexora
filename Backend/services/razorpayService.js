@@ -16,6 +16,12 @@ try {
     // Check if we are in test or live mode
     isTestMode = process.env.RAZORPAY_KEY_ID.startsWith('rzp_test');
     console.log(`✅ Razorpay initialized in ${isTestMode ? 'TEST' : 'LIVE'} mode`);
+
+    if (process.env.MERCHANT_UPI_ID) {
+      console.log(`✅ Merchant UPI ID verified: ${process.env.MERCHANT_UPI_ID}`);
+    } else {
+      console.warn('⚠️ MERCHANT_UPI_ID not found in .env');
+    }
   }
 } catch (error) {
   console.error('❌ Failed to initialize Razorpay:', error.message);
