@@ -8,7 +8,7 @@ import vendorBillService from '../../../../services/vendorBillService';
 import vendorWalletService from '../../../../services/vendorWalletService';
 import { getBookingById } from '../../services/bookingService';
 import { publicCatalogService } from '../../../../services/catalogService';
-import OtpVerificationModal from './OtpVerificationModal';
+import { OtpVerificationModal } from '../../components/common';
 
 const BillingPage = () => {
   const { id } = useParams();
@@ -102,7 +102,13 @@ const BillingPage = () => {
     try {
       setLoading(true);
       const bookingRes = await getBookingById(id);
-      setBooking(bookingRes.data || bookingRes);
+      const bookingData = bookingRes.data || bookingRes;
+      setBooking(bookingData);
+
+      // Check if OTP was already sent
+      if (bookingData?.customerConfirmationOTP || bookingData?.paymentOtp) {
+        setIsOtpSent(true);
+      }
 
       const [servicesRes, partsRes, catRes] = await Promise.all([
         vendorBillService.getServiceCatalog(),
@@ -538,6 +544,7 @@ const BillingPage = () => {
       if (res.success) {
         setOnlinePaymentData(res.data);
         setShowQrModal(true);
+        setIsOtpSent(true); // Allow entering OTP if QR is slow/fails
         toast.success('QR Code generated!');
       } else {
         toast.error(res.message || 'Failed to initiate online payment');

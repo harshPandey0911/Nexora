@@ -15,7 +15,7 @@ import {
   completeSelfJob
 } from '../../services/bookingService';
 import vendorBillService from '../../../../services/vendorBillService';
-import { CashCollectionModal, ConfirmDialog, WorkerPaymentModal } from '../../components/common';
+import { CashCollectionModal, ConfirmDialog, WorkerPaymentModal, OtpVerificationModal } from '../../components/common';
 import VisitVerificationModal from '../../components/common/VisitVerificationModal';
 // Import shared WorkCompletionModal from worker directory or move to shared
 import { WorkCompletionModal } from '../../../worker/components/common';
@@ -35,6 +35,7 @@ export default function BookingDetails() {
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [isWorkDoneModalOpen, setIsWorkDoneModalOpen] = useState(false);
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
 
 
   const [actionLoading, setActionLoading] = useState(false);
@@ -1316,22 +1317,26 @@ export default function BookingDetails() {
 
               <div className="flex flex-col gap-3 w-full">
                 <button
-                  onClick={handleCollectCashClick}
+                  onClick={() => navigate(`/vendor/booking/${booking.id || id}/billing`)}
                   disabled={loading}
-                  className="w-full py-4 rounded-xl font-bold bg-gray-900 text-white flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"
+                  className="w-full py-4 rounded-xl font-bold bg-blue-600 text-white flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"
+                  style={{ background: 'linear-gradient(135deg, #3B82F6, #2563EB)' }}
                 >
-                  {(booking?.customerConfirmationOTP || booking?.paymentOtp) ? (
-                    <>
-                      <FiCheckCircle className="w-5 h-5" />
-                      Enter OTP
-                    </>
-                  ) : (
-                    <>
-                      <FiDollarSign className="w-5 h-5" />
-                      {booking.paymentMethod === 'plan_benefit' ? 'Prepare/Edit Final Bill' : 'Prepare Bill & Collect Cash'}
-                    </>
-                  )}
+                  <FiDollarSign className="w-5 h-5" />
+                  {booking.paymentMethod === 'plan_benefit' ? 'Prepare/Edit Final Bill' : 'Prepare Bill & Collect Cash'}
                 </button>
+
+                {(booking?.customerConfirmationOTP || booking?.paymentOtp) && (
+                  <button
+                    onClick={() => setIsOtpModalOpen(true)}
+                    disabled={loading}
+                    className="w-full py-4 rounded-xl font-bold bg-green-600 text-white flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"
+                    style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
+                  >
+                    <FiCheckCircle className="w-5 h-5" />
+                    Enter OTP
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -1543,6 +1548,17 @@ export default function BookingDetails() {
         onConfirm={handleCashCollectionConfirm}
         onInitiateOTP={async (amt, items) => {
           return await vendorWalletService.initiateCashCollection(id, amt, items);
+        }}
+        loading={loading}
+      />
+
+      <OtpVerificationModal
+        isOpen={isOtpModalOpen}
+        onClose={() => setIsOtpModalOpen(false)}
+        onVerify={(otp) => {
+          const amount = booking.finalAmount || 0;
+          const extras = booking.workDoneDetails?.items || [];
+          handleCashCollectionConfirm(amount, extras, otp);
         }}
         loading={loading}
       />

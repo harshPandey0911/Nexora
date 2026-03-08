@@ -5,10 +5,10 @@ import { MdQrCode } from 'react-icons/md';
 import { toast } from 'react-hot-toast';
 import { workerTheme as themeColors } from '../../../../theme';
 import { useAppNotifications } from '../../../../hooks/useAppNotifications';
+import { OtpVerificationModal } from '../../components/common';
 import workerBillService from '../../../../services/workerBillService';
 import workerService from '../../../../services/workerService';
 import { publicCatalogService } from '../../../../services/catalogService';
-import OtpVerificationModal from './OtpVerificationModal';
 
 const BillingPage = () => {
   const { id } = useParams();
@@ -450,6 +450,7 @@ const BillingPage = () => {
       if (res.success) {
         setOnlinePaymentData(res.data);
         setShowQrModal(true);
+        setIsOtpSent(true); // Allow entering OTP if QR is slow/fails
         toast.success('QR Code generated!');
       } else {
         toast.error(res.message || 'Failed to initiate online payment');

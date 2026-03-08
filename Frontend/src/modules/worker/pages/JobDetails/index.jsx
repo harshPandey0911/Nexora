@@ -8,6 +8,7 @@ import { SkeletonCard } from '../../../../components/common/SkeletonLoaders';
 const CashCollectionModal = lazy(() => import('../../components/common/CashCollectionModal'));
 const VisitVerificationModal = lazy(() => import('../../components/common/VisitVerificationModal'));
 const WorkCompletionModal = lazy(() => import('../../components/common/WorkCompletionModal'));
+const OtpVerificationModal = lazy(() => import('../../components/common/OtpVerificationModal'));
 import workerService from '../../../../services/workerService';
 import api from '../../../../services/api';
 import { toast } from 'react-hot-toast';
@@ -381,18 +382,27 @@ const JobDetails = () => {
           )}
 
           {job.status === 'work_done' && (
-            <button
-              onClick={() => handleStatusUpdate('collect')}
-              disabled={actionLoading}
-              className="w-full py-4 rounded-2xl font-bold text-white flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all text-lg"
-              style={{ background: 'linear-gradient(135deg, #059669 0%, #047857 100%)' }}
-            >
-              {(job?.customerConfirmationOTP || job?.paymentOtp) ? (
-                <>ENTER OTP <FiCheck className="w-5 h-5" /></>
-              ) : (
-                <><FiFileText className="w-5 h-5" /> PREPARE BILL</>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => navigate(`/worker/job/${id}/billing`)}
+                disabled={actionLoading}
+                className="w-full py-4 rounded-2xl font-bold text-white flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all text-lg"
+                style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' }}
+              >
+                <FiFileText className="w-5 h-5" /> PREPARE BILL / EDIT
+              </button>
+
+              {(job?.customerConfirmationOTP || job?.paymentOtp) && (
+                <button
+                  onClick={() => setIsPaymentModalOpen(true)}
+                  disabled={actionLoading}
+                  className="w-full py-4 rounded-2xl font-bold text-white flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all text-lg"
+                  style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' }}
+                >
+                  <FiKey className="w-5 h-5" /> ENTER OTP
+                </button>
               )}
-            </button>
+            </div>
           )}
 
           {job.status === 'completed' && (
@@ -682,14 +692,16 @@ const JobDetails = () => {
         />
       </Suspense>
 
-      {/* Unified Cash Collection Modal - REUSABLE COMPONENT */}
+      {/* Verification OTP Modal */}
       <Suspense fallback={null}>
-        <CashCollectionModal
+        <OtpVerificationModal
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
-          booking={job}
-          onInitiateOTP={handleInitiateCashOTP}
-          onConfirm={handleConfirmCash}
+          onVerify={(otp) => {
+            const amount = job.finalAmount || 0;
+            const extraItems = job.extraCharges || [];
+            handleConfirmCash(amount, extraItems, otp);
+          }}
           loading={actionLoading}
         />
       </Suspense>
