@@ -1012,11 +1012,14 @@ const BillingPage = () => {
               </div>
               <h2 className="text-2xl font-black text-gray-900 mb-2">Scan & Pay</h2>
               <p className="text-sm text-gray-500 mb-6">Ask customer to scan to pay <span className="font-bold text-gray-900">₹{calculations.finalBillAmount.toFixed(2)}</span></p>
-              <div className="bg-gray-50 p-4 rounded-3xl inline-block mb-8 border border-gray-100 shadow-inner cursor-pointer hover:bg-gray-100 transition-colors relative group" onClick={() => window.open(onlinePaymentData.paymentUrl, '_blank')} title="Click to open payment link">
-                <img src={onlinePaymentData.qrImageUrl} alt="Payment QR" className="w-48 h-48 mx-auto mix-blend-multiply" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white/40 rounded-3xl">
-                  <p className="text-[10px] font-bold text-blue-600 bg-white px-2 py-1 rounded-full shadow-sm">Click to open link</p>
-                </div>
+              <div
+                className="bg-gray-50 p-4 rounded-3xl inline-block mb-8 border border-gray-100 shadow-inner transition-colors relative group"
+              >
+                <img
+                  src={onlinePaymentData.qrImageUrl}
+                  alt="Payment QR"
+                  className="w-48 h-48 mx-auto mix-blend-multiply"
+                />
               </div>
               <div className="space-y-3">
                 {onlinePaymentData.isManualUpi ? (

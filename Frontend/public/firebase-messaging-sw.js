@@ -155,6 +155,7 @@ messaging.onBackgroundMessage((payload) => {
     icon: icon,
     badge: badge,
     tag: tag,
+    sound: NOTIFICATION_SOUNDS[notificationType] || NOTIFICATION_SOUNDS.default,
     data: {
       ...data,
       notificationType: notificationType,

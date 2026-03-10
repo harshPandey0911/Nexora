@@ -250,15 +250,6 @@ const BookingAlertCard = ({ booking, onAccept, onReject, onAssign, maxSearchTime
 const BookingAlertModal = ({ isOpen, booking, bookings, onAccept, onReject, onAssign, onMinimize, maxSearchTimeMins = 5 }) => {
   const alertsArray = bookings || (booking ? [booking] : []);
 
-  useEffect(() => {
-    if (isOpen && alertsArray.length > 0) {
-      playAlertRing(true);
-    } else {
-      stopAlertRing();
-    }
-    return () => stopAlertRing();
-  }, [isOpen, alertsArray.length]);
-
   return (
     <AnimatePresence>
       {isOpen && alertsArray.length > 0 && (

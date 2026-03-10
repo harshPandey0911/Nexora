@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { BookingAlertModal } from '../bookings';
 import { acceptBooking, rejectBooking, assignWorker } from '../../services/bookingService';
+import { playAlertRing, stopAlertRing } from '../../../../utils/notificationSound';
 
 export default function GlobalBookingAlert() {
   const [activeAlertBookings, setActiveAlertBookings] = useState([]);
@@ -57,6 +58,16 @@ export default function GlobalBookingAlert() {
       window.removeEventListener('removeVendorBooking', handleRemoveBooking);
     };
   }, []);
+
+  // Effect to manage sound based on pending bookings
+  useEffect(() => {
+    if (activeAlertBookings.length > 0) {
+      playAlertRing(true); // Always loop for vendor until actioned
+    } else {
+      stopAlertRing();
+    }
+    return () => stopAlertRing();
+  }, [activeAlertBookings.length]);
 
   if (activeAlertBookings.length === 0 || location.pathname.includes('/booking-alert/')) return null;
 
