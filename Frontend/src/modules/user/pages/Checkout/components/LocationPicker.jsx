@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from '@react-google-maps/api';
 import { FiCrosshair } from 'react-icons/fi';
+import flutterBridge from '../../../../utils/flutterBridge';
+import { toast } from 'react-hot-toast';
 
 const libraries = ['places', 'geometry'];
 
@@ -19,6 +21,7 @@ const LocationPicker = ({ onLocationSelect, initialPosition = null }) => {
   const [marker, setMarker] = useState(initialPosition || defaultCenter);
   const [autocomplete, setAutocomplete] = useState(null);
   const [loading, setLoading] = useState(false);
+  const loadingRef = React.useRef(false);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -39,24 +42,10 @@ const LocationPicker = ({ onLocationSelect, initialPosition = null }) => {
 
   // Get user's current location on mount
   useEffect(() => {
-    if (!initialPosition && navigator.geolocation && isLoaded) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const newPos = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          };
-          setMarker(newPos);
-          if (map) {
-            map.panTo(newPos);
-          }
-          reverseGeocode(newPos);
-        },
-        (error) => {
-        }
-      );
+    if (!initialPosition && isLoaded) {
+      handleCurrentLocation();
     }
-  }, [isLoaded, map]);
+  }, [isLoaded]);
 
   // Reverse geocode to get address from coordinates
   const reverseGeocode = async (position) => {
@@ -116,41 +105,50 @@ const LocationPicker = ({ onLocationSelect, initialPosition = null }) => {
   };
 
   // Handle current location button
-  const handleCurrentLocation = () => {
-    if (navigator.geolocation) {
-      setLoading(true); // Show loading state on button click
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLoading(false);
-          const newPos = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          };
-          setMarker(newPos);
-          if (map) {
-            map.panTo(newPos);
-            map.setZoom(17); // Zoom in closer for better accuracy confirmation
-          }
-          reverseGeocode(newPos);
-        },
-        (error) => {
-          setLoading(false);
-          console.error("Geolocation error:", error);
-          let errorMessage = 'Unable to get your current location.';
-          if (error.code === 1) errorMessage = 'Location permission denied. Please enable location services.';
-          else if (error.code === 2) errorMessage = 'Location unavailable. Please check your GPS.';
-          else if (error.code === 3) errorMessage = 'Location request timed out.';
+  const handleCurrentLocation = async () => {
+    setLoading(true);
+    loadingRef.current = true;
+    
+    // Safety timer: If it takes more than 5 seconds, prompt user to check GPS
+    const slowLocationTimer = setTimeout(() => {
+      if (loadingRef.current) {
+        window.dispatchEvent(new CustomEvent('requestLocationPrompt'));
+        toast('Location taking too long. Please ensure GPS is ON.', { icon: '📍' });
+      }
+    }, 5000);
 
-          alert(`${errorMessage} Please select manually on the map.`);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      );
-    } else {
-      alert('Geolocation is not supported by your browser.');
+    try {
+      const pos = await flutterBridge.getCurrentLocation();
+      clearTimeout(slowLocationTimer);
+      setLoading(false);
+      loadingRef.current = false;
+      
+      const newPos = {
+        lat: pos.latitude,
+        lng: pos.longitude
+      };
+      
+      setMarker(newPos);
+      if (map) {
+        map.panTo(newPos);
+        map.setZoom(17);
+      }
+      reverseGeocode(newPos);
+    } catch (error) {
+      clearTimeout(slowLocationTimer);
+      setLoading(false);
+      loadingRef.current = false;
+      console.error("Geolocation error:", error);
+      
+      // Trigger the specialized "Allow GPS" popup
+      window.dispatchEvent(new CustomEvent('requestLocationPrompt'));
+      
+      let errorMessage = 'Unable to get location.';
+      if (error.code === 1) errorMessage = 'Location permission denied.';
+      else if (error.code === 2) errorMessage = 'GPS is turned off.';
+      else if (error.code === 3) errorMessage = 'Location request timed out.';
+
+      toast.error(`${errorMessage} Please select manually on the map.`);
     }
   };
 
