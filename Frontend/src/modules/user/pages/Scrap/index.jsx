@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiMapPin, FiClock, FiCheckCircle, FiBell, FiArrowLeft, FiTrash2, FiCamera, FiX, FiLoader } from 'react-icons/fi';
+import { FiPlus, FiMapPin, FiClock, FiCheckCircle, FiBell, FiArrowLeft, FiTrash2, FiCamera, FiX, FiLoader, FiImage } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import api from '../../../../services/api';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -9,6 +9,7 @@ import AddressSelectionModal from '../Checkout/components/AddressSelectionModal'
 import { themeColors } from '../../../../theme';
 import NotificationBell from '../../components/common/NotificationBell';
 import { uploadToCloudinary } from '../../../../utils/cloudinaryUpload';
+import flutterBridge from '../../../../utils/flutterBridge';
 
 import { z } from "zod";
 
@@ -54,6 +55,34 @@ const UserScrapPage = () => {
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isFlutter, setIsFlutter] = useState(flutterBridge.isFlutter);
+  const [showSourceSheet, setShowSourceSheet] = useState(false);
+
+  // Sync flutter bridge state
+  useEffect(() => {
+    flutterBridge.waitForFlutter().then(ready => {
+      setIsFlutter(ready);
+    });
+  }, []);
+
+  const handleNativeCamera = async () => {
+    const file = await flutterBridge.openCamera();
+    if (file) {
+      const newFile = {
+        id: Math.random().toString(36).substr(2, 9),
+        file,
+        preview: URL.createObjectURL(file),
+        progress: 0,
+        status: 'idle'
+      };
+      setSelectedFiles(prev => [...prev, newFile]);
+      flutterBridge.hapticFeedback('success');
+    }
+  };
+
+  const handlePhotoClick = () => {
+    setShowSourceSheet(true);
+  };
 
   useEffect(() => {
     fetchMyScrap();
@@ -483,17 +512,22 @@ const UserScrapPage = () => {
                         </div>
                       ))}
                       {selectedFiles.length < 5 && !isUploading && (
-                        <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-gray-50 transition-colors">
+                        <div
+                          onClick={handlePhotoClick}
+                          className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-gray-50 transition-colors"
+                        >
                           <FiCamera className="w-6 h-6 text-gray-400" />
                           <span className="text-[10px] font-bold text-gray-500 uppercase">Add Photo</span>
                           <input
+                            id="scrap-photo-upload"
                             type="file"
                             className="hidden"
                             accept="image/*"
                             multiple
                             onChange={handleImageSelect}
+                            onClick={(e) => e.stopPropagation()}
                           />
-                        </label>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -669,6 +703,78 @@ const UserScrapPage = () => {
 
         {/* Hide bottom nav when modal is open to prevent z-index issues / clutter */}
       </div>
+
+      {/* Photo Source Selection - Mobile Styled Bottom Sheet */}
+      <AnimatePresence>
+        {showSourceSheet && (
+          <div className="fixed inset-0 z-[100] flex items-end justify-center">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSourceSheet(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative bg-white w-full rounded-t-[32px] p-6 pb-12 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-10"
+            >
+              <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
+              <div className="flex justify-between items-center mb-6">
+                <h4 className="font-bold text-gray-900 text-lg">Select Photo Source</h4>
+                <button 
+                  onClick={() => setShowSourceSheet(false)}
+                  className="p-2 bg-gray-100 rounded-full text-gray-500"
+                >
+                  <FiX />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Camera Option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSourceSheet(false);
+                    if (isFlutter) {
+                      handleNativeCamera();
+                    } else {
+                      document.getElementById('scrap-photo-upload')?.click();
+                    }
+                  }}
+                  className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-teal-100 active:scale-95 transition-all"
+                  style={{ backgroundColor: `${themeColors.button}10` }}
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg"
+                    style={{ backgroundColor: themeColors.button }}
+                  >
+                    <FiCamera className="w-6 h-6" />
+                  </div>
+                  <span className="font-bold text-teal-800 text-sm">Take Photo</span>
+                </button>
+
+                {/* Gallery Option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSourceSheet(false);
+                    document.getElementById('scrap-photo-upload')?.click();
+                  }}
+                  className="flex flex-col items-center gap-3 p-6 bg-blue-50 rounded-2xl border border-blue-100 active:scale-95 transition-all"
+                >
+                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                    <FiImage className="w-6 h-6" />
+                  </div>
+                  <span className="font-bold text-blue-800 text-sm">Gallery</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div >
   );
 };

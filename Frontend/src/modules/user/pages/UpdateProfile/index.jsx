@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiUser, FiMail, FiPhone, FiCamera } from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiMail, FiPhone, FiCamera, FiImage, FiX } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { themeColors } from '../../../../theme';
 import { userAuthService } from '../../../../services/authService';
@@ -28,6 +29,7 @@ const UpdateProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isFlutter, setIsFlutter] = useState(flutterBridge.isFlutter);
+  const [showSourceSheet, setShowSourceSheet] = useState(false);
 
   // Sync flutter bridge state
   useEffect(() => {
@@ -36,17 +38,21 @@ const UpdateProfile = () => {
     });
   }, []);
 
-  const handleImageClick = async () => {
-    if (isFlutter) {
+  const handleNativeCamera = async () => {
+    try {
       const file = await flutterBridge.openCamera();
       if (file) {
         setPhotoFile(file);
         setPhotoPreview(URL.createObjectURL(file));
         flutterBridge.hapticFeedback('success');
       }
-    } else {
-      document.getElementById('user-photo-upload')?.click();
+    } catch (error) {
+      console.error('Native camera failed:', error);
     }
+  };
+
+  const handleImageClick = () => {
+    setShowSourceSheet(true);
   };
 
   // Fetch user profile on component mount
@@ -276,6 +282,7 @@ const UpdateProfile = () => {
                   accept="image/*"
                   className="hidden"
                   onChange={handlePhotoChange}
+                  onClick={(e) => e.stopPropagation()}
                 />
               </div>
             </div>
@@ -401,6 +408,81 @@ const UpdateProfile = () => {
           </button>
         </div>
       </main>
+
+      {/* Photo Source Selection - Mobile Styled Bottom Sheet */}
+      <AnimatePresence>
+        {showSourceSheet && (
+          <div className="fixed inset-0 z-[100] flex items-end justify-center">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSourceSheet(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative bg-white w-full rounded-t-[32px] p-6 pb-10 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-10"
+            >
+              <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
+              <div className="flex justify-between items-center mb-6">
+                <h4 className="font-bold text-gray-900 text-lg">Select Photo Source</h4>
+                <button 
+                  onClick={() => setShowSourceSheet(false)}
+                  className="p-2 bg-gray-100 rounded-full text-gray-500"
+                >
+                  <FiX />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Camera Option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSourceSheet(false);
+                    if (isFlutter) {
+                      handleNativeCamera();
+                    } else {
+                      // On web, if they want camera specifically we'd need another input, 
+                      // but standard input with capture="environment" works for mobile browsers.
+                      // For now, let's just trigger the same input which allows both on most browsers.
+                      document.getElementById('user-photo-upload')?.click();
+                    }
+                  }}
+                  className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-teal-100 active:scale-95 transition-all"
+                  style={{ backgroundColor: `${themeColors.button}10` }}
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg"
+                    style={{ backgroundColor: themeColors.button }}
+                  >
+                    <FiCamera className="w-6 h-6" />
+                  </div>
+                  <span className="font-bold text-teal-800 text-sm">Take Photo</span>
+                </button>
+
+                {/* Gallery Option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSourceSheet(false);
+                    document.getElementById('user-photo-upload')?.click();
+                  }}
+                  className="flex flex-col items-center gap-3 p-6 bg-blue-50 rounded-2xl border border-blue-100 active:scale-95 transition-all"
+                >
+                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                    <FiImage className="w-6 h-6" />
+                  </div>
+                  <span className="font-bold text-blue-800 text-sm">Gallery</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
