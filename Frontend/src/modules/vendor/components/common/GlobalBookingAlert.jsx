@@ -14,24 +14,73 @@ export default function GlobalBookingAlert() {
   const [maxSearchTime, setMaxSearchTime] = useState(1);
 
   useEffect(() => {
-    // 1. Initial Load: Check for existing pending jobs that haven't expired
-    const loadFromStorage = () => {
-      const pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
-      const now = Date.now();
-      
-      const validJobs = pendingJobs.filter(job => {
-        if (!job.expiresAt) return true;
-        return new Date(job.expiresAt).getTime() > now;
-      });
+    // 1. Logic to sync with localStorage and optionally Server
+    const syncAlerts = async (forceServerSync = false) => {
+      try {
+        const now = Date.now();
+        let pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
 
-      if (validJobs.length > 0) {
-        setActiveAlertBookings(prev => {
-          const existingIds = new Set(prev.map(b => String(b.id || b._id)));
-          const newJobs = validJobs.filter(v => !existingIds.has(String(v.id || v._id)));
-          return [...newJobs, ...prev];
+        // Every few heartbeats or if forced, sync with Server API for missed sockets
+        if (forceServerSync || (Math.random() > 0.8)) {
+          try {
+            const { getBookings } = await import('../../services/bookingService');
+            const response = await getBookings();
+            if (response.success && response.data) {
+              const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
+              const vId = String(vendorData._id || vendorData.id);
+              
+              const serverJobs = response.data
+                .filter(b => {
+                  const status = b.status?.toLowerCase();
+                  const isRelevant = status === 'searching' || status === 'requested';
+                  const isMine = !b.vendorId || String(b.vendorId?._id || b.vendorId) === vId;
+                  return isRelevant && isMine;
+                })
+                .map(b => ({
+                  ...b,
+                  id: b._id || b.id,
+                  serviceType: b.serviceName || b.serviceId?.title,
+                  customerName: b.userId?.name || 'Customer'
+                }));
+
+              const existingIds = new Set(pendingJobs.map(j => String(j.id || j._id)));
+              let updated = false;
+              serverJobs.forEach(sj => {
+                if (!existingIds.has(String(sj.id))) {
+                  pendingJobs.unshift(sj);
+                  updated = true;
+                }
+              });
+              if (updated) localStorage.setItem('vendorPendingJobs', JSON.stringify(pendingJobs));
+            }
+          } catch (e) { console.error("Server sync error:", e); }
+        }
+
+        const validJobs = pendingJobs.filter(job => {
+          if (!job.expiresAt) return true;
+          return new Date(job.expiresAt).getTime() > now;
         });
+
+        if (validJobs.length > 0) {
+          setActiveAlertBookings(prev => {
+            const currentIds = new Set(prev.map(b => String(b.id || b._id)));
+            const newJobsToAdd = validJobs.filter(v => !currentIds.has(String(v.id || v._id)));
+            if (newJobsToAdd.length === 0) return prev;
+            return [...newJobsToAdd, ...prev];
+          });
+        }
+      } catch (err) {
+        console.error('[GlobalAlert] Sync error:', err);
       }
     };
+
+    // 2. Foreground Sync: Sync immediately when vendor resumes app
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncAlerts(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Fetch global config for accurate timer
     const fetchConfig = async () => {
@@ -49,11 +98,11 @@ export default function GlobalBookingAlert() {
       }
     };
 
-    loadFromStorage();
+    syncAlerts(true);
     fetchConfig();
 
-    // 2. Heartbeat: sync every 5 seconds to catch missed events (critical for mobile)
-    const heartbeat = setInterval(loadFromStorage, 5000);
+    // 3. Heartbeat: Periodic sync
+    const heartbeat = setInterval(() => syncAlerts(false), 5000);
 
     // Listen for custom dashboard events from SocketContext
     const handleShowAlert = (e) => {
@@ -80,6 +129,7 @@ export default function GlobalBookingAlert() {
     return () => {
       window.removeEventListener('showDashboardBookingAlert', handleShowAlert);
       window.removeEventListener('removeVendorBooking', handleRemoveBooking);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(heartbeat);
     };
   }, []);
@@ -94,7 +144,7 @@ export default function GlobalBookingAlert() {
     return () => stopAlertRing();
   }, [activeAlertBookings.length]);
 
-  if (activeAlertBookings.length === 0 || location.pathname.includes('/booking-alert/')) return null;
+  if (activeAlertBookings.length === 0) return null;
 
   return (
     <BookingAlertModal
