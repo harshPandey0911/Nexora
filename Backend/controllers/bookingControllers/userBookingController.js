@@ -131,6 +131,7 @@ const createBooking = async (req, res) => {
       city: address.city
     };
 
+    console.log(`[LocationService] Searching vendors with: center=${JSON.stringify(bookingLocation)}, radius=10km, filters=${JSON.stringify(vendorFilters)}`);
     let nearbyVendors = await findNearbyVendors(bookingLocation, 10, vendorFilters);
 
     // Deduplicate nearbyVendors by _id to prevent duplicate notifications
@@ -471,7 +472,7 @@ const createBooking = async (req, res) => {
         const { getIO } = require('../../sockets');
         const io = getIO();
         if (io) {
-          console.log('Socket.IO instance found, emitting Wave 1 events...');
+          console.log(`[CreateBooking] Emitting Socket.IO events to ${wave1Vendors.length} vendors in Wave 1...`);
           wave1Vendors.forEach(vendor => {
             const vendorRoom = `vendor_${vendor._id.toString()}`;
             console.log(`[Wave 1] Emitting to ${vendorRoom} (dist: ${vendor.distance?.toFixed(1) || 'N/A'}km)`);
