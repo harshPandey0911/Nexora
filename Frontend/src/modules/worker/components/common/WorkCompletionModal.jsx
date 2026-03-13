@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { FiX, FiTrash, FiCamera, FiImage, FiDollarSign, FiCheckCircle } from 'react-icons/fi';
+import { FiX, FiTrash, FiCamera, FiDollarSign, FiCheckCircle } from 'react-icons/fi';
+import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import flutterBridge from '../../../../utils/flutterBridge';
 
 const WorkCompletionModal = ({ isOpen, onClose, job, onComplete, loading }) => {
   const [workPhotos, setWorkPhotos] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [showSourceSheet, setShowSourceSheet] = useState(false);
-
-  const galleryInputRef = React.useRef(null);
   const cameraInputRef = React.useRef(null);
 
   const handleNativeCamera = async () => {
@@ -71,7 +69,11 @@ const WorkCompletionModal = ({ isOpen, onClose, job, onComplete, loading }) => {
   };
 
   const handleSubmit = () => {
-    // TEMPORARY: Photos are now optional
+    if (workPhotos.length === 0) {
+      toast.error('At least one photo from camera is mandatory');
+      flutterBridge.hapticFeedback('error');
+      return;
+    }
     onComplete(workPhotos);
   };
 
@@ -109,14 +111,14 @@ const WorkCompletionModal = ({ isOpen, onClose, job, onComplete, loading }) => {
             <div className="px-8 pb-8 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
 
               <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                Please upload proof of work (Camera/Gallery) to confirm completion.
+                Please upload proof of work from your camera to confirm completion.
               </p>
 
               {/* Photo Upload Section */}
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Work Photos <span className="text-gray-300 font-normal">(Optional)</span></p>
-                  <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md font-bold">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Work Photos <span className="text-red-500 font-bold">(Mandatory)</span></p>
+                  <span className="text-[10px] bg-red-50 text-red-500 px-2 py-0.5 rounded-md font-bold">
                     {workPhotos.length}/5 (Min 1)
                   </span>
                 </div>
@@ -138,24 +140,21 @@ const WorkCompletionModal = ({ isOpen, onClose, job, onComplete, loading }) => {
                   {workPhotos.length < 5 && (
                     <button
                       type="button"
-                      onClick={() => setShowSourceSheet(true)}
+                      onClick={() => {
+                        if (flutterBridge.isFlutter) {
+                          handleNativeCamera();
+                        } else {
+                          cameraInputRef.current?.click();
+                        }
+                      }}
                       className="aspect-square rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 hover:border-green-400 hover:bg-green-50/30 flex flex-col items-center justify-center text-gray-400 hover:text-green-500 cursor-pointer active:scale-95 transition-all"
                     >
                       <FiCamera className="w-7 h-7 mb-1" />
-                      <span className="text-[10px] font-bold uppercase">Add / Cam</span>
+                      <span className="text-[10px] font-bold uppercase">Camera Only</span>
                     </button>
                   )}
                 </div>
 
-                {/* Hidden Inputs */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  ref={galleryInputRef}
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                />
                 <input
                   type="file"
                   accept="image/*"
@@ -221,74 +220,6 @@ const WorkCompletionModal = ({ isOpen, onClose, job, onComplete, loading }) => {
           </motion.div>
         </div>
       )}
-
-      {/* Photo Source Selection - Mobile Styled Bottom Sheet */}
-      <AnimatePresence>
-        {showSourceSheet && (
-          <div className="fixed inset-0 z-[10000] flex items-end justify-center">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowSourceSheet(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative bg-white w-full rounded-t-[32px] p-6 pb-12 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-10"
-            >
-              <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
-              <h4 className="text-center font-bold text-gray-900 mb-6 text-lg">Select Photo Source</h4>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Camera Option */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSourceSheet(false);
-                    if (flutterBridge.isFlutter) {
-                      handleNativeCamera();
-                    } else {
-                      cameraInputRef.current?.click();
-                    }
-                  }}
-                  className="flex flex-col items-center gap-3 p-6 bg-green-50 rounded-2xl border border-green-100 active:scale-95 transition-all"
-                >
-                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-green-200">
-                    <FiCamera className="w-6 h-6" />
-                  </div>
-                  <span className="font-bold text-green-800 text-sm">Take Photo</span>
-                </button>
-
-                {/* Gallery Option */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSourceSheet(false);
-                    galleryInputRef.current?.click();
-                  }}
-                  className="flex flex-col items-center gap-3 p-6 bg-blue-50 rounded-2xl border border-blue-100 active:scale-95 transition-all"
-                >
-                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                    <FiImage className="w-6 h-6" />
-                  </div>
-                  <span className="font-bold text-blue-800 text-sm">Gallery</span>
-                </button>
-              </div>
-
-              <button
-                onClick={() => setShowSourceSheet(false)}
-                className="w-full mt-6 py-3 text-sm font-bold text-gray-400 uppercase tracking-widest"
-              >
-                Cancel
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </AnimatePresence>
   );
 };
