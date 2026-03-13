@@ -143,6 +143,10 @@ const workerSchema = new mongoose.Schema({
   fcmTokenMobile: {
     type: [String],
     default: []
+  },
+  loginSessionId: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true

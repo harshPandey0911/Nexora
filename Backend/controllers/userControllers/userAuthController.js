@@ -98,9 +98,17 @@ const verifyLogin = async (req, res) => {
         });
       }
 
+      // SINGLE DEVICE LOGIN: Update Session ID & Clear OLD FCM tokens
+      const loginSessionId = Date.now().toString();
+      await User.findByIdAndUpdate(user._id, { 
+        loginSessionId,
+        $set: { fcmTokens: [], fcmTokenMobile: [] } // Clear all old tokens
+      });
+      
       const tokens = generateTokenPair({
         userId: user._id,
-        role: USER_ROLES.USER
+        role: USER_ROLES.USER,
+        loginSessionId
       });
 
       return res.status(200).json({
@@ -200,10 +208,14 @@ const register = async (req, res) => {
       sendWelcomeEmail(email, name).catch(err => console.error(err));
     }
 
-    // Generate JWT tokens
+    // Generate JWT tokens with session
+    const loginSessionId = Date.now().toString();
+    await User.findByIdAndUpdate(user._id, { loginSessionId });
+
     const tokens = generateTokenPair({
       userId: user._id,
-      role: USER_ROLES.USER
+      role: USER_ROLES.USER,
+      loginSessionId
     });
 
     res.status(201).json({
@@ -269,10 +281,17 @@ const login = async (req, res) => {
       });
     }
 
-    // Generate JWT tokens
+    // SINGLE DEVICE LOGIN: Update Session ID & Clear OLD FCM tokens
+    const loginSessionId = Date.now().toString();
+    await User.findByIdAndUpdate(user._id, { 
+      loginSessionId,
+      $set: { fcmTokens: [], fcmTokenMobile: [] } // Clear all old tokens
+    });
+
     const tokens = generateTokenPair({
       userId: user._id,
-      role: USER_ROLES.USER
+      role: USER_ROLES.USER,
+      loginSessionId
     });
 
     res.status(200).json({
@@ -304,14 +323,14 @@ const logout = async (req, res) => {
   try {
     const { platform = 'web' } = req.body;
 
-    // Clear FCM tokens based on platform
-    if (req.user && req.user._id) {
+    // Clear FCM tokens based on platform and reset session
+    if (req.user && req.user.id) {
       const updateQuery = platform === 'mobile'
-        ? { $set: { fcmTokenMobile: [] } }
-        : { $set: { fcmTokens: [] } };
+        ? { $set: { fcmTokenMobile: [], loginSessionId: null } }
+        : { $set: { fcmTokens: [], loginSessionId: null } };
 
-      await User.findByIdAndUpdate(req.user._id, updateQuery);
-      console.log(`[AUTH] ✅ ${platform} FCM tokens cleared for user: ${req.user._id}`);
+      await User.findByIdAndUpdate(req.user.id, updateQuery);
+      console.log(`[AUTH] ✅ ${platform} session & tokens cleared for user: ${req.user.id}`);
     }
 
     res.status(200).json({
@@ -367,10 +386,16 @@ const refreshToken = async (req, res) => {
       });
     }
 
+    // Verify Session ID
+    if (decoded.loginSessionId !== user.loginSessionId) {
+      return res.status(401).json({ success: false, message: 'LoggedIn on another device.' });
+    }
+
     // Generate new token pair
     const tokens = generateTokenPair({
       userId: user._id,
-      role: USER_ROLES.USER
+      role: USER_ROLES.USER,
+      loginSessionId: user.loginSessionId
     });
 
     res.status(200).json({

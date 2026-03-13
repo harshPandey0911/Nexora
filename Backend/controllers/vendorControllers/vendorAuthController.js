@@ -121,9 +121,12 @@ const verifyLogin = async (req, res) => {
         });
       }
 
-      // SINGLE DEVICE LOGIN: Update Session ID
+      // SINGLE DEVICE LOGIN: Update Session ID & Clear OLD FCM tokens
       const loginSessionId = Date.now().toString();
-      await Vendor.findByIdAndUpdate(vendor._id, { loginSessionId });
+      await Vendor.findByIdAndUpdate(vendor._id, { 
+        loginSessionId,
+        $set: { fcmTokens: [], fcmTokenMobile: [] } // Clear all old tokens to prevent ghost notifications
+      });
 
       const tokens = generateTokenPair({
         userId: vendor._id,
@@ -354,9 +357,12 @@ const login = async (req, res) => {
       });
     }
 
-    // SINGLE DEVICE LOGIN: Update Session ID
+    // SINGLE DEVICE LOGIN: Update Session ID & Clear OLD FCM tokens
     const loginSessionId = Date.now().toString();
-    await Vendor.findByIdAndUpdate(vendor._id, { loginSessionId });
+    await Vendor.findByIdAndUpdate(vendor._id, { 
+      loginSessionId,
+      $set: { fcmTokens: [], fcmTokenMobile: [] } // Clear all old tokens to prevent ghost notifications
+    });
 
     // Generate JWT tokens
     const tokens = generateTokenPair({
@@ -394,14 +400,14 @@ const logout = async (req, res) => {
   try {
     const { platform = 'web' } = req.body;
 
-    // Clear FCM tokens based on platform
-    if (req.user && req.user._id) {
+    // Clear FCM tokens based on platform and reset Session ID
+    if (req.user && req.user.id) {
       const updateQuery = platform === 'mobile'
         ? { $set: { fcmTokenMobile: [], loginSessionId: null } }
         : { $set: { fcmTokens: [], loginSessionId: null } };
 
-      await Vendor.findByIdAndUpdate(req.user._id, updateQuery);
-      console.log(`[AUTH] ✅ ${platform} FCM tokens cleared for vendor: ${req.user._id}`);
+      await Vendor.findByIdAndUpdate(req.user.id, updateQuery);
+      console.log(`[AUTH] ✅ ${platform} session & tokens cleared for vendor: ${req.user.id}`);
     }
 
     res.status(200).json({

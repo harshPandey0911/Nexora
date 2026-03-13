@@ -123,6 +123,10 @@ const userSchema = new mongoose.Schema({
     type: [String],
     default: []
   },
+  loginSessionId: {
+    type: String,
+    default: null
+  }
 
 }, {
   timestamps: true
