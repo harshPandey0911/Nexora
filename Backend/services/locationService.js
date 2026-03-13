@@ -34,12 +34,8 @@ const calculateDistance = (coord1, coord2) => {
 const geocodeAddress = async (address) => {
   try {
     if (!GOOGLE_MAPS_API_KEY) {
-      console.warn('Google Maps API key not configured, using mock coordinates');
-      // Return mock coordinates for testing
-      return {
-        lat: 22.7196,
-        lng: 75.8577
-      };
+      console.warn('Google Maps API key not configured, geocoding skipped');
+      return null;
     }
 
     const response = await axios.get(`${GOOGLE_MAPS_API_URL}/geocode/json`, {
@@ -60,11 +56,7 @@ const geocodeAddress = async (address) => {
     throw new Error(`Geocoding failed: ${response.data.status}`);
   } catch (error) {
     console.error('Geocoding error:', error);
-    // Return mock coordinates as fallback
-    return {
-      lat: 22.7196,
-      lng: 75.8577
-    };
+    return null;
   }
 };
 
@@ -77,10 +69,27 @@ const geocodeAddress = async (address) => {
  * @returns {Promise<Array>} Array of nearby vendors with distance
  */
 const findNearbyVendors = async (centerLocation, radiusKm = 10, filters = {}) => {
+  if (!centerLocation || typeof centerLocation.lat !== 'number' || typeof centerLocation.lng !== 'number') {
+    console.warn('[LocationService] Invalid centerLocation provided to findNearbyVendors');
+    return [];
+  }
   try {
     const Vendor = require('../models/Vendor');
+    const Settings = require('../models/Settings');
     const { VENDOR_STATUS } = require('../utils/constants');
     const { getNearbyVendorsFromCache, isRedisConnected } = require('./redisService');
+
+    // Fetch default radius from settings if not provided or 10 is passed
+    if (radiusKm === 10) {
+      try {
+        const globalSettings = await Settings.findOne({ type: 'global' }).select('searchRadius');
+        if (globalSettings && globalSettings.searchRadius) {
+          radiusKm = globalSettings.searchRadius;
+        }
+      } catch (err) {
+        console.error('Error fetching search radius from settings:', err);
+      }
+    }
 
     // Extract custom options from filters
     const checkCashLimit = filters.checkCashLimit;
@@ -159,8 +168,8 @@ const findNearbyVendors = async (centerLocation, radiusKm = 10, filters = {}) =>
             }
           }
         })
-          .select('name businessName phone address profilePhoto service rating isOnline availability geoLocation')
-          .limit(20); // Limit to top 20 closest
+          .select('name businessName phone address profilePhoto service rating isOnline availability geoLocation settings')
+          .limit(50); // Increased limit as we filter below
 
         // Calculate distance for each vendor
         nearbyVendors = nearbyVendors.map(vendor => {
@@ -176,6 +185,12 @@ const findNearbyVendors = async (centerLocation, radiusKm = 10, filters = {}) =>
           return vendorObj;
         });
 
+        // Filter by individual vendor range
+        nearbyVendors = nearbyVendors.filter(v => {
+          const vRange = v.settings?.serviceRange || radiusKm;
+          return v.distance <= vRange;
+        });
+
         console.log(`[LocationService] Found ${nearbyVendors.length} vendors using 2dsphere query`);
         return nearbyVendors;
       }
@@ -185,7 +200,7 @@ const findNearbyVendors = async (centerLocation, radiusKm = 10, filters = {}) =>
 
     // Fallback: Use Haversine formula (slower but works without geo index)
     const vendors = await Vendor.find(baseQuery)
-      .select('name businessName phone address profilePhoto service rating isOnline availability');
+      .select('name businessName phone address profilePhoto service rating isOnline availability settings');
 
     // Calculate distances and filter by radius
     nearbyVendors = vendors.map(vendor => {
@@ -199,10 +214,11 @@ const findNearbyVendors = async (centerLocation, radiusKm = 10, filters = {}) =>
         });
       }
 
+      const vRange = vendor.settings?.serviceRange || radiusKm;
       return {
         ...vendor.toObject(),
         distance: distance,
-        withinRange: distance === null || distance <= radiusKm
+        withinRange: distance !== null && distance <= vRange
       };
     }).filter(vendor => vendor.withinRange);
 

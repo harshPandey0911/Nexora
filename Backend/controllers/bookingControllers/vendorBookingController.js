@@ -32,7 +32,8 @@ const getVendorBookings = async (req, res) => {
         {
           vendorId: null,
           status: { $in: [BOOKING_STATUS.REQUESTED, BOOKING_STATUS.SEARCHING] },
-          serviceCategory: { $in: vendorCategories }
+          serviceCategory: { $in: vendorCategories },
+          'potentialVendors.vendorId': vId // Only show jobs where THIS vendor is within range
         }
       ]
     };

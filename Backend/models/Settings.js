@@ -67,6 +67,11 @@ const settingsSchema = new mongoose.Schema({
     default: 60, // 60 seconds per wave default
     min: 10
   },
+  searchRadius: {
+    type: Number,
+    default: 10, // 10 km default search radius
+    min: 1
+  },
   // Razorpay Settings
   razorpayKeyId: {
     type: String,

@@ -79,7 +79,7 @@ const updateProfile = async (req, res) => {
     }
 
     const vendorId = req.user.id;
-    const { name, businessName, address, profilePhoto, serviceCategory, skills, aadharNumber, aadharDocument, panNumber, panDocument } = req.body;
+    const { name, businessName, address, profilePhoto, serviceCategory, skills, aadharNumber, aadharDocument, panNumber, panDocument, serviceRange } = req.body;
 
     console.log('Update Vendor Profile Body:', JSON.stringify(req.body, null, 2));
 
@@ -142,6 +142,12 @@ const updateProfile = async (req, res) => {
       }
     }
 
+    // Handle service range
+    if (serviceRange !== undefined) {
+      if (!vendor.settings) vendor.settings = {};
+      vendor.settings.serviceRange = Number(serviceRange) || 10;
+    }
+
     // Handle skills
     if (skills !== undefined) {
       vendor.skills = Array.isArray(skills) ? skills : [];
@@ -202,7 +208,8 @@ const updateProfile = async (req, res) => {
         isEmailVerified: vendor.isEmailVerified,
         profilePhoto: vendor.profilePhoto,
         service: vendor.service,
-        skills: vendor.skills
+        skills: vendor.skills,
+        settings: vendor.settings
       }
     });
   } catch (error) {

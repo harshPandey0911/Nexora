@@ -48,7 +48,7 @@ exports.updateSettings = async (req, res, next) => {
       // Support Settings
       supportEmail, supportPhone, supportWhatsapp,
       // Booking Timing
-      maxSearchTime, waveDuration
+      maxSearchTime, waveDuration, searchRadius
     } = req.body;
 
     let settings = await Settings.findOne({ type: 'global' });
@@ -113,6 +113,7 @@ exports.updateSettings = async (req, res, next) => {
       // Booking Timing update
       if (maxSearchTime !== undefined) settings.maxSearchTime = maxSearchTime;
       if (waveDuration !== undefined) settings.waveDuration = waveDuration;
+      if (searchRadius !== undefined) settings.searchRadius = searchRadius;
 
       await settings.save();
     }
@@ -123,6 +124,15 @@ exports.updateSettings = async (req, res, next) => {
       await Vendor.updateMany(
         {}, // Filter: all vendors
         { $set: { 'wallet.cashLimit': vendorCashLimit } }
+      );
+    }
+
+    // Propagate searchRadius to all existing vendors if it was changed
+    if (searchRadius !== undefined) {
+      console.log(`Updating all vendors with new service range: ${searchRadius}`);
+      await Vendor.updateMany(
+        {},
+        { $set: { 'settings.serviceRange': searchRadius } }
       );
     }
 

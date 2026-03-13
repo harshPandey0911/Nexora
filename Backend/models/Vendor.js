@@ -172,6 +172,11 @@ const vendorSchema = new mongoose.Schema({
     language: {
       type: String,
       default: 'en'
+    },
+    serviceRange: {
+      type: Number,
+      default: 10, // Default 10km service range for the vendor
+      min: 1
     }
   },
   // Real-time Location
