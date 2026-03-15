@@ -181,13 +181,19 @@ export const handleLogout = (role = null) => {
 
   if (role === 'vendor') {
     clearTokens('vendor');
-    window.location.href = '/vendor/login';
+    if (window.location.pathname !== '/vendor/login') {
+      window.location.href = '/vendor/login';
+    }
   } else if (role === 'worker') {
     clearTokens('worker');
-    window.location.href = '/worker/login';
+    if (window.location.pathname !== '/worker/login') {
+      window.location.href = '/worker/login';
+    }
   } else if (role === 'admin') {
     clearTokens('admin');
-    window.location.href = '/admin/login';
+    if (window.location.pathname !== '/admin/login') {
+      window.location.href = '/admin/login';
+    }
   } else {
     // User
     localStorage.removeItem('accessToken');
@@ -196,7 +202,9 @@ export const handleLogout = (role = null) => {
     sessionStorage.removeItem('accessToken');
     sessionStorage.removeItem('refreshToken');
     sessionStorage.removeItem('userData');
-    window.location.href = '/user/login';
+    if (!window.location.pathname.includes('/login')) {
+      window.location.href = '/user/login';
+    }
   }
 };
 

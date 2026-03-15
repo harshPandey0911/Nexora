@@ -21,7 +21,8 @@ export default function GlobalBookingAlert() {
         let pendingJobs = JSON.parse(localStorage.getItem('vendorPendingJobs') || '[]');
 
         // Every few heartbeats or if forced, sync with Server API for missed sockets
-        if (forceServerSync || (Math.random() > 0.8)) {
+        const token = localStorage.getItem('vendorAccessToken') || sessionStorage.getItem('vendorAccessToken');
+        if (token && (forceServerSync || (Math.random() > 0.8))) {
           try {
             const { getBookings } = await import('../../services/bookingService');
             const response = await getBookings();
