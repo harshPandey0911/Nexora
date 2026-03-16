@@ -6,6 +6,7 @@ import { themeColors } from '../../../theme';
 import { userAuthService } from '../../../services/authService';
 import Logo from '../../../components/common/Logo';
 import LogoLoader from '../../../components/common/LogoLoader';
+import DebugConsole from '../components/common/DebugConsole';
 
 import { z } from "zod";
 
@@ -355,6 +356,7 @@ const Login = () => {
       <div className="mt-8 text-center text-xs text-gray-400 animate-fade-in animate-stagger-4">
         &copy; {new Date().getFullYear()} Homestr. All rights reserved.
       </div>
+      <DebugConsole />
     </div>
   );
 };
