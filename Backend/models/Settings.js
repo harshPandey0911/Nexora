@@ -168,6 +168,10 @@ const settingsSchema = new mongoose.Schema({
   supportWhatsapp: {
     type: String,
     default: ''
+  },
+  isOnlinePaymentEnabled: {
+    type: Boolean,
+    default: true
   }
 }, { timestamps: true });
 

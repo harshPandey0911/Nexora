@@ -23,7 +23,8 @@ const AdminSettings = () => {
     platformFeePercentage: 1,
     maxSearchTime: 5,
     waveDuration: 60,
-    searchRadius: 10
+    searchRadius: 10,
+    isOnlinePaymentEnabled: true
   });
 
   // Billing Configuration State
@@ -119,9 +120,8 @@ const AdminSettings = () => {
             platformFeePercentage: res.settings.platformFeePercentage || 1,
             vendorCashLimit: res.settings.vendorCashLimit || 10000,
             cancellationPenalty: res.settings.cancellationPenalty !== undefined ? res.settings.cancellationPenalty : 49,
-            maxSearchTime: res.settings.maxSearchTime || 5,
-            waveDuration: res.settings.waveDuration || 60,
-            searchRadius: res.settings.searchRadius || 10
+            searchRadius: res.settings.searchRadius || 10,
+            isOnlinePaymentEnabled: res.settings.isOnlinePaymentEnabled !== undefined ? res.settings.isOnlinePaymentEnabled : true
           });
           // Load billing settings
           setBillingSettings({
@@ -791,6 +791,21 @@ const AdminSettings = () => {
                     <button onClick={() => handleToggle('workerAutoAssignment')}
                       className={`relative w-12 h-7 rounded-full transition-all duration-300 ${settings.workerAutoAssignment ? 'bg-blue-600' : 'bg-gray-200'}`}>
                       <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${settings.workerAutoAssignment ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800">Online Payments</p>
+                      <p className="text-xs text-gray-500 mt-1">Enable digital payment methods for users</p>
+                    </div>
+                    <button onClick={() => {
+                        const newValue = !financialSettings.isOnlinePaymentEnabled;
+                        setFinancialSettings(prev => ({ ...prev, isOnlinePaymentEnabled: newValue }));
+                        updateSettings({ isOnlinePaymentEnabled: newValue });
+                      }}
+                      className={`relative w-12 h-7 rounded-full transition-all duration-300 ${financialSettings.isOnlinePaymentEnabled ? 'bg-green-600' : 'bg-gray-200'}`}>
+                      <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${financialSettings.isOnlinePaymentEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                     </button>
                   </div>
 

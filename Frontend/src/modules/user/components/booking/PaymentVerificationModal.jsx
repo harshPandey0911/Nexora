@@ -1,8 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiCheckCircle, FiShield, FiAlertCircle, FiPackage, FiX, FiInfo } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { configService } from '../../../../services/configService';
 
 const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => {
+  const [isOnlinePaymentEnabled, setIsOnlinePaymentEnabled] = useState(true);
+  const [configLoading, setConfigLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await configService.getSettings();
+        if (res.success && res.settings) {
+          setIsOnlinePaymentEnabled(res.settings.isOnlinePaymentEnabled !== false);
+        }
+      } catch (error) {
+        console.error('Error fetching payment config:', error);
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchConfig();
+    }
+  }, [isOpen]);
+
   if (!isOpen || !booking) return null;
 
   // --- 1. Total & Breakdown Calculations ---
@@ -10,10 +33,9 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
   const bill = booking.bill;
 
   // Base Logic (Services)
-  // Use bill.originalServiceBase if available (source of truth), else booking.basePrice
   const originalBase = bill ? (bill.originalServiceBase || 0) : (parseFloat(booking.basePrice) || 0);
 
-  // Extra Services (from Vendor Bill) — filter out the original service
+  // Extra Services
   const allBillServices = bill?.services || [];
   const services = allBillServices.filter(s => !s.isOriginal);
   const originalServiceFromBill = allBillServices.find(s => s.isOriginal);
@@ -22,26 +44,22 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
   let extraServiceGST = 0;
 
   services.forEach(s => {
-    // s.price is UNIT BASE PRICE. s.total is INCLUSIVE.
-    // Use stored values directly to avoid rounding errors or tax assumption mismatches
     const qty = parseFloat(s.quantity) || 1;
     const base = (parseFloat(s.price) || 0) * qty;
     const gst = parseFloat(s.gstAmount) || 0;
-
     extraServiceBase += base;
     extraServiceGST += gst;
   });
 
   const totalServiceBase = originalBase + extraServiceBase;
 
-  // Parts & Custom Items (from Vendor Bill)
+  // Parts & Custom Items
   const parts = bill?.parts || [];
   const customItems = bill?.customItems || [];
 
   let partsBase = 0;
   let partsGST = 0;
 
-  // Calculate parts base & GST from stored values
   parts.forEach(p => {
     const qty = parseFloat(p.quantity) || 1;
     partsBase += ((parseFloat(p.price) || 0) * qty);
@@ -55,21 +73,17 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
   });
 
   // Tax Logic
-  // Use bill.originalGST if available
   const originalGST = bill ? (bill.originalGST || 0) : (originalBase * 0.18);
   const totalGST = originalGST + extraServiceGST + partsGST;
 
   // Final Total
-  // Ideally, use grandTotal from bill if available
   const finalTotal = bill?.grandTotal || (booking.finalAmount || 0);
 
   // --- 2. Identity Helpers ---
   const categoryName = booking.serviceCategory || 'General';
-  // Use new field if present, else fallback
   const brandName = booking.brandName || booking.bookedItems?.[0]?.sectionTitle || '';
   const serviceName = booking.serviceName || 'Service Request';
 
-  // Dynamic Icon
   const CategoryIcon = booking.categoryIcon ? (
     <img src={booking.categoryIcon} alt={categoryName} className="w-full h-full object-cover" />
   ) : (
@@ -105,7 +119,6 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
           </div>
 
           <div className="p-5 overflow-y-auto custom-scrollbar flex-1">
-
             {/* Booking Identity Card */}
             <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-5 relative overflow-hidden">
               <div className="flex flex-col gap-1 relative z-10">
@@ -129,7 +142,6 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
                   ID: #{booking.bookingNumber || booking._id?.slice(-8).toUpperCase()}
                 </p>
               </div>
-              {/* Decorative Icon */}
               <FiPackage className="absolute -bottom-2 -right-2 w-16 h-16 text-slate-100 rotate-[-15deg] z-0" />
             </div>
 
@@ -149,7 +161,6 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Services</span>
                 </div>
                 <div className="space-y-2 pl-1">
-                  {/* Base */}
                   <div className="flex justify-between text-xs text-slate-600">
                     <span>{originalServiceFromBill?.name || booking.serviceName || 'Service'}</span>
                     {isPlanBenefit ? (
@@ -161,21 +172,16 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
                       <span className="font-medium font-mono">₹{originalBase.toFixed(2)}</span>
                     )}
                   </div>
-                  {/* Extra Services */}
                   {services.map((s, idx) => (
                     <div key={`s-${idx}`} className="flex justify-between text-xs text-slate-600">
                       <span>{s.name} <span className="text-slate-400">x{s.quantity}</span></span>
                       <span className="font-medium font-mono">₹{((parseFloat(s.price) || 0) * (parseFloat(s.quantity) || 1)).toFixed(2)}</span>
                     </div>
                   ))}
-
-                  {/* Service GST */}
                   <div className="flex justify-between text-xs text-slate-500 border-t border-dashed border-slate-100 pt-1 mt-1">
                     <span>GST (18%)</span>
                     <span className="font-mono">₹{(originalGST + extraServiceGST).toFixed(2)}</span>
                   </div>
-
-                  {/* Service Subtotal */}
                   <div className="flex justify-between text-xs font-bold text-slate-800 pt-1">
                     <span>Total Service</span>
                     <span>₹{(totalServiceBase + originalGST + extraServiceGST).toFixed(2)}</span>
@@ -183,7 +189,7 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
                 </div>
               </div>
 
-              {/* 2. Parts (Conditional) */}
+              {/* 2. Parts */}
               {(parts.length > 0 || customItems.length > 0) && (
                 <div>
                   <div className="flex items-center gap-2 mb-2 mt-4">
@@ -203,13 +209,10 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
                         <span className="font-medium font-mono">₹{(c.price * c.quantity).toFixed(2)}</span>
                       </div>
                     ))}
-
-                    {/* Parts GST */}
                     <div className="flex justify-between text-xs text-slate-500 border-t border-dashed border-slate-100 pt-1 mt-1">
                       <span>GST (18%)</span>
                       <span className="font-mono">₹{partsGST.toFixed(2)}</span>
                     </div>
-
                     <div className="flex justify-between text-xs font-bold text-slate-800 pt-1">
                       <span>Total Parts</span>
                       <span>₹{(partsBase + partsGST).toFixed(2)}</span>
@@ -257,20 +260,31 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
                 </div>
               ) : (
                 <>
-                  {/* Online Pay */}
-                  <button
-                    onClick={onPayOnline}
-                    className="w-full py-3.5 rounded-xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
-                  >
-                    Pay Online Securely
-                  </button>
+                  {/* Online Pay - CONDITIONALLY RENDERED */}
+                  {!configLoading && isOnlinePaymentEnabled ? (
+                    <button
+                      onClick={onPayOnline}
+                      className="w-full py-3.5 rounded-xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+                    >
+                      Pay Online Securely
+                    </button>
+                  ) : (
+                    !configLoading && (
+                      <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex items-start gap-2">
+                        <FiAlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                        <p className="text-[10px] font-bold text-amber-800 uppercase tracking-tight">
+                           Online payment temporarily unavailable. Please pay by cash.
+                        </p>
+                      </div>
+                    )
+                  )}
 
                   <div className="relative py-2 text-center">
                     <span className="bg-white px-2 text-[10px] font-bold text-slate-400 relative z-10 uppercase tracking-wider">OR</span>
                     <div className="absolute top-1/2 left-0 right-0 h-px bg-slate-100 z-0"></div>
                   </div>
 
-                  {/* Cash Code (Always show if available, even if QR initiated) */}
+                  {/* Cash Code */}
                   {(booking.customerConfirmationOTP || booking.paymentOtp) && (
                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
                       <p className="text-xs font-bold text-slate-700 mb-2">Paying Cash? Share Code</p>
@@ -285,7 +299,6 @@ const PaymentVerificationModal = ({ isOpen, onClose, booking, onPayOnline }) => 
                 </>
               )}
             </div>
-
           </div>
         </motion.div>
       </div>
