@@ -1204,17 +1204,36 @@ const completeSelfJob = async (req, res) => {
 
     // ── Notify user ──
     const { createNotification } = require('../notificationControllers/notificationController');
+    
+    // 1. Notify user that work is completed
     await createNotification({
       userId: booking.userId,
       type: 'work_completed',
-      title: 'Work Completed & Bill Ready',
-      message: `Work finished!  Please wait for the bill expert is preparing !`,
+      title: 'Work Completed',
+      message: `Work finished! Your bill is being prepared.`,
       relatedId: booking._id,
       relatedType: 'booking',
       priority: 'high',
       pushData: {
         type: 'work_completed',
         bookingId: booking._id.toString(),
+        link: `/user/booking/${booking._id}`
+      }
+    });
+
+    // 2. Notify user with Final Bill and OTP (The missing piece)
+    await createNotification({
+      userId: booking.userId,
+      type: 'work_done',
+      title: 'Billing Ready',
+      message: `Bill Generated: ₹${grandTotal}. Your verification OTP is ${payOtp}. Please share this with the professional to complete.`,
+      relatedId: booking._id,
+      relatedType: 'booking',
+      priority: 'high',
+      pushData: {
+        type: 'work_done',
+        bookingId: booking._id.toString(),
+        paymentOtp: payOtp,
         link: `/user/booking/${booking._id}`
       }
     });

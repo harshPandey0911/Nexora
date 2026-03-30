@@ -115,28 +115,22 @@ async function sendPushNotification(tokens, payload) {
         fcmOptions: {
           link: payload.data?.link || '/'
         }
-        // notification block removed to ensure Data-Only message
       },
       priority: payload.highPriority !== false ? 'high' : 'normal'
     };
 
-    /*
     // Standard notification block (Top-level)
-    // Commented out to prevent duplicate notifications (Reason #4: Both notification + data payload)
-    // We rely entirely on data payload and Service Worker/App handling
     message.notification = {
       title: payload.title || 'App Notification',
       body: payload.body || 'New Update',
     };
-
+    
     // Android specific (Sound, Priority, Channel, Icon)
     message.android.notification = {
-      ...message.android.notification,
       title: message.notification.title,
       body: message.notification.body,
       icon: 'stock_ticker_update',
-      color: '#f44336',
-      clickAction: 'FLUTTER_NOTIFICATION_CLICK', // Common for mobile apps
+      color: '#f44336'
     };
 
     // iOS/APNs specific (Sound, Alert, Badge)
@@ -147,13 +141,11 @@ async function sendPushNotification(tokens, payload) {
 
     // WebPush specific (Title, Body, Icon, Badge)
     message.webpush.notification = {
-      ...message.webpush.notification,
       title: message.notification.title,
       body: message.notification.body,
       icon: payload.icon || '/Homster-logo.png',
       badge: '/Homster-logo.png',
     };
-    */
 
     /*
     if (payload.icon) {

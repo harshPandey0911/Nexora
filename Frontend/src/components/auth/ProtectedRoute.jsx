@@ -12,12 +12,11 @@ const ProtectedRoute = ({ children, userType = 'user', redirectTo = null }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       let tokenKey = 'accessToken';
       let refreshTokenKey = 'refreshToken';
       let dataKey = 'userData';
 
-      // Determine keys based on userType
       switch (userType) {
         case 'vendor':
           tokenKey = 'vendorAccessToken';
@@ -43,41 +42,58 @@ const ProtectedRoute = ({ children, userType = 'user', redirectTo = null }) => {
       }
 
       const token = sessionStorage.getItem(tokenKey) || localStorage.getItem(tokenKey);
+      const refreshToken = sessionStorage.getItem(refreshTokenKey) || localStorage.getItem(refreshTokenKey);
       const userData = sessionStorage.getItem(dataKey) || localStorage.getItem(dataKey);
 
-      // If token exists, verify it's not expired (basic check)
       if (token && userData) {
         try {
-          // Decode JWT token to check expiry (basic check without verification)
           const parts = token.split('.');
           if (parts.length === 3) {
             const payload = JSON.parse(atob(parts[1]));
-            const currentTime = Date.now() / 1000;
+            const currentTime = Math.floor(Date.now() / 1000);
 
+            // If token is expired but we have a refresh token, let's try to let it proceed.
+            // The axios interceptor in api.js will handle the actual refresh when the first request fails.
+            // We only logout here if there's NO refresh token or if the refresh token itself is expired.
+            
             if (payload.exp && payload.exp > currentTime) {
               setIsAuthenticated(true);
+              setIsLoading(false);
+            } else if (refreshToken) {
+              // Access token expired but refresh token exists.
+              // We'll give it a chance. If the first API call fails to refresh, it will logout then.
+              // This prevents an aggressive logout before the interceptor can do its job.
+              console.log(`[Auth] Access token expired for ${userType}, but refresh token exists. Proveding...`);
+              setIsAuthenticated(true);
+              setIsLoading(false);
             } else {
-              // Token expired
-              console.log('Token expired, clearing auth data for:', userType);
-              localStorage.removeItem(tokenKey);
-              localStorage.removeItem(refreshTokenKey);
-              localStorage.removeItem(dataKey);
-              setIsAuthenticated(false);
-              toast.error('Session expired. Please login again.');
+              // Truly expired and no way to refresh
+              handleExpiredSession(tokenKey, refreshTokenKey, dataKey);
             }
           } else {
-            // Invalid token format
             setIsAuthenticated(false);
+            setIsLoading(false);
           }
         } catch (error) {
-          // Invalid token format
           console.error('Token validation error:', error);
           setIsAuthenticated(false);
+          setIsLoading(false);
         }
       } else {
         setIsAuthenticated(false);
+        setIsLoading(false);
       }
+    };
 
+    const handleExpiredSession = (tokenKey, refreshTokenKey, dataKey) => {
+      console.log('Session truly expired, clearing auth data');
+      localStorage.removeItem(tokenKey);
+      localStorage.removeItem(refreshTokenKey);
+      localStorage.removeItem(dataKey);
+      sessionStorage.removeItem(tokenKey);
+      sessionStorage.removeItem(refreshTokenKey);
+      sessionStorage.removeItem(dataKey);
+      setIsAuthenticated(false);
       setIsLoading(false);
     };
 
