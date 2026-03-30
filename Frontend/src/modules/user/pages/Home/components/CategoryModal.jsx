@@ -294,9 +294,14 @@ const CategoryModal = React.memo(({ isOpen, onClose, category, location, cartCou
                           <div className="space-y-4">
                             {services.map((svc) => (
                               <div key={svc.id || svc._id} className="flex justify-between items-center p-3 border border-gray-100 rounded-xl hover:shadow-md transition-shadow">
-                                <div className="flex-1">
-                                  <h3 className="font-bold text-gray-900">{svc.title}</h3>
-                                  <p className="text-sm text-gray-500">₹{svc.basePrice}</p>
+                                <div className="flex-1 pr-4">
+                                  <h3 className="font-black text-gray-900 text-[15px] leading-snug mb-0.5">{svc.title}</h3>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg font-black text-emerald-600">₹{svc.discountPrice || svc.basePrice}</span>
+                                    {svc.discountPrice && svc.discountPrice < svc.basePrice && (
+                                      <span className="text-xs text-gray-400 line-through font-bold opacity-60">₹{svc.basePrice}</span>
+                                    )}
+                                  </div>
                                 </div>
                                 <button
                                   onClick={() => handleServiceClick(svc)}
@@ -306,6 +311,18 @@ const CategoryModal = React.memo(({ isOpen, onClose, category, location, cartCou
                                 </button>
                               </div>
                             ))}
+                            
+                            {/* Bottom Disclaimer */}
+                            <div className="mt-8 pt-4 border-t border-gray-50 flex items-start gap-3 bg-gray-50/50 p-4 rounded-2xl">
+                              <div className="mt-0.5 text-gray-400">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <p className="text-[11px] text-rose-500 font-normal italic leading-snug">
+                                * It is a base price only, additional charges may be applicable after service
+                              </p>
+                            </div>
                           </div>
                         ) : (
                           <div className="text-center py-12 text-gray-500">

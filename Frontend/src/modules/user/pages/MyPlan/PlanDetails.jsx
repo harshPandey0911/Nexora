@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiCheck, FiCalendar, FiClock, FiCreditCard, FiInfo, FiShield, FiStar, FiZap, FiCheckCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiCheck, FiCalendar, FiClock, FiCreditCard, FiInfo, FiShield, FiStar, FiZap, FiCheckCircle, FiGift } from 'react-icons/fi';
 import { getPlans } from '../../services/planService';
 import { userAuthService } from '../../../../services/authService';
 import { toast } from 'react-hot-toast';
@@ -142,100 +142,194 @@ const PlanDetails = () => {
               )}
             </ul>
 
-            {(() => {
-              const planOrder = ['Silver', 'Gold', 'Platinum', 'Diamond'];
-              const currentName = planOrder.find(p => plan.name?.toLowerCase().includes(p.toLowerCase()));
-              const currentIndex = currentName ? planOrder.indexOf(currentName) : -1;
-              const previousPlan = currentIndex > 0 ? planOrder[currentIndex - 1] : null;
-
-              if (previousPlan) {
-                // Determine border color based on theme
-                const borderColor = theme.color.replace('text-', 'border-').replace('600', '200');
-                // Fallback if needed, but 'text-indigo-600' -> 'border-indigo-200' is standard tailwind.
-                // However, dynamic string construction is risky. 
-                // Let's use a simpler known border.
-                return (
-                  <div className={`mt-6 p-4 rounded-2xl border border-dashed flex items-start gap-3 bg-gray-50 border-gray-300`}>
-                    <div className={`mt-0.5 p-1.5 rounded-full ${theme.bg} text-white shadow-sm shrink-0`}>
-                      <FiInfo size={14} />
-                    </div>
-                    <div>
-                      <h4 className={`text-base font-black ${theme.color} mb-1 uppercase tracking-wide`}>
-                        INCLUDES {previousPlan} BENEFITS
-                      </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed font-medium">
-                        This plan is comprehensive! It includes <span className="font-bold text-gray-900 border-b-2 border-gray-200">everything in the {previousPlan} Plan</span> plus the exclusive {plan.name} benefits listed above.
-                      </p>
-                    </div>
-                  </div>
-                );
-              }
-              return null;
-            })()}
           </div>
         </div>
 
-        {/* Free Coverage Section */}
-        {((plan.freeCategories && plan.freeCategories.length > 0) || (plan.freeBrands && plan.freeBrands.length > 0) || (plan.freeServices && plan.freeServices.length > 0)) && (
+        {/* Complimentary Benefits from Previous Plan Section */}
+        {(() => {
+          const planOrder = ['Silver', 'Gold', 'Platinum', 'Diamond'];
+          const currentPlanName = plan.name || '';
+          const currentBaseName = planOrder.find(p => currentPlanName.toLowerCase().includes(p.toLowerCase()));
+          const currentIndex = currentBaseName ? planOrder.indexOf(currentBaseName) : -1;
+          const previousPlan = currentIndex > 0 ? planOrder[currentIndex - 1] : null;
+
+          if (!previousPlan) return null;
+
+          return (
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl p-8 mb-6 text-white shadow-lg shadow-orange-500/20 relative overflow-hidden group animate-fade-in">
+              <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-white/20 transition-all duration-700"></div>
+              
+              <div className="flex items-center gap-4 mb-4 relative z-10">
+                <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl border border-white/30">
+                  <FiGift className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black leading-tight uppercase tracking-wide">Extra Perks from Previous Tier</h3>
+                  <p className="text-[11px] text-amber-50 font-black uppercase tracking-widest opacity-80 mt-1">Tier Booster Active</p>
+                </div>
+              </div>
+
+              <div className="relative z-10 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
+                <p className="text-sm font-medium leading-relaxed">
+                  As a <span className="font-black underline decoration-2 underline-offset-4">{plan.name} Member</span>, you automatically enjoy 
+                  <span className="font-black"> extra benefits</span> from the <span className="bg-white text-orange-600 px-2 py-0.5 rounded-md inline-block font-black mx-1">{previousPlan}</span> 
+                  tier in addition to your premium services.
+                </p>
+                <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-tighter opacity-70">Legacy Support Included</span>
+                  <div className="flex -space-x-2">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="w-6 h-6 rounded-full border-2 border-orange-500 bg-white/20 flex items-center justify-center">
+                        <FiCheck className="w-3 h-3" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Unlimited Categories Section */}
+        {plan.freeCategories && plan.freeCategories.length > 0 && (
           <div className="bg-gradient-to-br from-primary-50 to-white rounded-3xl p-8 mb-6 border border-primary-100 shadow-sm">
             <div className="flex items-center gap-2 mb-6">
               <div className="p-2 bg-primary-100 text-primary-600 rounded-xl">
                 <FiZap className="w-5 h-5 fill-primary-600" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-gray-900 leading-none">Free Coverage</h3>
-                <p className="text-xs text-primary-600 font-bold uppercase tracking-wider mt-1">Zero billing on these services</p>
+                <h3 className="text-lg font-black text-gray-900 leading-none">Unlimited Service Categories</h3>
+                <p className="text-xs text-primary-600 font-bold uppercase tracking-wider mt-1">Full coverage on all services within these categories</p>
               </div>
             </div>
 
             <div className="space-y-6">
-              {plan.freeCategories && plan.freeCategories.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Complimentary Categories</p>
-                  <div className="flex flex-wrap gap-2">
-                    {plan.freeCategories.map((cat, idx) => (
-                      <span key={idx} className="bg-white border border-primary-100 text-primary-700 px-4 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
-                        {cat.title}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {plan.freeBrands && plan.freeBrands.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Complimentary Brands</p>
-                  <div className="flex flex-wrap gap-2">
-                    {plan.freeBrands.map((brand, idx) => (
-                      <span key={idx} className="bg-white border border-indigo-100 text-indigo-700 px-4 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
-                        {brand.title}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {plan.freeServices && plan.freeServices.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Free Specific Services</p>
-                  <div className="flex flex-wrap gap-2">
-                    {plan.freeServices.map((svc, idx) => (
-                      <span key={idx} className="bg-primary-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md flex items-center gap-2">
-                        <FiCheck className="w-3.5 h-3.5" />
-                        {svc.title}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {plan.freeCategories.map((cat, idx) => (
+                  <span key={idx} className="bg-white border border-primary-100 text-primary-700 px-4 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
+                    {cat.title}
+                  </span>
+                ))}
+              </div>
             </div>
 
             <div className="mt-6 p-4 bg-white/50 rounded-2xl border border-dashed border-primary-200">
               <p className="text-[10px] text-gray-400 leading-relaxed font-medium">
-                * Services within the categories listed above are fully covered. For specific free services, only the mentioned service is complimentary.
+                * All service types (Installation, Repair, Service) are 100% free for the categories listed above.
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* 1. Plan Inclusive Benefits (Rose Section) */}
+        {plan.freeServices && plan.freeServices.length > 0 && (
+          <div className="bg-gradient-to-br from-rose-50 to-white rounded-3xl p-8 mb-6 border border-rose-100 shadow-sm animate-fade-in">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="p-2.5 bg-rose-100 text-rose-600 rounded-2xl shadow-sm">
+                <FiCheckCircle className="w-5 h-5 fill-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-slate-900 leading-none">{plan.name} Inclusive Benefits</h3>
+                <p className="text-[10px] text-rose-600 font-bold uppercase tracking-widest mt-1.5 antialiased">Special benefits included with your tier</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {(() => {
+                const groups = new Map();
+                (plan.freeServices || []).forEach(svc => {
+                  const cid = String(svc.categoryId?._id || svc.categoryId || 'unknown');
+                  const tkey = (svc.title || '').trim().toLowerCase();
+                  const key = `${cid}_${tkey}`;
+                  if (!groups.has(key)) groups.set(key, svc);
+                });
+                return Array.from(groups.values()).map((svc, idx) => (
+                  <div key={`free-${idx}`} className="group relative flex items-center justify-between p-5 bg-white border border-rose-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center font-black text-sm">
+                        <FiCheck className="w-6 h-6" />
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-black text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md uppercase tracking-wider">{svc.categoryId?.title || 'Service'}</span>
+                        </div>
+                        <span className="text-slate-900 font-bold text-[15px]">{svc.title} (All Brands)</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-rose-400 text-[10px] font-black uppercase tracking-widest border border-rose-100 px-1.5 py-0.5 rounded text-glow-rose">Membership Exclusive</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] font-black text-rose-500 uppercase tracking-[0.1em] bg-rose-50 px-3 py-1 rounded-full border border-rose-100">Free Benefit</span>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* 2. Complimentary Membership Perks (Emerald Section) */}
+        {plan.bonusServices && plan.bonusServices.length > 0 && (
+          <div className="bg-gradient-to-br from-emerald-50 to-white rounded-3xl p-8 mb-6 border border-emerald-100 shadow-sm animate-fade-in">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-2xl shadow-sm">
+                <FiStar className="w-5 h-5 fill-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-slate-900 leading-none">Complimentary Membership Perks</h3>
+                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest mt-1.5 antialiased">Automatic benefits from previous tier inheritance</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {(() => {
+                const groups = new Map();
+                (plan.bonusServices || []).forEach(bs => {
+                  const svc = bs.serviceId;
+                  if (!svc) return;
+                  const cid = String(bs.categoryId?._id || bs.categoryId || svc.categoryId?._id || svc.categoryId || 'unknown');
+                  const tkey = (svc.title || '').trim().toLowerCase();
+                  const key = `${cid}_${tkey}`;
+                  if (!groups.has(key)) groups.set(key, bs);
+                });
+                
+                return Array.from(groups.values()).map((bs, idx) => {
+                  const svc = bs.serviceId;
+                  const catTitle = bs.categoryId?.title || svc?.categoryId?.title || 'Service';
+                  return (
+                    <div key={`bonus-${idx}`} className="group relative flex items-center justify-between p-5 bg-white border border-emerald-100/50 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-black text-sm">
+                          <FiStar className="w-5 h-5 fill-emerald-600" />
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-md uppercase tracking-wider">{catTitle}</span>
+                          </div>
+                          <span className="text-slate-900 font-bold text-[15px]">{svc.title} (All Brands)</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-100 px-1.5 py-0.5 rounded">Special Benefit</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.1em] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">Free Access</span>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            <div className="mt-8 p-5 bg-white/40 rounded-2xl border border-dashed border-emerald-200/60 backdrop-blur-sm shadow-inner">
+              <div className="flex gap-3">
+                <FiZap className="text-emerald-500 w-4 h-4 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-emerald-800/60 leading-relaxed font-bold italic">
+                  * Enjoy living at its best! These services are offered as a part of your {plan.name} Membership.
+                </p>
+              </div>
             </div>
           </div>
         )}

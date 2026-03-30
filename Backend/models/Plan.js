@@ -3,33 +3,36 @@ const mongoose = require('mongoose');
 const PlanSchema = new mongoose.Schema({
   name: {
     type: String, // Silver, Gold, etc.
-    required: [true, 'Plan name is required'],
-    unique: true,
-    trim: true
+    type: String,
+    required: true,
+    unique: true
   },
   price: {
     type: Number,
-    required: [true, 'Plan price is required']
+    required: true
   },
-  highlights: {
-    type: [String], // Array of highlight strings e.g. ["Priority Support", "Genuine Parts"]
-    default: []
+  duration: {
+    type: String,
+    required: true // e.g., '1 month', '1 year'
   },
-  validityDays: {
-    type: Number,
-    default: 30 // Default to 30 days if not specified
-  },
+  highlights: [String],
   freeCategories: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category'
   }],
-  freeBrands: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Brand'
-  }],
   freeServices: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'UserService'
+  }],
+  bonusServices: [{
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category'
+    },
+    serviceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'UserService'
+    }
   }],
   isActive: {
     type: Boolean,

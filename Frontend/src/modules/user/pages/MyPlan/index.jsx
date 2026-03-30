@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiCheck, FiStar, FiCheckCircle, FiShield, FiZap } from 'react-icons/fi';
+import { FiArrowLeft, FiCheck, FiStar, FiCheckCircle, FiShield, FiZap, FiGift } from 'react-icons/fi';
 import { getPlans } from '../../services/planService';
 import { userAuthService } from '../../../../services/authService';
 import { toast } from 'react-hot-toast';
@@ -114,9 +114,9 @@ const MyPlan = () => {
 
       <main className="px-4 py-12 max-w-7xl mx-auto">
         <div className="mb-12 bg-white/40 backdrop-blur-sm p-8 rounded-[2.5rem] border border-white shadow-sm">
-          <h2 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">Experience Living, Elevated.</h2>
+          <h2 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">Pick Your Membership</h2>
           <p className="text-slate-500 font-bold text-lg max-w-2xl leading-relaxed">
-            Choose a plan that matches your lifestyle. Our premium tiers are <span className="text-primary-600">additive</span>—higher plans seamlessly include every single benefit of the levels below them.
+            Choose a plan that fits your home. Higher plans automatically include benefits from the tiers below them.
           </p>
         </div>
 
@@ -165,17 +165,6 @@ const MyPlan = () => {
 
                     {/* Benefits Section */}
                     <div className="space-y-6">
-                      <div className="space-y-1">
-                        <h4 className={`text-[10px] font-black uppercase tracking-[0.25em] ${style.includes}`}>
-                          MEMBERSHIP PERKS
-                        </h4>
-                        {getPreviousPlanNote(plan.name) && (
-                          <p className={`text-[11px] font-black italic opacity-60 flex items-center gap-1.5`}>
-                            <FiStar className="w-3 h-3 fill-current" />
-                            {getPreviousPlanNote(plan.name)}
-                          </p>
-                        )}
-                      </div>
                       <ul className="space-y-3.5">
                         {(plan.highlights || []).map((feature, idx) => (
                           <li key={`h-${idx}`} className="flex items-start gap-3">
@@ -189,18 +178,85 @@ const MyPlan = () => {
                             <span className="text-[14px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">Free {cat.title || cat.name}</span>
                           </li>
                         ))}
-                        {(plan.freeBrands || []).map((brand, idx) => (
-                          <li key={`brand-${idx}`} className="flex items-start gap-3">
-                            <FiZap className="w-4 h-4 mt-1 shrink-0 text-amber-500 fill-amber-500" />
-                            <span className="text-[14px] font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">Free {brand.title || brand.name}</span>
-                          </li>
-                        ))}
-                        {(plan.freeServices || []).map((svc, idx) => (
-                          <li key={`svc-${idx}`} className="flex items-start gap-3">
-                            <FiZap className="w-4 h-4 mt-1 shrink-0 text-amber-500 fill-amber-500" />
-                            <span className="text-[14px] font-extrabold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md">Free {svc.title || svc.name}</span>
-                          </li>
-                        ))}
+                        {((() => {
+                          const groups = new Map();
+                          (plan.freeServices || []).forEach(svc => {
+                            const cid = String(svc.categoryId?._id || svc.categoryId || 'unknown');
+                            const tkey = (svc.title || '').trim().toLowerCase();
+                            const key = `${cid}_${tkey}`;
+                            if (!groups.has(key)) groups.set(key, svc);
+                          });
+                          
+                          return Array.from(groups.values()).map((svc, idx) => {
+                            const catTitle = svc.categoryId?.title || 'Service';
+                            return (
+                              <li key={`svc-${idx}`} className="flex items-start gap-3">
+                                <FiZap className="w-4 h-4 mt-1 shrink-0 text-amber-500 fill-amber-500" />
+                                <div className="flex flex-col gap-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black uppercase text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">{catTitle}</span>
+                                    <span className="text-[14px] font-extrabold text-rose-600">Free {svc.title || svc.name}</span>
+                                  </div>
+                                </div>
+                              </li>
+                            );
+                          });
+                        })())}
+                        
+                        {(() => {
+                          const planOrder = ['Silver', 'Gold', 'Platinum', 'Diamond'];
+                          const currentName = plan.name || '';
+                          const baseName = planOrder.find(p => currentName.toLowerCase().includes(p.toLowerCase()));
+                          const currentIndex = baseName ? planOrder.indexOf(baseName) : -1;
+                          const prevName = currentIndex > 0 ? planOrder[currentIndex - 1] : null;
+
+                          if (!prevName) return null;
+
+                          return (
+                            <div className="mt-6 mb-2 p-3 bg-white/40 rounded-xl border border-dashed border-current opacity-80 flex items-center gap-2">
+                              <FiGift className="w-4 h-4" />
+                              <p className="text-[10px] font-black uppercase tracking-wider">
+                                Benefits from <span className="underline decoration-2">{prevName}</span> Tier Included
+                              </p>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Grouped Previous Tier Benefit Display */}
+                        {(() => {
+                          const groups = new Map();
+                          (plan.bonusServices || []).forEach(bs => {
+                            const svc = bs.serviceId;
+                            if (!svc) return;
+                            const cid = String(bs.categoryId?._id || bs.categoryId || svc.categoryId?._id || svc.categoryId || 'unknown');
+                            const tkey = (svc.title || '').trim().toLowerCase();
+                            const key = `${cid}_${tkey}`;
+                            if (!groups.has(key)) {
+                              groups.set(key, bs);
+                            }
+                          });
+                          
+                          return Array.from(groups.values()).map((bs, idx) => {
+                            const svc = bs.serviceId;
+                            if (!svc) return null;
+                            const catTitle = bs.categoryId?.title || svc.categoryId?.title || 'Service';
+                            
+                            return (
+                              <li key={idx} className="flex items-start gap-3 p-3 bg-amber-50/70 rounded-xl border border-amber-100 shadow-sm">
+                                <div className="mt-1 w-5 h-5 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center shrink-0">
+                                  <FiStar className="w-3 h-3 fill-amber-600" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-[10px] font-black uppercase text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">{catTitle}</span>
+                                    <span className="text-[13px] font-extrabold text-amber-800">Free {svc.title}</span>
+                                  </div>
+                                  <span className="text-[10px] font-black uppercase tracking-[0.1em] text-[#854D0E] opacity-50 ml-1">Inherited from previous plan</span>
+                                </div>
+                              </li>
+                            );
+                          });
+                        })()}
                       </ul>
                     </div>
                   </div>

@@ -9,7 +9,7 @@ const Plans = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPlan, setCurrentPlan] = useState(null);
-  const [formData, setFormData] = useState({ name: 'Silver', price: '', highlights: [], validityDays: 30, freeCategories: [], freeBrands: [], freeServices: [] });
+  const [formData, setFormData] = useState({ name: 'Silver', price: '', highlights: [], validityDays: 30, freeCategories: [], freeBrands: [], freeServices: [], bonusServices: [] });
   const [featureInput, setFeatureInput] = useState('');
 
   const PLAN_TYPES = ['Silver', 'Gold', 'Diamond', 'Platinum'];
@@ -149,32 +149,20 @@ const Plans = () => {
     setSelectedService('');
   }, [selectedCategory, brandsList]);
 
-  // Filter services when brand (and category) changes
+  // Filter services when category changes
   useEffect(() => {
-    if (!selectedBrand || !selectedCategory) {
+    if (!selectedCategory) {
       setFilteredServices([]);
       return;
     }
     const filtered = servicesList.filter(s => {
       if (!s) return false;
-
-      // Check Brand Match
-      const bObj = s.brandId;
-      if (!bObj) return false;
-      const brandId = bObj._id || bObj.id || bObj;
-      const matchesBrand = String(brandId) === String(selectedBrand);
-
-      // Check Category Match
-      const cObj = s.categoryId;
-      if (!cObj) return false;
-      const categoryId = cObj._id || cObj.id || cObj;
-      const matchesCategory = String(categoryId) === String(selectedCategory);
-
-      return matchesBrand && matchesCategory;
+      const catId = s.categoryId?._id || s.categoryId || s.id;
+      return String(catId) === String(selectedCategory);
     });
     setFilteredServices(filtered);
     setSelectedService('');
-  }, [selectedBrand, selectedCategory, servicesList]);
+  }, [selectedCategory, servicesList]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -189,8 +177,11 @@ const Plans = () => {
         ...formData,
         price: Number(formData.price),
         freeCategories: formData.freeCategories.map(c => String(c?._id || c)),
-        freeBrands: formData.freeBrands.map(b => String(b?._id || b)),
         freeServices: formData.freeServices.map(s => String(s?._id || s)),
+        bonusServices: formData.bonusServices.map(bs => ({
+          categoryId: String(bs.categoryId?._id || bs.categoryId),
+          serviceId: String(bs.serviceId?._id || bs.serviceId)
+        })),
         highlights: formData.highlights 
       };
 
@@ -217,8 +208,11 @@ const Plans = () => {
       highlights: plan.highlights || plan.services || [],
       validityDays: plan.validityDays || 30,
       freeCategories: (plan.freeCategories || []).map(c => c._id || c),
-      freeBrands: (plan.freeBrands || []).map(b => b._id || b),
-      freeServices: (plan.freeServices || []).map(s => s._id || s)
+      freeServices: (plan.freeServices || []).map(s => s._id || s),
+      bonusServices: (plan.bonusServices || []).map(bs => ({
+        categoryId: bs.categoryId?._id || bs.categoryId,
+        serviceId: bs.serviceId?._id || bs.serviceId
+      }))
     });
     setFeatureInput('');
     setIsModalOpen(true);
@@ -259,11 +253,19 @@ const Plans = () => {
 
   const openCreateModal = () => {
     setCurrentPlan(null);
-    setFormData({ name: 'Silver', price: '', highlights: [], validityDays: 30, freeCategories: [], freeBrands: [], freeServices: [] });
+    setFormData({ 
+      name: 'Silver', 
+      price: '', 
+      highlights: [], 
+      validityDays: 30, 
+      freeCategories: [], 
+      freeServices: [], 
+      bonusServices: [],
+      isActive: true,
+      duration: 'Monthly'
+    });
     setIsModalOpen(true);
-    // Reset selections
     setSelectedCategory('');
-    setSelectedBrand('');
     setSelectedService('');
   };
 
@@ -303,7 +305,6 @@ const Plans = () => {
                   <div className="space-y-2 mb-4">
                     <h4 className={`text-[10px] font-bold uppercase tracking-wider ${style.subtext}`}>Includes</h4>
                     <div className="space-y-1.5">
-                      {/* Display Free Categories First */}
                       {plan.freeCategories && plan.freeCategories.length > 0 && (
                         <div className={`flex flex-col gap-1 text-xs ${style.text}`}>
                           {plan.freeCategories.map((catRef, idx) => {
@@ -320,50 +321,65 @@ const Plans = () => {
                         </div>
                       )}
 
-                      {/* Display Free Brands */}
-                      {plan.freeBrands && plan.freeBrands.length > 0 && (
-                        <div className={`flex flex-col gap-1 text-xs ${style.text}`}>
-                          {plan.freeBrands.map((brandRef, idx) => {
-                            const brandId = String(brandRef?._id || brandRef);
-                            const brand = brandsList.find(b => String(b.id || b._id) === brandId);
-                            const displayTitle = brand ? brand.title : (brandRef?.title || 'Unlimited Brand Coverage');
-                            return (
-                              <div key={`b-v-${idx}`} className="flex items-center gap-2">
-                                <FiCheck className={`w-3.5 h-3.5 ${style.check} rounded-full p-0.5`} />
-                                <span>{displayTitle === 'Unlimited Brand Coverage' ? 'Unlimited Brand Coverage' : `Unlimited ${displayTitle}`}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {/* Display Free Services */}
                       {plan.freeServices && plan.freeServices.length > 0 && (
                         <div className={`flex flex-col gap-1 text-xs ${style.text}`}>
-                          {plan.freeServices.map((svcRef, idx) => {
-                            const svcId = String(svcRef?._id || svcRef);
-                            const svc = servicesList.find(s => String(s.id || s._id) === svcId);
-                            
-                            let displayTitle = 'Free Service';
-                            if (svc) {
-                              const brandTitle = svc.brandId?.title || '';
-                              const catTitle = svc.categoryId?.title || '';
-                              displayTitle = `Free ${brandTitle} ${catTitle} ${svc.title}`.replace(/\s+/g, ' ').trim();
-                            } else if (svcRef?.title) {
-                              displayTitle = `Free ${svcRef.title}`;
-                            }
+                          {(() => {
+                            const groups = new Map();
+                            plan.freeServices.forEach(svcRef => {
+                              const svcId = String(svcRef?._id || svcRef);
+                              const svc = servicesList.find(s => String(s.id || s._id) === svcId) || svcRef;
+                              if (!svc || !svc.title) return;
+                              
+                              const cid = String(svc.categoryId?._id || svc.categoryId || 'unknown');
+                              const tkey = svc.title.trim().toLowerCase();
+                              const key = `${cid}_${tkey}`;
+                              if (!groups.has(key)) {
+                                groups.set(key, { svc, catTitle: svc.categoryId?.title || '' });
+                              }
+                            });
 
-                            return (
+                            return Array.from(groups.values()).map((group, idx) => (
                               <div key={`s-v-${idx}`} className="flex items-center gap-2">
                                 <FiCheck className={`w-3.5 h-3.5 ${style.check} rounded-full p-0.5`} />
-                                <span>{displayTitle}</span>
+                                <span className="truncate">
+                                  Free {group.catTitle} {group.svc.title}
+                                </span>
                               </div>
-                            );
-                          })}
+                            ));
+                          })()}
                         </div>
                       )}
 
-                      {(!plan.freeCategories?.length && !plan.freeBrands?.length && !plan.freeServices?.length) && (
+                      {plan.bonusServices && plan.bonusServices.length > 0 && (
+                        <div className={`flex flex-col gap-1 text-xs ${style.text} mt-2`}>
+                          <h5 className="text-[9px] font-bold opacity-70 uppercase mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">Free Benefit from Prev. Plan</h5>
+                          {(() => {
+                            const groups = new Map();
+                            plan.bonusServices.forEach(bs => {
+                              const svc = bs.serviceId;
+                              if (!svc || !svc.title) return;
+                              const cid = String(bs.categoryId?._id || bs.categoryId || svc.categoryId?._id || svc.categoryId || 'unknown');
+                              const tkey = svc.title.trim().toLowerCase();
+                              const key = `${cid}_${tkey}`;
+                              if (!groups.has(key)) {
+                                groups.set(key, { svc, catTitle: bs.categoryId?.title || svc.categoryId?.title || '' });
+                              }
+                            });
+
+                            return Array.from(groups.values()).map((group, idx) => (
+                              <div key={`bs-v-${idx}`} className="flex items-center justify-between gap-2 bg-black/5 rounded px-2 py-1">
+                                <div className="flex items-center gap-2">
+                                  <FiPlus className={`w-3 h-3 opacity-50`} />
+                                  <span className="truncate max-w-[160px] font-medium">{group.svc.title}</span>
+                                </div>
+                                <span className="text-[10px] opacity-40 font-bold">₹</span>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                      )}
+
+                      {(!plan.freeCategories?.length && !plan.freeServices?.length) && (
                         <span className={`text-xs italic ${style.subtext}`}>No benefits configured</span>
                       )}
                     </div>
@@ -402,7 +418,6 @@ const Plans = () => {
         <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in duration-200 my-8 flex flex-col max-h-[90vh]">
 
-            {/* Modal Header */}
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <div>
                 <h2 className="text-2xl font-bold text-gray-800">{currentPlan ? 'Edit Configuration' : 'Create New Plan'}</h2>
@@ -413,10 +428,8 @@ const Plans = () => {
               </button>
             </div>
 
-            {/* Modal Content - Scrollable */}
             <div className="p-8 overflow-y-auto custom-scrollbar space-y-8">
 
-              {/* Basic Info Section */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Plan Type</label>
@@ -465,7 +478,6 @@ const Plans = () => {
                 </div>
               </div>
 
-              {/* Plan Highlights Section */}
               <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                 <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center gap-3">
                   <span className="bg-amber-100 text-amber-600 p-2 rounded-lg">
@@ -525,7 +537,6 @@ const Plans = () => {
                 </div>
               </div>
 
-              {/* Boxed Benefits Section */}
               <div className="border border-gray-200 rounded-2xl overflow-hidden">
                 <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                   <div className="flex items-center gap-3">
@@ -540,7 +551,6 @@ const Plans = () => {
                 </div>
 
                 <div className="p-6 bg-white space-y-6">
-                  {/* Selector Row */}
                   <div className="flex flex-col md:flex-row gap-3 items-end">
                     <div className="flex-1 w-full space-y-1.5">
                       <label className="text-xs font-semibold text-gray-500 uppercase">Category</label>
@@ -557,37 +567,24 @@ const Plans = () => {
                     </div>
 
                     <div className="flex-1 w-full space-y-1.5">
-                      <label className="text-xs font-semibold text-gray-500 uppercase">Brand</label>
-                      <select
-                        value={selectedBrand}
-                        onChange={(e) => setSelectedBrand(e.target.value)}
-                        disabled={!selectedCategory}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
-                      >
-                        <option value="">{selectedCategory ? 'All Brands / Select Brand...' : 'Select Category first'}</option>
-                        {filteredBrands.map(brand => (
-                          <option key={brand.id || brand._id} value={brand.id || brand._id}>{brand.title}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex items-center justify-center pb-3 text-gray-400">
-                      <FiChevronRight className="w-5 h-5 hidden md:block" />
-                    </div>
-
-                    <div className="flex-1 w-full space-y-1.5">
                       <label className="text-xs font-semibold text-gray-500 uppercase">Service</label>
-                      <select
-                        value={selectedService}
-                        onChange={(e) => setSelectedService(e.target.value)}
-                        disabled={!selectedBrand}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
-                      >
-                        <option value="">{selectedBrand ? 'All Services / Select...' : 'Select Brand first'}</option>
-                        {filteredServices.map(service => (
-                          <option key={service.id || service._id} value={service.id || service._id}>{service.title}</option>
-                        ))}
-                      </select>
+                        <select
+                          value={selectedService}
+                          onChange={(e) => setSelectedService(e.target.value)}
+                          disabled={!selectedCategory}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                        >
+                          <option value="">{selectedCategory ? 'Select Service Type...' : 'Select Category first'}</option>
+                          {(() => {
+                            const uniqueNames = Array.from(new Set(filteredServices.map(s => (s.title || '').replace(/\s+/g, ' ').trim().toLowerCase()))).filter(Boolean).sort().map(tKey => {
+                              const match = filteredServices.find(s => (s.title || '').replace(/\s+/g, ' ').trim().toLowerCase() === tKey);
+                              return match ? match.title.replace(/\s+/g, ' ').trim() : tKey;
+                            });
+                            return uniqueNames.map(title => (
+                              <option key={title} value={title}>All {title} Services (All Brands)</option>
+                            ));
+                          })()}
+                        </select>
                     </div>
 
                     <button
@@ -595,22 +592,18 @@ const Plans = () => {
                       disabled={!selectedCategory}
                       onClick={() => {
                         let addedAny = false;
-                        
-                        // Most specific selection wins
-                        if (selectedService) {
-                          // Specific Service
-                          if (!formData.freeServices.some(s => String(s._id || s) === String(selectedService))) {
-                            setFormData(p => ({ ...p, freeServices: [...p.freeServices, selectedService] }));
-                            addedAny = true;
-                          }
-                        } else if (selectedBrand) {
-                          // All Services for a Brand
-                          if (!formData.freeBrands.some(b => String(b._id || b) === String(selectedBrand))) {
-                            setFormData(p => ({ ...p, freeBrands: [...p.freeBrands, selectedBrand] }));
+                          if (selectedService) {
+                            const targetTitleRaw = selectedService.trim().toLowerCase();
+                            const matches = filteredServices.filter(s => (s.title || '').trim().toLowerCase() === targetTitleRaw);
+                            const matchIds = matches.map(s => String(s._id || s.id));
+                          const currentIds = formData.freeServices.map(id => String(id?._id || id));
+                          const newServices = [...new Set([...currentIds, ...matchIds])];
+                          
+                          if (newServices.length > currentIds.length) {
+                            setFormData(p => ({ ...p, freeServices: newServices }));
                             addedAny = true;
                           }
                         } else if (selectedCategory) {
-                          // All Services for a Category
                           if (!formData.freeCategories.some(c => String(c._id || c) === String(selectedCategory))) {
                             setFormData(p => ({ ...p, freeCategories: [...p.freeCategories, selectedCategory] }));
                             addedAny = true;
@@ -620,7 +613,6 @@ const Plans = () => {
                         if (addedAny) {
                           toast.success('Benefit added to list');
                           setSelectedService('');
-                          // If we added a service, maybe keep brand/cat selected for adding next service
                         } else {
                           toast.error('Benefit already in list or nothing selected');
                         }
@@ -631,15 +623,12 @@ const Plans = () => {
                     </button>
                   </div>
 
-                  {/* Divider */}
                   <div className="h-px bg-gray-100 w-full"></div>
 
-                  {/* Active List */}
                   <div className="space-y-3">
                     <p className="text-sm font-semibold text-gray-700">Active Benefits</p>
 
                     <div className="flex flex-wrap gap-3">
-                      {/* Categories */}
                       {formData.freeCategories.map((catId, idx) => {
                         const targetId = String(catId?._id || catId);
                         const cat = categories.find(c => String(c.id || c._id) === targetId);
@@ -660,58 +649,215 @@ const Plans = () => {
                         );
                       })}
 
-                      {/* Brands */}
-                      {formData.freeBrands.map((brandId, idx) => {
-                        const targetId = String(brandId?._id || brandId);
-                        const brand = brandsList.find(b => String(b.id || b._id) === targetId);
-                        const displayTitle = brand ? brand.title : (brandId?.title || 'Brand');
-                        return (
-                          <div key={`b-tag-${idx}`} className="flex items-center gap-2 pl-3 pr-2 py-1.5 bg-sky-50 text-sky-700 border border-sky-100 rounded-full text-sm font-medium shadow-sm">
-                            <FiBriefcase className="w-4 h-4" />
-                            <span>{displayTitle}</span>
-                            <span className="bg-sky-200 text-sky-800 text-[10px] px-1.5 rounded-full uppercase">All Brand Free</span>
-                            <button
-                              type="button"
-                              onClick={() => setFormData(p => ({ ...p, freeBrands: p.freeBrands.filter(id => String(id?._id || id) !== targetId) }))}
-                              className="ml-1 p-0.5 hover:bg-white rounded-full transition-colors text-sky-400 hover:text-red-500"
-                            >
-                              <FiX className="w-4 h-4" />
-                            </button>
-                          </div>
-                        );
-                      })}
+                      {/* Grouped Services - by Category AND Title */}
+                      {(() => {
+                        const groups = new Map();
+                        formData.freeServices.forEach(svcId => {
+                          const targetId = String(svcId?._id || svcId);
+                          const svc = servicesList.find(s => String(s.id || s._id) === targetId);
+                          if (!svc) return;
+                          
+                          const catId = String(svc.categoryId?._id || svc.categoryId);
+                          const title = (svc.title || '').trim().toLowerCase();
+                          const key = `${catId}_${title}`;
+                          
+                          if (!groups.has(key)) {
+                            groups.set(key, { catId, title, ids: [] });
+                          }
+                          groups.get(key).ids.push(targetId);
+                        });
 
-                      {/* Services */}
-                      {formData.freeServices.map((svcId, idx) => {
-                        const targetId = String(svcId?._id || svcId);
-                        const svc = servicesList.find(s => String(s.id || s._id) === targetId);
-                        
-                        let displayTitle = 'Service';
-                        if (svc) {
-                          const brandTitle = svc.brandId?.title || '';
-                          const catTitle = svc.categoryId?.title || '';
-                          displayTitle = `${brandTitle} ${catTitle} ${svc.title}`.replace(/\s+/g, ' ').trim();
-                        } else if (svcId?.title) {
-                          displayTitle = svcId.title;
-                        }
+                        return Array.from(groups.values()).map((group, idx) => {
+                          const cat = categories.find(c => String(c.id || c._id) === group.catId);
+                          const catName = cat ? cat.title : 'Category';
+                          const displayTitle = group.title.charAt(0).toUpperCase() + group.title.slice(1);
 
-                        return (
-                          <div key={`s-tag-${idx}`} className="flex items-center gap-2 pl-3 pr-2 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-sm font-medium shadow-sm">
-                            <FiTool className="w-4 h-4" />
-                            <span>{displayTitle}</span>
-                            <button
-                              type="button"
-                              onClick={() => setFormData(p => ({ ...p, freeServices: p.freeServices.filter(id => String(id?._id || id) !== targetId) }))}
-                              className="ml-1 p-0.5 hover:bg-white rounded-full transition-colors text-emerald-400 hover:text-red-500"
-                            >
-                              <FiX className="w-4 h-4" />
-                            </button>
-                          </div>
-                        );
-                      })}
+                          return (
+                            <div key={`svc-tag-${idx}`} className="flex items-center gap-2 pl-3 pr-2 py-1.5 bg-rose-50 text-rose-700 border border-rose-100 rounded-full text-sm font-medium shadow-sm">
+                              <FiTool className="w-4 h-4" />
+                              <span className="text-[10px] bg-rose-200/50 px-1.5 rounded uppercase font-black mr-1">{catName}</span>
+                              <span className="font-bold">{displayTitle}</span>
+                              <span className="text-[9px] opacity-60 ml-1">All Brands</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData(p => ({ 
+                                    ...p, 
+                                    freeServices: p.freeServices.filter(id => !group.ids.includes(String(id?._id || id)))
+                                  }));
+                                }}
+                                className="ml-1 p-0.5 hover:bg-white rounded-full transition-colors text-rose-400 hover:text-red-500"
+                              >
+                                <FiX className="w-4 h-4" />
+                              </button>
+                            </div>
+                          );
+                        });
+                      })()}
 
-                      {formData.freeCategories.length === 0 && formData.freeBrands.length === 0 && formData.freeServices.length === 0 && (
+                      {formData.freeCategories.length === 0 && formData.freeServices.length === 0 && (
                         <p className="text-gray-400 text-sm italic w-full">No benefits added yet. Select a category above to start.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-gray-200 rounded-2xl overflow-hidden">
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <span className="bg-emerald-100 text-emerald-600 p-2 rounded-lg">
+                      <FiPackage className="w-5 h-5" />
+                    </span>
+                    <div>
+                      <h3 className="font-bold text-gray-800">Free Benefit from Previous Plan</h3>
+                      <p className="text-xs text-gray-500">Add services inherited from lower tiers</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-white space-y-6">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col md:flex-row gap-3 items-end">
+                      <div className="flex-1 w-full space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase">Category</label>
+                        <select
+                          value={selectedCategory}
+                          onChange={(e) => setSelectedCategory(e.target.value)}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                        >
+                          <option value="">Select Category...</option>
+                          {categories.map(cat => (
+                            <option key={cat.id || cat._id} value={cat.id || cat._id}>{cat.title}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex-1 w-full space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-500 uppercase">Service</label>
+                        <select
+                          value={selectedService}
+                          onChange={(e) => setSelectedService(e.target.value)}
+                          disabled={!selectedCategory}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                        >
+                          <option value="">{selectedCategory ? 'Select Service Type...' : 'Select Category first'}</option>
+                          {(() => {
+                            const uniqueNames = Array.from(new Set(filteredServices.map(s => (s.title || '').replace(/\s+/g, ' ').trim().toLowerCase()))).filter(Boolean).sort().map(tKey => {
+                              const match = filteredServices.find(s => (s.title || '').replace(/\s+/g, ' ').trim().toLowerCase() === tKey);
+                              return match ? match.title.replace(/\s+/g, ' ').trim() : tKey;
+                            });
+                            return uniqueNames.map(title => (
+                              <option key={title} value={title}>All {title} Services (All Brands)</option>
+                            ));
+                          })()}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-3 items-end">
+                      <button
+                        type="button"
+                        disabled={!selectedService}
+                        onClick={() => {
+                          const selectionTitleRaw = (selectedService || '').trim().toLowerCase();
+                          if (!selectionTitleRaw) return;
+
+                          // Find all service entries with this title (case-insensitive)
+                          const matches = filteredServices.filter(s => (s.title || '').trim().toLowerCase() === selectionTitleRaw);
+                          
+                          let addedAny = false;
+                          const newBonusEntries = [...formData.bonusServices];
+                          
+                          matches.forEach(svcObj => {
+                            const svcId = String(svcObj._id || svcObj.id);
+                            if (!newBonusEntries.some(bs => String(bs.serviceId?._id || bs.serviceId) === svcId)) {
+                              newBonusEntries.push({
+                                categoryId: selectedCategory,
+                                serviceId: svcObj
+                              });
+                              addedAny = true;
+                            }
+                          });
+
+                          if (addedAny) {
+                            setFormData(p => ({ ...p, bonusServices: newBonusEntries }));
+                            setSelectedService('');
+                            toast.success('Benefits added to list');
+                          } else {
+                            toast.error('Service group already in benefit list');
+                          }
+                        }}
+                        className="h-[42px] px-8 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-emerald-500/20 active:scale-95 transition-all w-full"
+                      >
+                        Add Service Group to Previous Plan Benefits
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-gray-700">Active Previous Plan Benefits</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Grouped Bonus display - by Category AND Title */}
+                      {(() => {
+                        const bonusGroups = new Map();
+                        formData.bonusServices.forEach(bs => {
+                          const sid = String(bs.serviceId?._id || bs.serviceId);
+                          const sObj = servicesList.find(s => String(s.id || s._id) === sid);
+                          if (!sObj) return;
+
+                          const cid = String(bs.categoryId?._id || bs.categoryId);
+                          const title = (sObj.title || '').trim().toLowerCase();
+                          const key = `${cid}_${title}`;
+
+                          if (!bonusGroups.has(key)) {
+                            bonusGroups.set(key, { bs, title, sid, cid, ids: [] });
+                          }
+                          bonusGroups.get(key).ids.push(sid);
+                        });
+
+                        return Array.from(bonusGroups.values()).map((group, idx) => {
+                          const bs = group.bs;
+                          const sampleSvc = servicesList.find(s => String(s.id || s._id) === group.sid);
+                          const displayTitle = sampleSvc ? sampleSvc.title.trim() : group.title;
+                          const catName = bs.categoryId?.title || (categories.find(c => String(c._id || c.id) === group.cid)?.title) || 'Category';
+
+                          return (
+                            <div key={`bs-tag-${idx}`} className="flex flex-col gap-1 pl-3 pr-2 py-3 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-sm font-medium shadow-sm relative">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded uppercase font-black tracking-wider">
+                                  {catName}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData(p => ({ 
+                                      ...p, 
+                                      bonusServices: p.bonusServices.filter(b => {
+                                        const sid = b.serviceId?._id || b.serviceId;
+                                        return !group.ids.includes(String(sid));
+                                      }) 
+                                    }));
+                                  }}
+                                  className="p-1 px-1.5 hover:bg-white rounded transition-colors text-emerald-400 hover:text-red-500"
+                                >
+                                  <FiX className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              <div className="flex flex-col mt-1">
+                                <span className="font-bold text-gray-800 leading-tight">
+                                  {displayTitle} <span className="text-[10px] font-normal opacity-50 ml-1">(All Brands)</span>
+                                </span>
+                                <div className="flex items-center mt-2 text-[10px] opacity-40 uppercase tracking-widest italic">
+                                  Tier Inheritance
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                      {formData.bonusServices.length === 0 && (
+                        <p className="text-gray-400 text-sm italic col-span-full">No bonus services added yet.</p>
                       )}
                     </div>
                   </div>
