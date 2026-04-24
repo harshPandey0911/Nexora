@@ -183,6 +183,30 @@ export const updateProfile = async (profileData) => {
 };
 
 /**
+ * Toggle vendor online/offline status
+ * @param {boolean} isOnline - Whether the vendor is online
+ * @returns {Promise<Object>} Updated status
+ */
+export const updateOnlineStatus = async (isOnline) => {
+  try {
+    const response = await api.put('/vendors/status', { isOnline });
+    
+    // Update local storage so the toggle stays persistent on refresh
+    if (response.data.success) {
+      const profile = JSON.parse(localStorage.getItem('vendorData') || '{}');
+      profile.isOnline = isOnline;
+      profile.availability = isOnline ? 'AVAILABLE' : 'OFFLINE';
+      localStorage.setItem('vendorData', JSON.stringify(profile));
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error updating online status:', error);
+    throw error;
+  }
+};
+
+/**
  * Change password
  * @param {Object} passwordData - Current and new password
  * @returns {Promise<boolean>} Success status

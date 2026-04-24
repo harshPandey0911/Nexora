@@ -11,8 +11,8 @@ const DebugConsole = () => {
     // Intercept console.error
     const originalError = console.error;
     console.error = (...args) => {
-      setErrors(prev => [...prev.slice(-19), { 
-        id: Date.now(), 
+      setErrors(prev => [...prev.slice(-19), {
+        id: Date.now(),
         message: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '),
         time: new Date().toLocaleTimeString()
       }]);
@@ -21,8 +21,8 @@ const DebugConsole = () => {
 
     // Capture global errors
     const handleGlobalError = (event) => {
-      setErrors(prev => [...prev.slice(-19), { 
-        id: Date.now(), 
+      setErrors(prev => [...prev.slice(-19), {
+        id: Date.now(),
         message: `Global Error: ${event.message}`,
         time: new Date().toLocaleTimeString()
       }]);
@@ -73,14 +73,14 @@ const DebugConsole = () => {
                 <h3 className="font-bold text-lg">Homster Debug Console</h3>
               </div>
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={() => setErrors([])}
                   className="p-2 hover:bg-white/10 rounded-lg text-gray-400 transition-colors"
                   title="Clear Logs"
                 >
                   <FiTrash2 size={18} />
                 </button>
-                <button 
+                <button
                   onClick={() => setIsOpen(false)}
                   className="p-2 hover:bg-white/10 rounded-lg text-gray-400 transition-colors"
                 >
@@ -100,7 +100,7 @@ const DebugConsole = () => {
                   <div key={err.id} className="p-3 bg-red-900/20 border-l-4 border-red-500/50 rounded-r-lg group">
                     <div className="flex justify-between items-start mb-1">
                       <span className="text-[10px] text-red-400 font-bold uppercase tracking-wider">Error @ {err.time}</span>
-                      <button 
+                      <button
                         onClick={() => navigator.clipboard.writeText(err.message)}
                         className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded transition-all"
                       >

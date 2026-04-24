@@ -1,21 +1,27 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiDollarSign, FiTrendingUp, FiCalendar, FiArrowRight } from 'react-icons/fi';
+import { FiDollarSign, FiTrendingUp, FiCalendar, FiArrowRight, FiGift, FiAlertCircle, FiPieChart } from 'react-icons/fi';
+import { FaWallet } from 'react-icons/fa';
 import { vendorTheme as themeColors } from '../../../../theme';
 import Header from '../../components/layout/Header';
 import BottomNav from '../../components/layout/BottomNav';
-
+import { getEarningsOverview } from '../../services/earningsService';
+import LogoLoader from '../../../../components/common/LogoLoader';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const Earnings = () => {
   const navigate = useNavigate();
-  const [earnings, setEarnings] = useState({
-    today: 0,
-    week: 0,
-    month: 0,
-    total: 0,
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [period, setPeriod] = useState('monthly'); // for chart: daily, weekly, monthly
+  const [filter, setFilter] = useState('all'); // for history and breakdown: all, today, week, month
+  
+  const [earningsData, setEarningsData] = useState({
+    totals: { total: 0, today: 0, week: 0, month: 0 },
+    breakdown: { totalEarnings: 0, totalDeductions: 0, totalBonuses: 0 },
+    chartData: [],
+    history: []
   });
-  const [earningsHistory, setEarningsHistory] = useState([]);
-  const [filter, setFilter] = useState('all'); // all, today, week, month
 
   useLayoutEffect(() => {
     const html = document.documentElement;
@@ -34,216 +40,251 @@ const Earnings = () => {
     };
   }, []);
 
-  useEffect(() => {
-
-
-    const loadEarnings = () => {
-      try {
-        const vendorEarnings = JSON.parse(localStorage.getItem('vendorEarnings') || '{}');
-        const earningsData = {
-          today: vendorEarnings.today || 0,
-          week: vendorEarnings.week || 0,
-          month: vendorEarnings.month || 0,
-          total: vendorEarnings.total || 0,
-        };
-        setEarnings(earningsData);
-
-        const history = JSON.parse(localStorage.getItem('vendorEarningsHistory') || '[]');
-        setEarningsHistory(history);
-      } catch (error) {
-        console.error('Error loading earnings:', error);
+  const fetchEarnings = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await getEarningsOverview({ period, filter });
+      if (res.success) {
+        setEarningsData(res.data);
+      } else {
+        setError(res.message || 'Failed to load earnings data');
       }
-    };
-
-    // Load immediately and after a delay
-    loadEarnings();
-    setTimeout(loadEarnings, 200);
-
-    window.addEventListener('vendorEarningsUpdated', loadEarnings);
-
-    return () => {
-      window.removeEventListener('vendorEarningsUpdated', loadEarnings);
-    };
-  }, []);
-
-  const filteredHistory = earningsHistory.filter(item => {
-    if (filter === 'all') return true;
-    const itemDate = new Date(item.date);
-    const now = new Date();
-
-    if (filter === 'today') {
-      return itemDate.toDateString() === now.toDateString();
+    } catch (err) {
+      console.error('Fetch earnings error:', err);
+      setError('An error occurred while fetching earnings data.');
+    } finally {
+      setLoading(false);
     }
-    if (filter === 'week') {
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      return itemDate >= weekAgo;
+  };
+
+  useEffect(() => {
+    fetchEarnings();
+  }, [period, filter]);
+
+  // Format date for chart X-axis
+  const formatXAxis = (tickItem) => {
+    if (!tickItem) return '';
+    const parts = tickItem.split('-');
+    if (period === 'daily' && parts.length === 3) {
+      return `${parts[2]}/${parts[1]}`; // DD/MM
     }
-    if (filter === 'month') {
-      return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+    if (period === 'weekly') {
+      return `W${parts[1]}`;
     }
-    return true;
-  });
+    if (period === 'monthly' && parts.length >= 2) {
+      const date = new Date(parts[0], parseInt(parts[1]) - 1, 1);
+      return date.toLocaleString('default', { month: 'short' });
+    }
+    return tickItem;
+  };
+
+  if (loading && !earningsData.chartData.length) {
+    return <LogoLoader />;
+  }
+
+  const { totals, breakdown, chartData, history } = earningsData;
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: themeColors.backgroundGradient }}>
-      <Header title="Earnings" />
+    <div className="min-h-screen pb-24" style={{ background: themeColors.backgroundGradient }}>
+      <Header title="Earnings Analytics" />
 
-      <main className="px-4 py-6">
-        {/* Earnings Overview Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div
-            className="bg-white rounded-xl p-4 shadow-md"
-            style={{
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            }}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Today</p>
-              <FiCalendar className="w-4 h-4 text-gray-400" />
+      <main className="px-4 py-4 space-y-6">
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl text-sm font-medium">
+            {error}
+          </div>
+        )}
+
+        {/* Top Totals Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-white/40 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-teal-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 bg-teal-50 rounded-lg text-teal-600">
+                <FiCalendar className="w-4 h-4" />
+              </div>
+              <p className="text-xs font-black uppercase tracking-wider text-gray-500">Today</p>
             </div>
-            <p className="text-2xl font-bold" style={{ color: themeColors.button }}>
-              ₹{earnings.today.toLocaleString()}
-            </p>
+            <p className="text-2xl font-black text-gray-900">₹{totals.today.toLocaleString()}</p>
           </div>
 
-          <div
-            className="bg-white rounded-xl p-4 shadow-md"
-            style={{
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            }}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">This Week</p>
-              <FiTrendingUp className="w-4 h-4 text-gray-400" />
+          <div className="bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-white/40 shadow-sm relative overflow-hidden group">
+             <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 bg-blue-50 rounded-lg text-blue-600">
+                <FiTrendingUp className="w-4 h-4" />
+              </div>
+              <p className="text-xs font-black uppercase tracking-wider text-gray-500">This Week</p>
             </div>
-            <p className="text-2xl font-bold" style={{ color: themeColors.button }}>
-              ₹{earnings.week.toLocaleString()}
-            </p>
+            <p className="text-2xl font-black text-gray-900">₹{totals.week.toLocaleString()}</p>
           </div>
 
-          <div
-            className="bg-white rounded-xl p-4 shadow-md"
-            style={{
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            }}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">This Month</p>
-              <FiDollarSign className="w-4 h-4 text-gray-400" />
+          <div className="bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-white/40 shadow-sm relative overflow-hidden group">
+             <div className="absolute top-0 right-0 w-16 h-16 bg-purple-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 bg-purple-50 rounded-lg text-purple-600">
+                <FiPieChart className="w-4 h-4" />
+              </div>
+              <p className="text-xs font-black uppercase tracking-wider text-gray-500">This Month</p>
             </div>
-            <p className="text-2xl font-bold" style={{ color: themeColors.button }}>
-              ₹{earnings.month.toLocaleString()}
-            </p>
+            <p className="text-2xl font-black text-gray-900">₹{totals.month.toLocaleString()}</p>
           </div>
 
-          <div
-            className="bg-white rounded-xl p-4 shadow-md"
-            style={{
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            }}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Total</p>
-              <FiDollarSign className="w-4 h-4" style={{ color: themeColors.icon }} />
+          <div className="bg-gradient-to-br from-[#001947] to-[#003b77] rounded-2xl p-4 shadow-lg relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white rounded-full mix-blend-overlay filter blur-2xl opacity-10"></div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 bg-white/20 rounded-lg text-white">
+                <FaWallet className="w-4 h-4" />
+              </div>
+              <p className="text-xs font-black uppercase tracking-wider text-gray-300">All Time</p>
             </div>
-            <p className="text-2xl font-bold" style={{ color: themeColors.button }}>
-              ₹{earnings.total.toLocaleString()}
-            </p>
+            <p className="text-2xl font-black text-white">₹{totals.total.toLocaleString()}</p>
           </div>
         </div>
 
-        {/* Filter Buttons */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-          {[
-            { id: 'all', label: 'All' },
-            { id: 'today', label: 'Today' },
-            { id: 'week', label: 'This Week' },
-            { id: 'month', label: 'This Month' },
-          ].map((filterOption) => (
-            <button
-              key={filterOption.id}
-              onClick={() => setFilter(filterOption.id)}
-              className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${filter === filterOption.id
-                  ? 'text-white'
-                  : 'bg-white text-gray-700'
-                }`}
-              style={
-                filter === filterOption.id
-                  ? {
-                    background: themeColors.button,
-                    boxShadow: `0 2px 8px ${themeColors.button}40`,
-                  }
-                  : {
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  }
-              }
-            >
-              {filterOption.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Earnings History */}
-        <div>
-          <h3 className="font-bold text-gray-800 mb-4">Earnings History</h3>
-          {filteredHistory.length === 0 ? (
-            <div
-              className="bg-white rounded-xl p-8 text-center shadow-md"
-              style={{
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-              }}
-            >
-              <FiDollarSign className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-600 font-semibold mb-2">No earnings yet</p>
-              <p className="text-sm text-gray-500">Your earnings will appear here</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredHistory.map((item, index) => (
-                <div
-                  key={index}
-                  className="bg-white rounded-xl p-4 shadow-md"
-                  style={{
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                  }}
+        {/* Charts Section */}
+        <div className="bg-white rounded-[2rem] p-5 shadow-lg border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest">Revenue Growth</h3>
+            <div className="flex bg-gray-100 rounded-xl p-1">
+              {['daily', 'weekly', 'monthly'].map(p => (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={`px-3 py-1 text-[10px] font-bold uppercase rounded-lg transition-all ${
+                    period === p ? 'bg-white text-[#00a6a6] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-800">{item.serviceType || 'Service'}</p>
-                      <p className="text-sm text-gray-600">{item.date}</p>
-                      {item.worker && (
-                        <p className="text-xs text-gray-500 mt-1">Worker: {item.worker}</p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold" style={{ color: themeColors.button }}>
-                        ₹{item.amount.toLocaleString()}
-                      </p>
-                      {item.commission && (
-                        <p className="text-xs text-gray-500">Commission: ₹{item.commission}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  {p.replace('ly', '')}
+                </button>
               ))}
             </div>
-          )}
+          </div>
+          
+          <div className="h-48 w-full">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#00a6a6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#00a6a6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                  <XAxis dataKey="date" tickFormatter={formatXAxis} axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    itemStyle={{ color: '#00a6a6', fontWeight: 'bold' }}
+                    labelStyle={{ color: '#6B7280', fontSize: '12px', marginBottom: '4px' }}
+                    formatter={(value) => [`₹${value}`, 'Revenue']}
+                  />
+                  <Area type="monotone" dataKey="amount" stroke="#00a6a6" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+               <div className="h-full flex items-center justify-center text-gray-400 text-sm font-medium">
+                 No chart data available
+               </div>
+            )}
+          </div>
         </div>
 
-        {/* View Wallet Button */}
-        <div className="mt-6">
-          <button
-            onClick={() => navigate('/vendor/wallet')}
-            className="w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all active:scale-95"
-            style={{
-              background: themeColors.button,
-              boxShadow: `0 4px 12px ${themeColors.button}40`,
-            }}
-          >
-            View Wallet
-            <FiArrowRight className="w-5 h-5" />
-          </button>
+        {/* Breakdown Section */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest px-1">Breakdown</h3>
+            <select 
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="bg-transparent text-xs font-bold text-teal-600 outline-none cursor-pointer"
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="bg-green-50 rounded-2xl p-4 flex items-center justify-between border border-green-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-green-600">
+                  <FiDollarSign className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase text-green-700 opacity-70">Earnings</p>
+                  <p className="text-lg font-black text-green-700">+₹{breakdown.totalEarnings.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 rounded-2xl p-4 flex items-center justify-between border border-amber-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                  <FiGift className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase text-amber-700 opacity-70">Bonuses</p>
+                  <p className="text-lg font-black text-amber-700">+₹{breakdown.totalBonuses.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-red-50 rounded-2xl p-4 flex items-center justify-between border border-red-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600">
+                  <FiAlertCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase text-red-700 opacity-70">Deductions</p>
+                  <p className="text-lg font-black text-red-700">-₹{breakdown.totalDeductions.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Recent Transactions List */}
+        <div>
+           <div className="flex items-center justify-between mb-4 px-1">
+            <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest">Recent Activity</h3>
+            <button onClick={() => navigate('/vendor/wallet')} className="text-xs font-bold text-teal-600">View Wallet</button>
+          </div>
+          
+          <div className="space-y-3">
+            {history.length === 0 ? (
+              <div className="bg-white/50 rounded-2xl p-8 text-center border border-white/40">
+                <p className="text-sm font-medium text-gray-500">No recent transactions found.</p>
+              </div>
+            ) : (
+              history.slice(0, 5).map((item) => (
+                <div key={item.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${item.isDeduction ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}`}>
+                      {item.isDeduction ? <FiTrendingUp className="w-4 h-4 rotate-180" /> : <FiTrendingUp className="w-4 h-4" />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800 capitalize">{item.description || item.type.replace('_', ' ')}</p>
+                      <p className="text-[10px] font-medium text-gray-400">
+                        {new Date(item.date).toLocaleDateString()} • {new Date(item.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-base font-black ${item.isDeduction ? 'text-red-500' : 'text-green-500'}`}>
+                      {item.isDeduction ? '-' : '+'}₹{item.amount.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
       </main>
 
       <BottomNav />
@@ -252,4 +293,3 @@ const Earnings = () => {
 };
 
 export default Earnings;
-

@@ -13,7 +13,7 @@ const StatsCards = memo(({ stats }) => {
       value: `₹${stats.todayEarnings.toLocaleString()}`,
       icon: FaWallet,
       gradient: 'linear-gradient(135deg, #001947 0%, #003b77 100%)',
-      onClick: () => navigate('/vendor/wallet')
+      onClick: () => navigate('/vendor/earnings')
     },
     {
       title: 'Pending Alerts',
@@ -30,11 +30,11 @@ const StatsCards = memo(({ stats }) => {
       onClick: () => navigate('/vendor/jobs')
     },
     {
-      title: 'Completed',
-      value: stats.completedJobs,
-      icon: FiCheckCircle,
+      title: 'My Services',
+      value: stats.totalCategories || 0,
+      icon: FiBriefcase,
       gradient: 'linear-gradient(135deg, #001947 0%, #003b77 100%)',
-      onClick: () => navigate('/vendor/jobs')
+      onClick: () => navigate('/vendor/my-services')
     }
   ];
 

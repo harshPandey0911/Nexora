@@ -74,6 +74,7 @@ const _buildVendorQuery = (filters = {}) => {
   const baseQuery = {
     approvalStatus: VENDOR_STATUS.APPROVED,
     isActive: true,
+    isOnline: true, // Only fetch online vendors for bookings
     ...queryFilters
   };
 

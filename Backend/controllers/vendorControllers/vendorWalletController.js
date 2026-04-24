@@ -807,6 +807,163 @@ const getWithdrawals = async (req, res) => {
   }
 };
 
+/**
+ * Get comprehensive earnings analytics (Charts & Breakdowns)
+ */
+const getEarningsAnalytics = async (req, res) => {
+  try {
+    const vendorId = req.user.id;
+    const { period = 'monthly', filter = 'all' } = req.query; // period for chart grouping
+
+    // Time ranges
+    const now = new Date();
+    const todayStart = new Date(now.setHours(0, 0, 0, 0));
+    
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - 7);
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const monthStart = new Date(now);
+    monthStart.setMonth(now.getMonth() - 1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    // Earning Types
+    const earningTypes = ['credit', 'commission', 'earnings_credit'];
+    const deductionTypes = ['debit', 'penalty', 'tds_deduction', 'platform_fee', 'convenience_fee'];
+    const bonusTypes = ['bonus']; // If you introduce a 'bonus' type later
+
+    // 1. Get Totals (Today, Week, Month, All-Time)
+    // We will aggregate all 'earning' transactions
+    const totalsAggregation = await Transaction.aggregate([
+      {
+        $match: {
+          vendorId: vendorId,
+          type: { $in: earningTypes },
+          status: 'completed'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' },
+          today: {
+            $sum: { $cond: [{ $gte: ['$createdAt', todayStart] }, '$amount', 0] }
+          },
+          week: {
+            $sum: { $cond: [{ $gte: ['$createdAt', weekStart] }, '$amount', 0] }
+          },
+          month: {
+            $sum: { $cond: [{ $gte: ['$createdAt', monthStart] }, '$amount', 0] }
+          }
+        }
+      }
+    ]);
+
+    const totals = totalsAggregation[0] || { total: 0, today: 0, week: 0, month: 0 };
+
+    // 2. Get Breakdowns (Bonuses, Deductions, Commissions)
+    let dateFilter = {};
+    if (filter === 'today') dateFilter = { $gte: todayStart };
+    else if (filter === 'week') dateFilter = { $gte: weekStart };
+    else if (filter === 'month') dateFilter = { $gte: monthStart };
+
+    const breakdownMatch = {
+      vendorId: vendorId,
+      status: 'completed'
+    };
+    if (filter !== 'all') {
+      breakdownMatch.createdAt = dateFilter;
+    }
+
+    const breakdownsAggregation = await Transaction.aggregate([
+      { $match: breakdownMatch },
+      {
+        $group: {
+          _id: null,
+          totalEarnings: {
+            $sum: { $cond: [{ $in: ['$type', earningTypes] }, '$amount', 0] }
+          },
+          totalDeductions: {
+            $sum: { $cond: [{ $in: ['$type', deductionTypes] }, '$amount', 0] }
+          },
+          totalBonuses: {
+            // For now, assume any 'credit' with 'bonus' in description is a bonus
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$type', 'credit'] },
+                    { $regexMatch: { input: { $toLower: '$description' }, regex: 'bonus' } }
+                  ]
+                },
+                '$amount',
+                0
+              ]
+            }
+          }
+        }
+      }
+    ]);
+
+    const breakdown = breakdownsAggregation[0] || { totalEarnings: 0, totalDeductions: 0, totalBonuses: 0 };
+
+    // 3. Get Chart Data
+    let groupFormat = '%Y-%m-%d'; // default daily
+    if (period === 'weekly') groupFormat = '%Y-%W';
+    else if (period === 'monthly') groupFormat = '%Y-%m';
+
+    const chartData = await Transaction.aggregate([
+      {
+        $match: {
+          vendorId: vendorId,
+          type: { $in: earningTypes },
+          status: 'completed'
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: groupFormat, date: '$createdAt' }
+          },
+          amount: { $sum: '$amount' }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 30 } // Limit to last 30 points
+    ]);
+
+    // 4. Recent History (Combined Earnings & Deductions)
+    const history = await Transaction.find(breakdownMatch)
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .select('type amount description createdAt status');
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totals,
+        breakdown,
+        chartData: chartData.map(d => ({ date: d._id, amount: d.amount })),
+        history: history.map(h => ({
+          id: h._id,
+          type: h.type,
+          amount: h.amount,
+          description: h.description,
+          date: h.createdAt,
+          isDeduction: deductionTypes.includes(h.type)
+        }))
+      }
+    });
+
+  } catch (error) {
+    console.error('Get earnings analytics error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch earnings analytics'
+    });
+  }
+};
+
 module.exports = {
   getWallet,
   getTransactions,
@@ -816,5 +973,6 @@ module.exports = {
   getWalletSummary,
   payWorker,
   requestWithdrawal,
-  getWithdrawals
+  getWithdrawals,
+  getEarningsAnalytics
 };

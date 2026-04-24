@@ -39,25 +39,58 @@
 /* Modern fade-in page transition - smooth and fast */
 /* Using opacity only to avoid transform stacking context issues that break fixed positioning */
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slide-in-bottom {
-  from { transform: translateY(30px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes floating {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(5deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-15px) rotate(5deg);
+  }
+
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
 }
 
 @keyframes pulse-subtle {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.1); }
-  70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.1); }
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.1);
+  }
+
+  70% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.1);
+  }
 }
 
 .animate-fade-in {
@@ -72,11 +105,30 @@
   animation: floating 6s ease-in-out infinite;
 }
 
-.animate-stagger-1 { animation-delay: 0.1s; opacity: 0; }
-.animate-stagger-2 { animation-delay: 0.2s; opacity: 0; }
-.animate-stagger-3 { animation-delay: 0.3s; opacity: 0; }
-.animate-stagger-4 { animation-delay: 0.4s; opacity: 0; }
-.animate-stagger-5 { animation-delay: 0.5s; opacity: 0; }
+.animate-stagger-1 {
+  animation-delay: 0.1s;
+  opacity: 0;
+}
+
+.animate-stagger-2 {
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+
+.animate-stagger-3 {
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+.animate-stagger-4 {
+  animation-delay: 0.4s;
+  opacity: 0;
+}
+
+.animate-stagger-5 {
+  animation-delay: 0.5s;
+  opacity: 0;
+}
 
 .logo-animated {
   animation: logo-slide-in 0.6s ease-out, logo-pulse 3s ease-in-out infinite 0.6s;

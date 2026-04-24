@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { FiUser, FiMail, FiPhone, FiFileText, FiUpload, FiX, FiArrowRight, FiChevronLeft, FiCheckCircle, FiCamera } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { themeColors } from '../../../theme';
-import { register, sendOTP as sendVendorOTP } from '../services/authService';
+import { register, sendOTP as sendVendorOTP, verifyLogin } from '../services/authService';
 import LogoLoader from '../../../components/common/LogoLoader';
 import Logo from '../../../components/common/Logo';
 import { compressImage } from '../../../utils/imageCompression';
@@ -182,7 +182,7 @@ const VendorSignup = () => {
     });
 
     if (!validationResult.success) {
-      validationResult.error.errors.forEach(err => toast.error(err.message));
+      validationResult.error.issues.forEach(err => toast.error(err.message));
       return;
     }
 
@@ -223,11 +223,11 @@ const VendorSignup = () => {
           toast.success(
             <div className="flex flex-col">
               <span className="font-bold">Application Submitted!</span>
-              <span className="text-xs">Your vendor account is pending admin approval.</span>
+              <span className="text-xs">Please complete the training module.</span>
             </div>,
             { icon: <FiCheckCircle className="text-[#D68F35]" />, duration: 5000 }
           );
-          navigate('/vendor/login');
+          navigate('/vendor/training');
         } else {
           toast.error(response.message || 'Registration failed');
         }
@@ -242,6 +242,21 @@ const VendorSignup = () => {
     try {
       const response = await sendVendorOTP(formData.phoneNumber);
       if (response.success) {
+        if (response.vendor?.adminApproval?.toLowerCase() === 'pending') {
+          setIsLoading(false);
+          toast.error('Your account is currently under review. Please wait for admin approval.', {
+            duration: 5000,
+            icon: '⏳'
+          });
+          return;
+        }
+
+        if (!response.token) {
+          setIsLoading(false);
+          toast.error(response.message || 'Failed to initialize verification.');
+          return;
+        }
+
         setOtpToken(response.token);
         setIsLoading(false);
         setStep('otp');
@@ -295,39 +310,55 @@ const VendorSignup = () => {
     }
     setIsLoading(true);
     try {
-      const aadharDoc = formData.documents.find(d => d.type === 'aadhar')?.url || null;
-      const aadharBackDoc = formData.documents.find(d => d.type === 'aadharBack')?.url || null;
-      const panDoc = formData.documents.find(d => d.type === 'pan')?.url || null;
-      const otherDocs = formData.documents.filter(d => d.type === 'other').map(d => d.url);
+      // 1. Verify OTP using the unified verify-login endpoint
+      // This will return isNewUser: true and a verificationToken for new vendors
+      const response = await verifyLogin({ 
+        phone: formData.phoneNumber, 
+        otp: otpValue 
+      });
 
-      const registerData = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phoneNumber,
-        aadhar: formData.aadhar,
-        pan: formData.pan,
-        service: formData.service,
-        aadharDocument: aadharDoc,
-        aadharBackDocument: aadharBackDoc,
-        panDocument: panDoc,
-        otherDocuments: otherDocs,
-        otp: otpValue,
-        token: otpToken
-      };
-
-      const response = await register(registerData);
-
-      if (response.success) {
+      if (response.success && response.isNewUser) {
         setIsLoading(false);
-        toast.success('Registration successful! Pending admin approval.');
-        navigate('/vendor/login');
+        toast.success('OTP Verified! Please complete the training module.');
+        
+        // Prepare registration data to be passed to Training page
+        const aadharDoc = formData.documents.find(d => d.type === 'aadhar')?.url || null;
+        const aadharBackDoc = formData.documents.find(d => d.type === 'aadharBack')?.url || null;
+        const panDoc = formData.documents.find(d => d.type === 'pan')?.url || null;
+        const otherDocs = formData.documents.filter(d => d.type === 'other').map(d => d.url);
+
+        const pendingRegisterData = {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phoneNumber,
+          aadhar: formData.aadhar,
+          pan: formData.pan,
+          service: [], // Default empty
+          aadharDocument: aadharDoc,
+          aadharBackDocument: aadharBackDoc,
+          panDocument: panDoc,
+          otherDocuments: otherDocs,
+          verificationToken: response.verificationToken
+        };
+
+        // Store in sessionStorage as fallback
+        sessionStorage.setItem('pendingVendorRegistration', JSON.stringify(pendingRegisterData));
+        
+        // Navigate to training with data
+        navigate('/vendor/training', { state: { registerData: pendingRegisterData } });
+      } else if (response.success && !response.isNewUser) {
+        // This shouldn't happen if they came through signup flow with a new number,
+        // but if they are already a vendor, they might be logged in now.
+        setIsLoading(false);
+        toast.success('Account already exists. Logged in successfully.');
+        navigate('/vendor/dashboard');
       } else {
         setIsLoading(false);
-        toast.error(response.message || 'Registration failed');
+        toast.error(response.message || 'Verification failed');
       }
     } catch (error) {
       setIsLoading(false);
-      toast.error(error.response?.data?.message || 'Registration failed');
+      toast.error(error.response?.data?.message || 'Verification failed');
     }
   };
 

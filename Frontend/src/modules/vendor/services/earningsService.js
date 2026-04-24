@@ -6,7 +6,7 @@
  * Replace localStorage calls with actual API endpoints.
  */
 
-const API_BASE_URL = '/api/vendors';
+import api from '../../../services/api';
 
 /**
  * Get earnings overview
@@ -15,13 +15,8 @@ const API_BASE_URL = '/api/vendors';
  */
 export const getEarningsOverview = async (filters = {}) => {
   try {
-    // TODO: Replace with actual API call
-    // const response = await fetch(`${API_BASE_URL}/earnings/overview?${new URLSearchParams(filters)}`);
-    // return await response.json();
-
-    // Mock implementation
-    const earnings = JSON.parse(localStorage.getItem('vendorEarnings') || '{}');
-    return earnings;
+    const response = await api.get('/vendors/earnings/analytics', { params: filters });
+    return response.data;
   } catch (error) {
     console.error('Error fetching earnings overview:', error);
     throw error;

@@ -58,7 +58,7 @@ const VendorLogin = () => {
     // Zod Validation
     const validationResult = phoneSchema.safeParse({ phone: phoneNumber });
     if (!validationResult.success) {
-      toast.error(validationResult.error.errors[0].message);
+      toast.error(validationResult.error.issues[0].message);
       return;
     }
 

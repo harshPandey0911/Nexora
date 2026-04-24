@@ -186,6 +186,8 @@ app.use('/api/vendors/workers', require('./routes/vendor-routes/worker.routes'))
 app.use('/api/vendors/fcm-tokens', require('./routes/vendor-routes/fcmToken.routes'));
 app.use('/api/vendors', require('./routes/vendor-routes/vendorBill.routes'));
 app.use('/api/vendors/catalog', require('./routes/vendor-routes/catalog.routes'));
+app.use('/api/vendors/training', require('./routes/vendor-routes/training.routes'));
+app.use('/api/vendors/support', require('./routes/vendor-routes/support.routes'));
 
 // Worker routes
 app.use('/api/workers/auth', require('./routes/worker-routes/auth.routes'));
@@ -217,6 +219,8 @@ app.use('/api/admin', require('./routes/admin-routes/reviewManagement.routes'));
 app.use('/api/admin', require('./routes/admin-routes/reportManagement.routes'));
 app.use('/api/admin/settlements', require('./routes/admin-routes/settlementManagement.routes'));
 app.use('/api/admin/admins', require('./routes/admin-routes/adminManagement.routes'));
+app.use('/api/admin/support', require('./routes/admin-routes/support.routes'));
+app.use('/api/admin/training', require('./routes/admin-routes/training.routes'));
 app.use('/api/image', require('./routes/admin-routes/image.routes'));
 app.use('/api', require('./routes/admin-routes/upload.routes')); // Generic upload access
 

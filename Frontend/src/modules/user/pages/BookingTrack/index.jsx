@@ -306,17 +306,17 @@ const BookingTrack = () => {
     if (!db || !id) return;
 
     const trackingRef = ref(db, `trackings/${id}`);
-    
+
     const unsubscribe = onValue(trackingRef, (snapshot) => {
       const data = snapshot.val();
       if (data && data.lat && data.lng) {
         // Firebase is now the primary source for real-time smoothness
         locationFromSocketRef.current = true;
-        setCurrentLocation({ 
-          lat: parseFloat(data.lat), 
-          lng: parseFloat(data.lng) 
+        setCurrentLocation({
+          lat: parseFloat(data.lat),
+          lng: parseFloat(data.lng)
         });
-        
+
         if (data.heading !== undefined && data.heading !== null) {
           setHeading(parseFloat(data.heading));
         }

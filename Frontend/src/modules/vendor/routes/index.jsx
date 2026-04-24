@@ -7,6 +7,7 @@ import ProtectedRoute from '../../../components/auth/ProtectedRoute';
 import PublicRoute from '../../../components/auth/PublicRoute';
 import CashLimitModal from '../components/common/CashLimitModal'; // Import
 import GlobalBookingAlert from '../components/common/GlobalBookingAlert';
+import LogoLoader from '../../../components/common/LogoLoader';
 // import useAppNotifications from '../../../hooks/useAppNotifications.jsx'; // Handled globally
 
 // Lazy load wrapper with error handling (same as user app)
@@ -39,6 +40,7 @@ const lazyLoad = (importFunc) => {
 // Lazy load vendor pages for code splitting
 const Login = lazyLoad(() => import('../pages/login'));
 const Signup = lazyLoad(() => import('../pages/signup'));
+const Training = lazyLoad(() => import('../pages/Training'));
 const Dashboard = lazyLoad(() => import('../pages/Dashboard'));
 const BookingAlert = lazyLoad(() => import('../pages/BookingAlert'));
 const BookingAlerts = lazyLoad(() => import('../pages/BookingAlerts'));
@@ -61,12 +63,13 @@ const Notifications = lazyLoad(() => import('../pages/Notifications'));
 const SettlementRequest = lazyLoad(() => import('../pages/Wallet/SettlementRequest'));
 const SettlementHistory = lazyLoad(() => import('../pages/Wallet/SettlementHistory'));
 const MyRatings = lazyLoad(() => import('../pages/MyRatings'));
-const AboutHomestr = lazyLoad(() => import('../pages/AboutHomster'));
+const AboutCleaningExpert = lazyLoad(() => import('../pages/AboutCleaningExpert'));
 const BillingPage = lazyLoad(() => import('../pages/BillingPage'));
+const SupportList = lazyLoad(() => import('../pages/Support/index'));
+const TicketDetails = lazyLoad(() => import('../pages/Support/TicketDetails'));
+const MyServices = lazyLoad(() => import('../pages/MyServices'));
 
 // Loading fallback component
-import LogoLoader from '../../../components/common/LogoLoader';
-
 const LoadingFallback = () => (
   <LogoLoader />
 );
@@ -78,6 +81,7 @@ const VendorRoutes = () => {
   // Check if current route should hide bottom nav (auth routes or map or booking alert)
   const shouldHideBottomNav = location.pathname === '/vendor/login' ||
     location.pathname === '/vendor/signup' ||
+    location.pathname === '/vendor/training' ||
     location.pathname.endsWith('/map') ||
     location.pathname.includes('/booking-alert/');
 
@@ -93,6 +97,7 @@ const VendorRoutes = () => {
               {/* Public routes */}
               <Route path="/login" element={<PublicRoute userType="vendor"><Login /></PublicRoute>} />
               <Route path="/signup" element={<PublicRoute userType="vendor"><Signup /></PublicRoute>} />
+              <Route path="/training" element={<PublicRoute userType="vendor"><Training /></PublicRoute>} />
 
               {/* Protected routes (auth required) */}
               <Route path="/" element={<ProtectedRoute userType="vendor"><Navigate to="dashboard" replace /></ProtectedRoute>} />
@@ -120,7 +125,10 @@ const VendorRoutes = () => {
               <Route path="/address-management" element={<ProtectedRoute userType="vendor"><AddressManagement /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute userType="vendor"><Notifications /></ProtectedRoute>} />
               <Route path="/my-ratings" element={<ProtectedRoute userType="vendor"><MyRatings /></ProtectedRoute>} />
-              <Route path="/about-homestr" element={<ProtectedRoute userType="vendor"><AboutHomestr /></ProtectedRoute>} />
+              <Route path="/about-cleaning-expert" element={<ProtectedRoute userType="vendor"><AboutCleaningExpert /></ProtectedRoute>} />
+              <Route path="/my-services" element={<ProtectedRoute userType="vendor"><MyServices /></ProtectedRoute>} />
+              <Route path="/support" element={<ProtectedRoute userType="vendor"><SupportList /></ProtectedRoute>} />
+              <Route path="/support/:id" element={<ProtectedRoute userType="vendor"><TicketDetails /></ProtectedRoute>} />
             </Routes>
           </PageTransition>
         </Suspense>
@@ -139,3 +147,4 @@ const VendorRoutes = () => {
 };
 
 export default VendorRoutes;
+

@@ -48,20 +48,20 @@ const Footer = () => {
     {
       title: 'Contact Us',
       links: [
-        { 
-          label: settings?.supportEmail || settings?.companyEmail || 'support@homestr.in', 
-          path: `mailto:${settings?.supportEmail || settings?.companyEmail || 'support@homestr.in'}`, 
-          icon: FiMail 
+        {
+          label: settings?.supportEmail || settings?.companyEmail || 'support@homestr.in',
+          path: `mailto:${settings?.supportEmail || settings?.companyEmail || 'support@homestr.in'}`,
+          icon: FiMail
         },
-        { 
-          label: settings?.supportPhone || settings?.companyPhone || '+91 98765 43210', 
-          path: `tel:${(settings?.supportPhone || settings?.companyPhone || '+91 98765 43210').replace(/\s/g, '')}`, 
-          icon: FiPhone 
+        {
+          label: settings?.supportPhone || settings?.companyPhone || '+91 98765 43210',
+          path: `tel:${(settings?.supportPhone || settings?.companyPhone || '+91 98765 43210').replace(/\s/g, '')}`,
+          icon: FiPhone
         },
-        { 
-          label: settings?.companyAddress ? `${settings.companyAddress}, ${settings.companyCity}, ${settings.companyState} - ${settings.companyPincode}` : 'Bhopal, Madhya Pradesh, India', 
-          path: '#', 
-          icon: FiMapPin 
+        {
+          label: settings?.companyAddress ? `${settings.companyAddress}, ${settings.companyCity}, ${settings.companyState} - ${settings.companyPincode}` : 'Bhopal, Madhya Pradesh, India',
+          path: '#',
+          icon: FiMapPin
         },
       ]
     }
@@ -85,9 +85,9 @@ const Footer = () => {
             </p>
             <div className="flex items-center gap-4">
               {[FiFacebook, FiTwitter, FiInstagram, FiLinkedin].map((Icon, i) => (
-                <a 
-                  key={i} 
-                  href="#" 
+                <a
+                  key={i}
+                  href="#"
                   className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-[#347989] hover:border-[#347989] hover:shadow-lg transition-all duration-300"
                 >
                   <Icon className="w-5 h-5" />
@@ -104,16 +104,16 @@ const Footer = () => {
                 {section.links.map((link) => (
                   <li key={link.label}>
                     {link.path.startsWith('http') || link.path.startsWith('mailto') || link.path.startsWith('tel') ? (
-                      <a 
-                        href={link.path} 
+                      <a
+                        href={link.path}
                         className="text-gray-500 hover:text-[#347989] text-sm flex items-center gap-2 transition-colors duration-200"
                       >
                         {link.icon && <link.icon className="w-4 h-4" />}
                         {link.label}
                       </a>
                     ) : (
-                      <Link 
-                        to={link.path} 
+                      <Link
+                        to={link.path}
                         className="text-gray-500 hover:text-[#347989] text-sm flex items-center gap-2 transition-colors duration-200"
                       >
                         {link.icon && <link.icon className="w-4 h-4" />}

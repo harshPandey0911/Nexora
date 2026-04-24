@@ -171,8 +171,8 @@ const Notifications = () => {
               key={filterOption.id}
               onClick={() => setFilter(filterOption.id)}
               className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${filter === filterOption.id
-                  ? 'text-white'
-                  : 'bg-white text-gray-700'
+                ? 'text-white'
+                : 'bg-white text-gray-700'
                 }`}
               style={
                 filter === filterOption.id

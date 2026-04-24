@@ -23,10 +23,10 @@ const Profile = () => {
   const menuItems = [
     { id: 2, label: 'Wallet', icon: FaWallet, path: '/vendor/wallet' },
     { id: 5, label: 'My Ratings', icon: FiStar, path: '/vendor/my-ratings' },
-    { id: 6, label: 'Manage Payment Methods', icon: FiCreditCard, path: '/vendor/manage-payment-methods' },
+    { id: 10, label: 'My Services', icon: FiBriefcase, path: '/vendor/my-services' },
     { id: 7, label: 'Manage Address', icon: FiMapPin, path: '/vendor/address-management' },
     { id: 8, label: 'Settings', icon: FiSettings, path: '/vendor/settings' },
-    { id: 9, label: 'About Homestr', icon: null, customIcon: 'H', path: '/vendor/about-homestr' },
+    { id: 9, label: 'About Cleaning Expert Services', icon: null, customIcon: 'S', path: '/vendor/about-cleaning-expert' },
   ];
 
   const [profile, setProfile] = useState(null);
@@ -464,4 +464,5 @@ const Profile = () => {
 };
 
 export default Profile;
+
 

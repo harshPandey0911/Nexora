@@ -22,7 +22,7 @@ const lazyLoad = (importFunc) => {
               <div className="text-5xl mb-4">🚫</div>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">Failed to load page</h2>
               <p className="text-gray-600 mb-6">Something went wrong while loading this section.</p>
-              
+
               <div className="bg-red-50 p-4 rounded-xl text-left border border-red-100 mb-6 max-h-40 overflow-auto">
                 <p className="text-xs font-mono text-red-600 underline mb-2">Error Details:</p>
                 <code className="text-xs text-red-700 whitespace-pre-wrap">
@@ -71,7 +71,7 @@ const Wallet = lazyLoad(() => import('../pages/Wallet'));
 const MyPlan = lazyLoad(() => import('../pages/MyPlan'));
 const PlanDetails = lazyLoad(() => import('../pages/MyPlan/PlanDetails'));
 const MyRating = lazyLoad(() => import('../pages/MyRating'));
-const AboutHomestr = lazyLoad(() => import('../pages/AboutHomster'));
+const AboutCleaningExpert = lazyLoad(() => import('../pages/AboutCleaningExpert'));
 const UpdateProfile = lazyLoad(() => import('../pages/UpdateProfile'));
 const Login = lazyLoad(() => import('../pages/login'));
 const Signup = lazyLoad(() => import('../pages/signup'));
@@ -140,7 +140,7 @@ const UserRoutes = () => {
               <Route path="/my-plan" element={<ProtectedRoute userType="user"><MyPlan /></ProtectedRoute>} />
               <Route path="/my-plan/:id" element={<ProtectedRoute userType="user"><PlanDetails /></ProtectedRoute>} />
               <Route path="/my-rating" element={<ProtectedRoute userType="user"><MyRating /></ProtectedRoute>} />
-              <Route path="/about-homestr" element={<ProtectedRoute userType="user"><AboutHomestr /></ProtectedRoute>} />
+              <Route path="/about-cleaning-expert" element={<ProtectedRoute userType="user"><AboutCleaningExpert /></ProtectedRoute>} />
               <Route path="/update-profile" element={<ProtectedRoute userType="user"><UpdateProfile /></ProtectedRoute>} />
               <Route path="/scrap" element={<ProtectedRoute userType="user"><Scrap /></ProtectedRoute>} />
               <Route path="/scrap/add" element={<ProtectedRoute userType="user"><AddScrap /></ProtectedRoute>} />

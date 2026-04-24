@@ -320,10 +320,50 @@ const updateLocation = async (req, res) => {
   }
 };
 
+/**
+ * Toggle online/offline status
+ */
+const updateStatus = async (req, res) => {
+  try {
+    const vendorId = req.user.id;
+    const { isOnline } = req.body;
+
+    if (isOnline === undefined) {
+      return res.status(400).json({ success: false, message: 'isOnline status is required' });
+    }
+
+    const vendor = await Vendor.findById(vendorId);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
+    }
+
+    vendor.isOnline = isOnline;
+    vendor.availability = isOnline ? 'AVAILABLE' : 'OFFLINE';
+    
+    // Set lastSeenAt if going offline
+    if (!isOnline) {
+      vendor.lastSeenAt = new Date();
+    }
+    
+    await vendor.save();
+
+    res.status(200).json({ 
+      success: true, 
+      message: `Status updated to ${isOnline ? 'Online' : 'Offline'}`,
+      isOnline: vendor.isOnline,
+      availability: vendor.availability
+    });
+  } catch (error) {
+    console.error('Vendor status update error:', error);
+    res.status(500).json({ success: false, message: 'Server error while updating status' });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
   updateAddress,
-  updateLocation
+  updateLocation,
+  updateStatus
 };
 

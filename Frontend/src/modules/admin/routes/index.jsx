@@ -4,6 +4,7 @@ import AdminLayout from '../components/layout/AdminLayout';
 import ProtectedRoute from '../../../components/auth/ProtectedRoute';
 import PublicRoute from '../../../components/auth/PublicRoute';
 import useAppNotifications from '../../../hooks/useAppNotifications.jsx';
+import LogoLoader from '../../../components/common/LogoLoader';
 
 // Login page (not lazy loaded for faster initial access)
 import Login from '../pages/login';
@@ -21,6 +22,8 @@ const BookingNotifications = lazy(() => import('../pages/Bookings/BookingNotific
 const Payments = lazy(() => import('../pages/Payments'));
 const Reports = lazy(() => import('../pages/Reports'));
 const Notifications = lazy(() => import('../pages/Notifications'));
+const AdminSupport = lazy(() => import('../pages/Support/index'));
+const TrainingManagement = lazy(() => import('../pages/TrainingManagement'));
 
 const Plans = lazy(() => import('../pages/Plans/Plans'));
 const Scrap = lazy(() => import('../pages/Scrap'));
@@ -30,8 +33,6 @@ const Reviews = lazy(() => import('../pages/Reviews'));
 
 
 // Loading fallback component
-import LogoLoader from '../../../components/common/LogoLoader';
-
 const LoadingFallback = () => (
   <LogoLoader />
 );
@@ -70,6 +71,8 @@ const AdminRoutes = () => {
           <Route path="reviews" element={<Reviews />} />
           <Route path="settlements/*" element={<Settlements />} />
           <Route path="settings/*" element={<Settings />} />
+          <Route path="support/*" element={<AdminSupport />} />
+          <Route path="training" element={<TrainingManagement />} />
         </Route>
       </Routes>
     </Suspense>

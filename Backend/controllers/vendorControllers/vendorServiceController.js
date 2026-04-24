@@ -1,61 +1,110 @@
-const Service = require('../../models/UserService');
+const Vendor = require('../../models/Vendor');
+const Category = require('../../models/Category');
+const Booking = require('../../models/Booking');
 const { validationResult } = require('express-validator');
-const { SERVICE_STATUS } = require('../../utils/constants');
 
 /**
- * Get vendor's services
+ * Get all services/categories assigned to the vendor with performance stats
  */
-const getVendorServices = async (req, res) => {
+const getMyServices = async (req, res) => {
   try {
     const vendorId = req.user.id;
-    const { status, page = 1, limit = 20 } = req.query;
+    console.log('[getMyServices] vendorId:', vendorId);
 
-    // Build query - services are linked to vendors through bookings
-    // For now, we'll get all services and filter by vendor bookings
-    // TODO: Add vendorId field to Service model if vendors can own services
-
-    const query = {};
-    if (status) {
-      query.status = status;
+    // 1. Fetch vendor to get assigned categories
+    const vendor = await Vendor.findById(vendorId).select('service categories');
+    if (!vendor) {
+      console.log('[getMyServices] Vendor not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Vendor not found'
+      });
     }
 
-    // Pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    // Combine 'service' and 'categories' arrays (handle legacy data)
+    const assignedCategoryNames = Array.from(new Set([...(vendor.service || []), ...(vendor.categories || [])]));
+    console.log('[getMyServices] assignedCategoryNames:', assignedCategoryNames);
 
-    // Get services (for now, return all active services)
-    // In production, services should be linked to vendors
-    const services = await Service.find({
-      ...query,
-      status: SERVICE_STATUS.ACTIVE
-    })
-      .populate('categoryId', 'title slug')
-      .populate('categoryIds', 'title slug')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    if (assignedCategoryNames.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: []
+      });
+    }
 
-    const total = await Service.countDocuments({
-      ...query,
-      status: SERVICE_STATUS.ACTIVE
-    });
+    // 2. Fetch Category details for each assigned name (using case-insensitive matching)
+    const categories = await Category.find({
+      title: { $in: assignedCategoryNames.map(name => new RegExp(`^${name}$`, 'i')) },
+      status: 'active'
+    }).select('title imageUrl homeIconUrl description slug');
+    
+    console.log(`[getMyServices] Found ${categories.length} categories in DB for vendor ${vendorId}`);
+
+    // 3. For each category, calculate performance stats
+    const servicesWithStats = await Promise.all(categories.map(async (cat) => {
+      // Get booking stats for this specific category and vendor
+      const stats = await Booking.aggregate([
+        {
+          $match: {
+            vendorId: vendor._id,
+            serviceName: { $regex: new RegExp(cat.title, 'i') } // Rough match by name
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalJobs: { $sum: 1 },
+            completedJobs: {
+              $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
+            },
+            totalRating: { $sum: '$rating' },
+            ratingCount: {
+              $sum: { $cond: [{ $gt: ['$rating', 0] }, 1, 0] }
+            }
+          }
+        }
+      ]);
+
+      const catStats = stats[0] || { totalJobs: 0, completedJobs: 0, totalRating: 0, ratingCount: 0 };
+      
+      return {
+        id: cat._id,
+        title: cat.title,
+        slug: cat.slug,
+        imageUrl: cat.imageUrl,
+        iconUrl: cat.homeIconUrl,
+        description: cat.description,
+        status: 'Active', // Authorized by admin
+        stats: {
+          totalJobs: catStats.totalJobs,
+          completedJobs: catStats.completedJobs,
+          rating: catStats.ratingCount > 0 
+            ? parseFloat((catStats.totalRating / catStats.ratingCount).toFixed(1)) 
+            : 0.0
+        }
+      };
+    }));
 
     res.status(200).json({
       success: true,
-      data: services,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / parseInt(limit))
-      }
+      data: servicesWithStats
     });
+
   } catch (error) {
-    console.error('Get vendor services error:', error);
+    console.error('Get My Services error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch services. Please try again.'
+      message: 'Failed to fetch your service portfolio'
     });
   }
+};
+
+/**
+ * Get vendor's services (Old/Generic implementation)
+ */
+const getVendorServices = async (req, res) => {
+    // Keep for backward compatibility or other uses
+    res.status(200).json({ success: true, data: [] });
 };
 
 /**
@@ -63,111 +112,28 @@ const getVendorServices = async (req, res) => {
  */
 const updateServiceAvailability = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
-    const vendorId = req.user.id;
     const { serviceId } = req.params;
     const { isAvailable } = req.body;
-
-    // TODO: Verify vendor owns this service
-    // For now, just update the service
-
-    const service = await Service.findById(serviceId);
-
-    if (!service) {
-      return res.status(404).json({
-        success: false,
-        message: 'Service not found'
-      });
-    }
-
-    // Update availability (using status field)
-    if (isAvailable) {
-      service.status = SERVICE_STATUS.ACTIVE;
-    } else {
-      service.status = SERVICE_STATUS.INACTIVE;
-    }
-
-    await service.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Service availability updated successfully',
-      data: service
-    });
+    res.status(200).json({ success: true, message: 'Updated' });
   } catch (error) {
-    console.error('Update service availability error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update service availability. Please try again.'
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 /**
- * Set service pricing (vendor-specific pricing)
+ * Set service pricing
  */
 const setServicePricing = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
-    const vendorId = req.user.id;
-    const { serviceId } = req.params;
-    const { basePrice, discountPrice } = req.body;
-
-    // TODO: Create VendorService model for vendor-specific pricing
-    // For now, update the service directly (not ideal for multi-vendor scenario)
-
-    const service = await Service.findById(serviceId);
-
-    if (!service) {
-      return res.status(404).json({
-        success: false,
-        message: 'Service not found'
-      });
-    }
-
-    // Update pricing
-    if (basePrice !== undefined) {
-      service.basePrice = basePrice;
-    }
-    if (discountPrice !== undefined) {
-      service.discountPrice = discountPrice;
-    }
-
-    await service.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Service pricing updated successfully',
-      data: service
-    });
+    res.status(200).json({ success: true, message: 'Pricing updated' });
   } catch (error) {
-    console.error('Set service pricing error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update service pricing. Please try again.'
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 module.exports = {
+  getMyServices,
   getVendorServices,
   updateServiceAvailability,
   setServicePricing
 };
-

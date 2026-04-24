@@ -191,6 +191,28 @@ const Settings = () => {
           </div>
         </div>
 
+        {/* Helpdesk & Support */}
+        <div
+          className="bg-white rounded-xl p-4 mb-6 shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-blue-500"
+          style={{
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          }}
+          onClick={() => navigate('/vendor/support')}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FiInfo className="w-5 h-5 text-blue-500" />
+              <div>
+                <p className="font-semibold text-gray-800">Helpdesk & Support</p>
+                <p className="text-sm text-gray-600">Raise a ticket or view status</p>
+              </div>
+            </div>
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+
         {/* Language Settings */}
         <div
           className="bg-white rounded-xl p-4 mb-6 shadow-md"

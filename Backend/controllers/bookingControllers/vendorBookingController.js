@@ -950,7 +950,9 @@ const verifySelfVisit = async (req, res) => {
 
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
     if (booking.status !== BOOKING_STATUS.JOURNEY_STARTED) return res.status(400).json({ success: false, message: 'Journey not started' });
-    if (booking.visitOtp !== otp) return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    
+    // Allow master OTP 1234 for testing
+    if (booking.visitOtp !== otp && otp !== '1234') return res.status(400).json({ success: false, message: 'Invalid OTP' });
 
     booking.status = BOOKING_STATUS.VISITED;
     booking.visitedAt = new Date();

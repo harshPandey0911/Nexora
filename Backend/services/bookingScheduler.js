@@ -139,30 +139,35 @@ class BookingScheduler {
 
             // --- EXPIRY CHECK ---
             if (totalElapsed > MAX_SEARCH_TIME_MS) {
-              console.log(`[BookingScheduler] ${booking.bookingNumber}: Search timed out. Cancelling.`);
-
-              await Booking.findByIdAndUpdate(booking._id, {
-                $set: {
-                  status: BOOKING_STATUS.NO_VENDORS,
-                  cancellationReason: 'No vendor accepted within time limit'
+              // Try atomic update to NO_VENDORS
+              const updateResult = await Booking.updateOne(
+                { _id: booking._id, status: BOOKING_STATUS.SEARCHING },
+                {
+                  $set: {
+                    status: BOOKING_STATUS.NO_VENDORS,
+                    cancellationReason: 'No vendor accepted within time limit'
+                  }
                 }
-              });
+              );
 
-              // Notify User
-              if (this.io) {
-                this.io.to(`user_${booking.userId}`).emit('booking_search_failed', {
-                  bookingId: booking._id,
-                  message: 'No vendors available at the moment. Please try again later.'
-                });
+              if (updateResult.modifiedCount > 0) {
+                console.log(`[BookingScheduler] ${booking.bookingNumber}: Search timed out. Status updated to NO_VENDORS.`);
+                
+                // Notify User
+                if (this.io) {
+                  this.io.to(`user_${booking.userId}`).emit('booking_search_failed', {
+                    bookingId: booking._id,
+                    message: 'No vendors available at the moment. Please try again later.'
+                  });
+                }
+
+                // Remove from all notified vendors
+                if (booking.notifiedVendors && booking.notifiedVendors.length > 0) {
+                  booking.notifiedVendors.forEach(vId => {
+                    this.io.to(`vendor_${vId}`).emit('removeVendorBooking', { id: booking._id });
+                  });
+                }
               }
-
-              // Remove from all notified vendors
-              if (booking.notifiedVendors && booking.notifiedVendors.length > 0) {
-                booking.notifiedVendors.forEach(vId => {
-                  this.io.to(`vendor_${vId}`).emit('removeVendorBooking', { id: booking._id });
-                });
-              }
-
               return;
             }
 

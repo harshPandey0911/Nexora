@@ -42,7 +42,33 @@ const AllVendors = () => {
             other: vendor.otherDocuments?.[0]
           },
           createdAt: vendor.createdAt,
-          isActive: vendor.isActive
+          isActive: vendor.isActive,
+          rating: vendor.rating || 0,
+          completedJobs: vendor.completedJobs || 0,
+          totalJobs: vendor.totalJobs || 0,
+          cancelledJobs: vendor.cancelledJobs || 0,
+          performance: (() => {
+            const total = vendor.totalJobs || 0;
+            const completed = vendor.completedJobs || 0;
+            const cancelled = vendor.cancelledJobs || 0;
+            const rating = vendor.rating || 0;
+            
+            const completionRate = total > 0 ? (completed / total) * 100 : 0;
+            const cancellationRate = total > 0 ? (cancelled / total) * 100 : 0;
+            const ratingScore = (rating / 5) * 100;
+            
+            const score = Math.round(
+              (ratingScore * 0.6) + 
+              (completionRate * 0.3) + 
+              ((100 - cancellationRate) * 0.1)
+            );
+            
+            let level = 1;
+            if (score >= 85) level = 3;
+            else if (score >= 70) level = 2;
+            
+            return { score, level, completionRate, cancellationRate };
+          })()
         }));
         setVendors(transformedVendors);
       } else {
@@ -227,6 +253,7 @@ const AllVendors = () => {
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Vendor Details</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Business Info</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Performance</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -256,6 +283,21 @@ const AllVendors = () => {
                           <p className="text-[10px] text-blue-600 font-medium">
                             {Array.isArray(vendor.service) ? vendor.service.join(', ') : (vendor.service || 'No service')}
                           </p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col items-start gap-1">
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1 ${
+                            vendor.performance.level === 3 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                            vendor.performance.level === 2 ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                            'bg-gray-100 text-gray-700 border border-gray-200'
+                          }`}>
+                            L{vendor.performance.level} Vendor
+                            {vendor.performance.level === 3 && ' ⭐'}
+                          </span>
+                          <span className="text-[10px] text-gray-500 font-semibold">
+                            Score: <span className={vendor.performance.score >= 70 ? 'text-green-600' : 'text-orange-500'}>{vendor.performance.score}%</span>
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -374,6 +416,54 @@ const AllVendors = () => {
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Active</label>
                 <div className={`text-sm font-semibold ${selectedVendor.isActive ? 'text-green-600' : 'text-red-600'}`}>
                   {selectedVendor.isActive ? 'Active' : 'Inactive'}
+                </div>
+              </div>
+            </div>
+
+            {/* Performance Analytics */}
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-gray-900">Performance Analytics</h3>
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                    selectedVendor.performance.level === 3 ? 'bg-yellow-100 text-yellow-800' :
+                    selectedVendor.performance.level === 2 ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-200 text-gray-800'
+                  }`}>
+                    Level {selectedVendor.performance.level}
+                  </span>
+                  <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700">
+                    Score: {selectedVendor.performance.score}/100
+                  </span>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="font-semibold text-gray-700">Rating ({selectedVendor.rating.toFixed(1)}/5.0)</span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-yellow-400" style={{ width: `${(selectedVendor.rating / 5) * 100}%` }}></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="font-semibold text-gray-700">Job Completion ({selectedVendor.completedJobs}/{selectedVendor.totalJobs})</span>
+                    <span className="font-bold text-green-600">{Math.round(selectedVendor.performance.completionRate)}%</span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500" style={{ width: `${selectedVendor.performance.completionRate}%` }}></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="font-semibold text-gray-700">Cancellation Rate</span>
+                    <span className="font-bold text-red-600">{Math.round(selectedVendor.performance.cancellationRate)}%</span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-red-500" style={{ width: `${selectedVendor.performance.cancellationRate}%` }}></div>
+                  </div>
                 </div>
               </div>
             </div>
