@@ -48,8 +48,8 @@ const SearchBar = ({ onInputClick }) => {
   }, [displayedText, isTyping, currentServiceIndex]);
 
   return (
-    <div className="flex items-center gap-3 w-full">
-      <div className="flex-1 relative cursor-pointer" onClick={onInputClick}>
+    <div className="flex items-center gap-3 w-full min-w-0">
+      <div className="flex-1 min-w-0 relative cursor-pointer" onClick={onInputClick}>
         <div className="relative w-full group">
           {/* Glow effect on hover */}
           <div
@@ -76,15 +76,15 @@ const SearchBar = ({ onInputClick }) => {
 
           {/* Simulated Input */}
           <div
-            className="w-full pl-12 pr-4 py-3.5 rounded-2xl text-[15px] bg-white border border-gray-200 transition-all duration-300 text-gray-800 flex items-center h-[52px]"
+            className="w-full pl-12 pr-4 py-3.5 rounded-2xl text-[15px] bg-white border border-gray-200 transition-all duration-300 text-gray-800 flex items-center h-[52px] overflow-hidden"
             style={{
               boxShadow: '0 4px 20px -4px rgba(0,0,0,0.05)',
             }}
           >
             {/* Placeholder text with typing animation */}
-            <span className="text-[15px] text-gray-400 tracking-wide font-light truncate w-full">
+            <span className="text-[15px] text-gray-400 tracking-wide font-light flex items-center gap-1 whitespace-nowrap overflow-hidden">
               Search for <span
-                className="font-medium inline-block min-w-[2px]"
+                className="font-medium whitespace-nowrap overflow-hidden text-ellipsis"
                 style={{
                   background: themeColors.gradient,
                   WebkitBackgroundClip: 'text',
@@ -92,8 +92,7 @@ const SearchBar = ({ onInputClick }) => {
                   color: 'transparent'
                 }}
               >
-                {displayedText}
-                <span className="animate-pulse ml-0.5" style={{ color: themeColors.brand.teal }}>|</span>
+                {displayedText}<span className="animate-pulse ml-0.5" style={{ WebkitTextFillColor: themeColors.brand.teal, color: themeColors.brand.teal }}>|</span>
               </span>
             </span>
           </div>
