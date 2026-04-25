@@ -108,10 +108,24 @@ const VendorTraining = () => {
             sessionStorage.removeItem('pendingVendorRegistration');
             navigate('/vendor/login');
           } else {
-            toast.error(res.message || 'Registration failed at final step.');
+            // Handle case where backend returns success:false but doesn't throw
+            if (res.message?.toLowerCase().includes('already exists')) {
+              sessionStorage.removeItem('pendingVendorRegistration');
+              navigate('/vendor/login');
+            } else {
+              toast.error(res.message || 'Registration failed at final step.');
+            }
           }
         } catch (error) {
-          toast.error('Something went wrong during registration.');
+          const errMsg = error.response?.data?.message || '';
+          if (errMsg.toLowerCase().includes('already exists')) {
+            // If already registered, just let them go to login
+            sessionStorage.removeItem('pendingVendorRegistration');
+            navigate('/vendor/login');
+          } else {
+            console.error('Registration finish error:', error);
+            toast.error('Something went wrong during registration.');
+          }
         } finally {
           setLoading(false);
         }

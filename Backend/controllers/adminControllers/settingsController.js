@@ -50,7 +50,9 @@ exports.updateSettings = async (req, res, next) => {
       // Booking Timing
       maxSearchTime, waveDuration, searchRadius,
       // Payment Control
-      isOnlinePaymentEnabled
+      isOnlinePaymentEnabled,
+      // Commission & Platform Fees
+      commissionRates, platformFeeRates
     } = req.body;
 
     let settings = await Settings.findOne({ type: 'global' });
@@ -117,6 +119,10 @@ exports.updateSettings = async (req, res, next) => {
       if (waveDuration !== undefined) settings.waveDuration = waveDuration;
       if (searchRadius !== undefined) settings.searchRadius = searchRadius;
       if (isOnlinePaymentEnabled !== undefined) settings.isOnlinePaymentEnabled = isOnlinePaymentEnabled;
+
+      // Commission & Platform Fees update
+      if (commissionRates !== undefined) settings.commissionRates = commissionRates;
+      if (platformFeeRates !== undefined) settings.platformFeeRates = platformFeeRates;
 
       await settings.save();
     }

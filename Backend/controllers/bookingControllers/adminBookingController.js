@@ -161,6 +161,16 @@ const cancelBooking = async (req, res) => {
 
     await booking.save();
 
+    // ── Update Vendor Performance Stats ──
+    if (booking.vendorId) {
+      try {
+        const { updateVendorStats } = require('../../utils/vendorStatsHelper');
+        updateVendorStats(booking.vendorId);
+      } catch (statsErr) {
+        console.error('Error updating vendor stats after admin cancellation:', statsErr);
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: 'Booking cancelled successfully',

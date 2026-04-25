@@ -261,6 +261,21 @@ const vendorSchema = new mongoose.Schema({
   trainingScore: {
     type: Number,
     default: 0
+  },
+  performanceScore: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
+  },
+  level: {
+    type: Number,
+    enum: [1, 2, 3],
+    default: 3
+  },
+  commissionRate: {
+    type: Number,
+    default: 15 // Default 15%
   }
 }, {
   timestamps: true

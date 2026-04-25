@@ -70,6 +70,7 @@ const notificationSchema = new mongoose.Schema({
       'scrap_accepted',
       'scrap_completed',
       'vendor_withdrawal_request',
+      'new_vendor_registration',
       'general'
     ],
     index: true

@@ -220,6 +220,7 @@ app.use('/api/admin', require('./routes/admin-routes/reportManagement.routes'));
 app.use('/api/admin/settlements', require('./routes/admin-routes/settlementManagement.routes'));
 app.use('/api/admin/admins', require('./routes/admin-routes/adminManagement.routes'));
 app.use('/api/admin/support', require('./routes/admin-routes/support.routes'));
+app.use('/api/admin/banners', require('./routes/admin-routes/banner.routes'));
 app.use('/api/admin/training', require('./routes/admin-routes/training.routes'));
 app.use('/api/image', require('./routes/admin-routes/image.routes'));
 app.use('/api', require('./routes/admin-routes/upload.routes')); // Generic upload access
@@ -244,6 +245,7 @@ app.use('/api/notifications', require('./routes/notification.routes'));
 app.use('/api/public', require('./routes/public-routes/catalog.routes'));
 app.use('/api/public', require('./routes/public-routes/plan.routes'));
 app.use('/api/public', require('./routes/public-routes/config.routes'));
+app.use('/api/public/banners', require('./routes/user-routes/banner.routes'));
 
 // 404 handler
 app.use((req, res) => {

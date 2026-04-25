@@ -11,7 +11,6 @@ import { themeColors } from '../../../../theme';
 import CitySelectorModal from '../common/CitySelectorModal';
 import { useCity } from '../../../../context/CityContext';
 import { HiChevronDown } from 'react-icons/hi';
-import NotificationBell from '../common/NotificationBell';
 
 const Header = ({ location, onLocationClick }) => {
   const logoRef = useRef(null);
@@ -66,14 +65,13 @@ const Header = ({ location, onLocationClick }) => {
             <nav className="hidden lg:flex items-center gap-8 ml-10">
               <Link to="/user" className="text-gray-700 font-semibold hover:text-[#347989] transition-colors">Home</Link>
               <Link to="/user/my-bookings" className="text-gray-700 font-semibold hover:text-[#347989] transition-colors">Bookings</Link>
-              <Link to="/user/scrap" className="text-gray-700 font-semibold hover:text-[#347989] transition-colors">Scrap</Link>
+              <Link to="/user/shop" className="text-gray-700 font-semibold hover:text-[#347989] transition-colors">Shop</Link>
               <Link to="/user/cart" className="text-gray-700 font-semibold hover:text-[#347989] transition-colors">Cart</Link>
               <Link to="/user/account" className="text-gray-700 font-semibold hover:text-[#347989] transition-colors">Account</Link>
             </nav>
 
             {/* Right: City & Location */}
             <div className="flex items-center gap-2">
-              <NotificationBell />
               <div className="flex flex-col items-end gap-1 flex-1 min-w-0 ml-1">
                 {/* Location Selector */}
                 <div className="flex flex-col items-end cursor-pointer" onClick={onLocationClick}>

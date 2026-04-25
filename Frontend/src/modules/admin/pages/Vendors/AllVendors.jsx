@@ -64,9 +64,9 @@ const AllVendors = () => {
               ((100 - cancellationRate) * 0.1)
             );
             
-            let level = 1;
-            if (score >= 85) level = 3;
-            else if (score >= 70) level = 2;
+            let level = 3;
+            if (score >= 80) level = 1;
+            else if (score >= 50) level = 2;
             
             return { score, level, completionRate, cancellationRate };
           })()
@@ -298,12 +298,11 @@ const AllVendors = () => {
                       <td className="px-4 py-3">
                         <div className="flex flex-col items-start gap-1">
                           <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1 ${
-                            vendor.performance.level === 3 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                            vendor.performance.level === 1 ? 'bg-teal-50 text-teal-700 border border-teal-100' :
                             vendor.performance.level === 2 ? 'bg-blue-50 text-blue-700 border border-blue-100' :
-                            'bg-gray-100 text-gray-700 border border-gray-200'
+                            'bg-orange-50 text-orange-700 border border-orange-100'
                           }`}>
-                            L{vendor.performance.level} Vendor
-                            {vendor.performance.level === 3 && ' ⭐'}
+                            {vendor.performance.level === 1 ? '🏆 Level 1' : `L${vendor.performance.level} Vendor`}
                           </span>
                           <span className="text-[10px] text-gray-500 font-semibold">
                             Score: <span className={vendor.performance.score >= 70 ? 'text-green-600' : 'text-orange-500'}>{vendor.performance.score}%</span>
@@ -447,11 +446,11 @@ const AllVendors = () => {
                 <h3 className="font-bold text-gray-900">Performance Analytics</h3>
                 <div className="flex items-center gap-2">
                   <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                    selectedVendor.performance.level === 3 ? 'bg-yellow-100 text-yellow-800' :
+                    selectedVendor.performance.level === 1 ? 'bg-teal-100 text-teal-800' :
                     selectedVendor.performance.level === 2 ? 'bg-blue-100 text-blue-800' :
-                    'bg-gray-200 text-gray-800'
+                    'bg-orange-100 text-orange-800'
                   }`}>
-                    Level {selectedVendor.performance.level}
+                    Level {selectedVendor.performance.level} {selectedVendor.performance.level === 1 && '(Top)'}
                   </span>
                   <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700">
                     Score: {selectedVendor.performance.score}/100

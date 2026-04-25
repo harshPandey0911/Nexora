@@ -23,10 +23,12 @@ const Banner = lazy(() => import('./components/Banner'));
 const ReferEarnSection = lazy(() => import('./components/ReferEarnSection'));
 import CategoryModal from './components/CategoryModal';
 import SearchOverlay from './components/SearchOverlay';
+import OfferBannerSlider from './components/OfferBannerSlider';
+import userBannerService from '../../../../services/userBannerService';
 import LogoLoader from '../../../../components/common/LogoLoader';
 import AddressSelectionModal from '../Checkout/components/AddressSelectionModal';
 import ScrapPromotionCard from './components/ScrapPromotionCard';
-import DebugConsole from '../../components/common/DebugConsole';
+
 
 
 
@@ -233,6 +235,7 @@ const Home = () => {
 
   const [categories, setCategories] = useState([]);
   const [homeContent, setHomeContent] = useState(null);
+  const [offerBanners, setOfferBanners] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Handle scroll separately (only when needed)
@@ -279,7 +282,19 @@ const Home = () => {
       }
     };
 
+    const fetchBanners = async () => {
+      try {
+        const response = await userBannerService.getActiveBanners();
+        if (response.success) {
+          setOfferBanners(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching banners:', error);
+      }
+    };
+
     fetchData();
+    fetchBanners();
   }, [currentCity]);
   // Open category modal from navigation state (e.g. from Cart 'Add Services')
   useEffect(() => {
@@ -500,6 +515,9 @@ const Home = () => {
             </div>
           ) : (
             <>
+              {/* Sliding Offer Banners */}
+              {!isSearchOpen && <OfferBannerSlider banners={offerBanners} />}
+
               {/* Hero Section - Promo Carousel */}
               {homeContent?.isPromosVisible !== false && (
                 <motion.section variants={itemVariants} className="relative z-0">
@@ -535,7 +553,7 @@ const Home = () => {
 
               {/* Scrap Promotion Section */}
               <motion.section variants={itemVariants}>
-                <ScrapPromotionCard onClick={() => navigate('/user/scrap')} />
+                <ScrapPromotionCard onClick={() => navigate('/user/shop')} />
               </motion.section>
 
 
@@ -718,7 +736,7 @@ const Home = () => {
         onSave={handleAddressSave}
       />
 
-      <DebugConsole />
+
     </div>
   );
 };

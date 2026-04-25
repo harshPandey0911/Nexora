@@ -864,6 +864,16 @@ const cancelBooking = async (req, res) => {
       // Manual FCM push removed
     }
 
+    // ── Update Vendor Performance Stats ──
+    if (booking.vendorId) {
+      try {
+        const { updateVendorStats } = require('../../utils/vendorStatsHelper');
+        updateVendorStats(booking.vendorId);
+      } catch (statsErr) {
+        console.error('Error updating vendor stats after user cancellation:', statsErr);
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: refundMessage || 'Booking cancelled successfully',
@@ -1072,6 +1082,14 @@ const addReview = async (req, res) => {
       relatedId: booking._id,
       relatedType: 'booking'
     });
+
+    // ── Update Vendor Performance Stats ──
+    try {
+      const { updateVendorStats } = require('../../utils/vendorStatsHelper');
+      updateVendorStats(booking.vendorId);
+    } catch (statsErr) {
+      console.error('Error updating vendor stats after review:', statsErr);
+    }
 
     res.status(200).json({
       success: true,

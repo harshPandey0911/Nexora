@@ -158,6 +158,23 @@
     "children": []
   },
   {
+    "title": "Commission",
+    "route": "/admin/commission",
+    "allowedRoles": [
+      "super_admin"
+    ],
+    "children": []
+  },
+  {
+    "title": "Offer Banners",
+    "route": "/admin/offer-banners",
+    "allowedRoles": [
+      "super_admin",
+      "admin"
+    ],
+    "children": []
+  },
+  {
     "title": "Settings",
     "route": "/admin/settings",
     "allowedRoles": [

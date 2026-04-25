@@ -5,6 +5,7 @@ import { vendorTheme as themeColors } from '../../../../theme';
 import Header from '../../components/layout/Header';
 import BottomNav from '../../components/layout/BottomNav';
 import { requestWithdrawal, getWalletBalance, getWithdrawalHistory } from '../../services/walletService';
+import { vendorDashboardService } from '../../services/dashboardService';
 import { toast } from 'react-hot-toast';
 import LogoLoader from '../../../../components/common/LogoLoader';
 
@@ -25,6 +26,11 @@ const WithdrawalRequest = () => {
   const [isBankSaved, setIsBankSaved] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [vendorStats, setVendorStats] = useState({
+    commissionRate: 15,
+    level: 3,
+    platformFeeRate: 2
+  });
 
   useLayoutEffect(() => {
     const html = document.documentElement;
@@ -49,12 +55,29 @@ const WithdrawalRequest = () => {
 
   const loadData = async () => {
     try {
-      const [walletRes, historyRes] = await Promise.all([
+      const [walletRes, historyRes, statsRes] = await Promise.all([
         getWalletBalance(),
-        getWithdrawalHistory()
+        getWithdrawalHistory(),
+        vendorDashboardService.getDashboardStats()
       ]);
       setWallet({ available: walletRes.earnings || 0 });
       setHistory(historyRes || []);
+      
+      if (statsRes.success) {
+        const stats = statsRes.data.stats;
+        const level = stats.level || 3;
+        const levelKey = `level${level}`;
+        
+        // Use dynamic rates from backend
+        const commRate = stats.commissionRates?.[levelKey] || stats.commissionRate || 15;
+        const pfRate = stats.platformFeeRates?.[levelKey] || 2;
+
+        setVendorStats({
+          commissionRate: commRate,
+          level: level,
+          platformFeeRate: pfRate
+        });
+      }
 
       const savedBank = JSON.parse(localStorage.getItem('vendorBankAccount') || 'null');
       if (savedBank) {
@@ -138,9 +161,15 @@ const WithdrawalRequest = () => {
     }
   };
 
-  const tdsRate = 2;
-  const tdsAmount = Math.round((parseInt(amount) || 0) * (tdsRate / 100));
-  const netAmount = (parseInt(amount) || 0) - tdsAmount;
+  const tdsRate = 1; // Updated to 1% as per user request
+  const commissionRate = vendorStats.commissionRate;
+  const platformFeeRate = vendorStats.platformFeeRate;
+
+  const grossAmount = parseInt(amount) || 0;
+  const commissionAmount = Math.round(grossAmount * (commissionRate / 100));
+  const platformFeeAmount = Math.round(grossAmount * (platformFeeRate / 100));
+  const tdsAmount = Math.round(grossAmount * (tdsRate / 100));
+  const netAmount = grossAmount - commissionAmount - platformFeeAmount - tdsAmount;
 
   return (
     <div className="min-h-screen pb-24" style={{ background: themeColors.backgroundGradient }}>
@@ -206,14 +235,29 @@ const WithdrawalRequest = () => {
             <div className="bg-emerald-50/50 rounded-2xl p-4 space-y-3 border border-emerald-50">
               <div className="flex justify-between text-xs font-bold text-gray-500">
                 <span>Gross Total</span>
-                <span>₹{parseInt(amount).toLocaleString()}</span>
+                <span>₹{grossAmount.toLocaleString()}</span>
               </div>
+              
+              <div className="flex justify-between text-xs font-bold text-orange-600/80">
+                <span>Commission ({commissionRate}%)</span>
+                <span>- ₹{commissionAmount.toLocaleString()}</span>
+              </div>
+
+              <div className="flex justify-between text-xs font-bold text-blue-600/80">
+                <span>Platform Charge ({platformFeeRate}%)</span>
+                <span>- ₹{platformFeeAmount.toLocaleString()}</span>
+              </div>
+
               <div className="flex justify-between text-xs font-bold text-red-500/70">
-                <span>TDS Deduction (2%)</span>
+                <span>TDS Deduction ({tdsRate}%)</span>
                 <span>- ₹{tdsAmount.toLocaleString()}</span>
               </div>
+
               <div className="pt-2 border-t border-emerald-100 flex justify-between items-end">
-                <span className="text-xs font-black text-gray-400 uppercase tracking-widest leading-none">Net Payout</span>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Estimated</span>
+                  <span className="text-xs font-black text-gray-800 uppercase tracking-widest leading-none">Net Payout</span>
+                </div>
                 <span className="text-2xl font-black text-emerald-600 leading-none">₹{netAmount.toLocaleString()}</span>
               </div>
             </div>

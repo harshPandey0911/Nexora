@@ -47,6 +47,16 @@ const settingsSchema = new mongoose.Schema({
     min: 0,
     max: 100
   },
+  commissionRates: {
+    level1: { type: Number, default: 10 },
+    level2: { type: Number, default: 15 },
+    level3: { type: Number, default: 20 }
+  },
+  platformFeeRates: {
+    level1: { type: Number, default: 0.5 },
+    level2: { type: Number, default: 1.0 },
+    level3: { type: Number, default: 2.0 }
+  },
   vendorCashLimit: {
     type: Number,
     default: 10000,

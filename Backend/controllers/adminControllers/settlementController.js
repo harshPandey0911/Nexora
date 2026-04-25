@@ -222,9 +222,9 @@ const approveSettlement = async (req, res) => {
 
     const currentDues = vendor.wallet?.dues || 0;
 
-    // Settlement reduces DUES
-    // Ensure we don't go below zero (though validation handles request)
+    // Settlement reduces DUES and increases TOTAL SETTLED
     vendor.wallet.dues = Math.max(0, currentDues - settlement.amount);
+    vendor.wallet.totalSettled = (vendor.wallet.totalSettled || 0) + settlement.amount;
 
     // Auto-unblock if dues drop below limit
     if (vendor.wallet.isBlocked && vendor.wallet.dues <= (vendor.wallet.cashLimit || 10000)) {
@@ -570,7 +570,7 @@ module.exports = {
       const Settings = require('../../models/Settings');
       const settings = await Settings.findOne({ type: 'global' });
       const tdsRate = settings?.tdsPercentage || 1;
-      const platformFeeRate = settings?.platformFeePercentage || 1;
+      let platformFeeRate = settings?.platformFeePercentage || 1;
 
       const withdrawal = await Withdrawal.findById(withdrawalId);
       if (!withdrawal) return res.status(404).json({ success: false, message: 'Withdrawal not found' });
@@ -586,11 +586,18 @@ module.exports = {
         });
       }
 
-      // Calculate Deductions
+      // Calculate Deductions based on Vendor Level from SETTINGS
+      const vendorLevel = vendor.level || 3;
+      const levelKey = `level${vendorLevel}`;
+      
+      const commissionRate = settings.commissionRates?.[levelKey] || 15;
+      platformFeeRate = settings.platformFeeRates?.[levelKey] || 1.0;
+
       const grossAmount = withdrawal.amount;
+      const commissionAmount = Math.round((grossAmount * commissionRate) / 100);
       const tdsAmount = Math.round((grossAmount * tdsRate) / 100);
       const platformFeeAmount = Math.round((grossAmount * platformFeeRate) / 100);
-      const netAmount = grossAmount - tdsAmount - platformFeeAmount;
+      const netAmount = grossAmount - commissionAmount - tdsAmount - platformFeeAmount;
 
       // Deduct full amount from vendor earnings (gross)
       vendor.wallet.earnings -= grossAmount;

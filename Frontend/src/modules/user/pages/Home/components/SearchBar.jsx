@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiSearch } from 'react-icons/fi';
+import { FiSearch, FiShoppingBag } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import NotificationBell from '../../../components/common/NotificationBell';
 import { themeColors } from '../../../../../theme';
 
 const SearchBar = ({ onInputClick }) => {
+  const navigate = useNavigate();
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
   const [currentServiceIndex, setCurrentServiceIndex] = useState(0);
@@ -98,8 +100,20 @@ const SearchBar = ({ onInputClick }) => {
         </div>
       </div>
 
-      {/* Notification Bell next to Search Bar */}
-      <div className="shrink-0">
+      {/* Shop & Notification Icons */}
+      <div className="shrink-0 flex items-center gap-3">
+        <div 
+          className="flex flex-col items-center cursor-pointer"
+          onClick={() => navigate('/user/shop')}
+        >
+          <div className="relative">
+            <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center">
+              <FiShoppingBag className="w-5 h-5 text-primary-600" />
+              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 border-2 border-white rounded-full"></div>
+            </div>
+          </div>
+          <span className="text-[10px] font-black text-primary-600 mt-1 uppercase tracking-tighter">Shop</span>
+        </div>
         <NotificationBell />
       </div>
     </div>

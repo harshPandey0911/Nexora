@@ -154,6 +154,10 @@ const getDashboardStats = async (req, res) => {
     // 5. Fetch Global Settings for Timing
     const globalSettings = await Settings.findOne({ type: 'global' }).lean();
 
+    // 6. Fetch fresh vendor data for stats
+    const Vendor = require('../../models/Vendor');
+    const vendorProfile = await Vendor.findById(vendorId).select('performanceScore level commissionRate isOnline');
+
     res.status(200).json({
       success: true,
       data: {
@@ -170,7 +174,12 @@ const getDashboardStats = async (req, res) => {
           vendorEarnings: vendorEarnings,
           workersOnline,
           rating: parseFloat(rating.toFixed(1)),
-          isOnline: req.user.isOnline
+          isOnline: vendorProfile?.isOnline ?? req.user.isOnline,
+          performanceScore: vendorProfile?.performanceScore || 0,
+          level: vendorProfile?.level || 3,
+          commissionRate: vendorProfile?.commissionRate || 15,
+          commissionRates: globalSettings?.commissionRates || { level1: 10, level2: 15, level3: 20 },
+          platformFeeRates: globalSettings?.platformFeeRates || { level1: 0.5, level2: 1.0, level3: 2.0 }
         },
         recentBookings
       }

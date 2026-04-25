@@ -745,9 +745,19 @@ const updateBookingStatus = async (req, res) => {
       });
     }
 
+    // ── Update Vendor Performance Stats ──
+    if (status === BOOKING_STATUS.COMPLETED || status === BOOKING_STATUS.CANCELLED) {
+      try {
+        const { updateVendorStats } = require('../../utils/vendorStatsHelper');
+        updateVendorStats(vendorId);
+      } catch (statsErr) {
+        console.error('Error updating vendor stats after status change:', statsErr);
+      }
+    }
+
     res.status(200).json({
       success: true,
-      message: 'Booking status updated successfully',
+      message: `Booking status updated successfully`,
       data: booking
     });
   } catch (error) {
@@ -1031,10 +1041,23 @@ const completeSelfJob = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Bill already generated for this booking' });
     }
 
-    // ── Fetch Settings (frozen snapshot for this bill) ──
+    // ── Fetch Settings & Vendor (frozen snapshot for this bill) ──
     const Settings = require('../../models/Settings');
+    const Vendor = require('../../models/Vendor');
     const settings = await Settings.findOne({ type: 'global' });
-    const serviceSplitPct = settings?.servicePayoutPercentage ?? 70;
+    const vendor = await Vendor.findById(vendorId).select('commissionRate level');
+
+    // Dynamic split based on vendor performance
+    // If it's a cash job, we calculate commission now to add to DUES.
+    // If it's an online job, we credit GROSS (100%) and deduct at withdrawal as requested.
+    const isOnlineJob = booking.paymentMethod === 'online' || booking.paymentMethod === 'Qr online';
+    
+    // Get Dynamic Commission from Settings based on Vendor Level
+    const vendorLevel = vendor?.level || 3;
+    const levelKey = `level${vendorLevel}`;
+    const dynamicCommission = settings?.commissionRates?.[levelKey] || vendor?.commissionRate || 15;
+    
+    const serviceSplitPct = isOnlineJob ? 100 : (100 - dynamicCommission);
     const partsSplitPct = settings?.partsPayoutPercentage ?? 10;
     const serviceGstPct = settings?.serviceGstPercentage ?? 18;
     const partsGstPct = settings?.partsGstPercentage ?? 18;
@@ -1400,6 +1423,14 @@ const collectSelfCash = async (req, res) => {
       relatedType: 'booking',
       priority: 'high'
     });
+
+    // ── Update Vendor Performance Stats ──
+    try {
+      const { updateVendorStats } = require('../../utils/vendorStatsHelper');
+      updateVendorStats(vendorId);
+    } catch (statsErr) {
+      console.error('Error updating vendor stats after cash collection:', statsErr);
+    }
 
     res.status(200).json({ success: true, message: 'Cash collected, job completed', data: booking });
   } catch (error) {
