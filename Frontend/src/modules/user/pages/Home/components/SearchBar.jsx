@@ -82,7 +82,7 @@ const SearchBar = ({ onInputClick }) => {
             }}
           >
             {/* Placeholder text with typing animation */}
-            <span className="text-[15px] text-gray-400 tracking-wide font-light">
+            <span className="text-[15px] text-gray-400 tracking-wide font-light truncate w-full">
               Search for <span
                 className="font-medium inline-block min-w-[2px]"
                 style={{
