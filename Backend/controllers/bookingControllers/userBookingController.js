@@ -76,7 +76,7 @@ const createBooking = async (req, res) => {
 
     // 1. Parallel Fetching: Service and User
     const [service, user] = await Promise.all([
-      Service.findById(serviceId).select('title basePrice discountPrice description images iconUrl categoryId category categoryIds').lean(),
+      Service.findById(serviceId).select('title basePrice discountPrice description images iconUrl categoryId category categoryIds vendorId').lean(),
       User.findById(userId).select('name phone wallet plans')
     ]);
 
@@ -131,8 +131,29 @@ const createBooking = async (req, res) => {
       city: address.city
     };
 
-    console.log(`[LocationService] Searching vendors with: center=${JSON.stringify(bookingLocation)}, radius=10km, filters=${JSON.stringify(vendorFilters)}`);
-    let nearbyVendors = await findNearbyVendors(bookingLocation, 10, vendorFilters);
+    let nearbyVendors = [];
+    
+    // IF SERVICE HAS A VENDOR ID, ONLY NOTIFY THAT VENDOR (EXCLUSIVE)
+    if (service.vendorId) {
+      console.log(`[CreateBooking] Service is custom. vendorId found: ${service.vendorId}`);
+      const ownerVendor = await Vendor.findById(service.vendorId);
+      if (ownerVendor) {
+        console.log(`[CreateBooking] Owner vendor found: ${ownerVendor.businessName} (${ownerVendor._id})`);
+        // Mock a nearby vendor object for the downstream logic
+        nearbyVendors = [{
+          _id: ownerVendor._id,
+          distance: 0, // Assume they are eligible regardless of distance if it's their own service
+          businessName: ownerVendor.businessName,
+          phone: ownerVendor.phone
+        }];
+      } else {
+        console.log(`[CreateBooking] Owner vendor NOT found for id: ${service.vendorId}`);
+      }
+    } else {
+      console.log(`[LocationService] Searching vendors with: center=${JSON.stringify(bookingLocation)}, radius=10km, filters=${JSON.stringify(vendorFilters)}`);
+      nearbyVendors = await findNearbyVendors(bookingLocation, 10, vendorFilters);
+    }
+    console.log(`[CreateBooking] Final nearbyVendors count: ${nearbyVendors.length}`);
 
     // Deduplicate nearbyVendors by _id to prevent duplicate notifications
     const uniqueVendorIds = new Set();
@@ -445,7 +466,7 @@ const createBooking = async (req, res) => {
           console.log(`[CreateBooking] Emitting Socket.IO events to ${wave1Vendors.length} vendors in Wave 1...`);
           wave1Vendors.forEach(vendor => {
             const vendorRoom = `vendor_${vendor._id.toString()}`;
-            console.log(`[Wave 1] Emitting to ${vendorRoom} (dist: ${vendor.distance?.toFixed(1) || 'N/A'}km)`);
+            console.log(`[CreateBooking] Sending socket notification to: ${vendorRoom}`);
             io.to(vendorRoom).emit('new_booking_request', {
               bookingId: bookingForBackground._id,
               serviceName: serviceForBackground.title,

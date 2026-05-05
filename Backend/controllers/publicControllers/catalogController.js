@@ -19,7 +19,12 @@ const getPublicCategories = async (req, res) => {
     // Build query
     const query = { status: 'active' };
     if (cityId) {
-      query.cityIds = cityId;
+      // Find categories that are either global (no vendorId) and in city, 
+      // or vendor-specific and in city (we should probably check vendor's city too)
+      query.$or = [
+        { vendorId: null, cityIds: cityId },
+        { vendorId: { $ne: null } } // Vendor categories are currently shown if active
+      ];
     }
 
     const categories = await Category.find(query)
@@ -95,21 +100,52 @@ const getPublicBrands = async (req, res) => {
       }
     }
 
+    // If no brands found but categoryId is provided, check for vendor-specific services
+    if (brands.length === 0 && categoryId) {
+      const vendorServices = await Service.find({ categoryId, status: 'active' })
+        .populate('vendorId', 'name businessName profilePhoto')
+        .lean();
+      
+      if (vendorServices.length > 0) {
+        // Create virtual brands for each vendor
+        const vendorMap = new Map();
+        vendorServices.forEach(svc => {
+          if (svc.vendorId && !vendorMap.has(svc.vendorId._id.toString())) {
+            vendorMap.set(svc.vendorId._id.toString(), {
+              id: svc.vendorId._id.toString(),
+              title: svc.vendorId.businessName || svc.vendorId.name,
+              slug: `vendor-${svc.vendorId._id}`,
+              icon: svc.vendorId.profilePhoto || '',
+              logo: svc.vendorId.profilePhoto || '',
+              imageUrl: svc.vendorId.profilePhoto || '',
+              badge: 'Vendor',
+              categoryId: categoryId,
+              vendorId: svc.vendorId._id,
+              isVendor: true
+            });
+          }
+        });
+        brands = Array.from(vendorMap.values());
+      }
+    }
+
     res.status(200).json({
       success: true,
       brands: brands.map(brand => ({
-        id: brand._id.toString(),
+        id: brand.id || brand._id.toString(),
         title: brand.title,
         slug: brand.slug,
-        icon: brand.iconUrl || '',
-        logo: brand.logo || brand.iconUrl || '',
-        imageUrl: brand.imageUrl || brand.iconUrl || '',
+        icon: brand.iconUrl || brand.icon || '',
+        logo: brand.logo || brand.iconUrl || brand.icon || '',
+        imageUrl: brand.imageUrl || brand.iconUrl || brand.icon || '',
         badge: brand.badge || '',
         price: brand.basePrice || 0, // Legacy support
         originalPrice: brand.discountPrice ? (brand.basePrice + brand.discountPrice) : (brand.basePrice || 0),
-        categoryId: brand.categoryIds && brand.categoryIds.length > 0 ? brand.categoryIds[0].toString() : null,
-        categoryIds: (brand.categoryIds || []).map(id => id.toString()),
-        sections: brand.sections || []
+        categoryId: brand.categoryId || (brand.categoryIds && brand.categoryIds.length > 0 ? brand.categoryIds[0].toString() : null),
+        categoryIds: brand.categoryIds ? brand.categoryIds.map(id => id.toString()) : [brand.categoryId?.toString()],
+        sections: brand.sections || [],
+        vendorId: brand.vendorId || null,
+        isVendor: brand.isVendor || false
       }))
     });
   } catch (error) {
@@ -243,6 +279,11 @@ const getPublicServices = async (req, res) => {
 
     if (categoryId) {
       query.categoryId = categoryId;
+      // If fetching by category and brandId is a vendor ID (handled by front-end passing brandId as vendorId for vendor-specific brands)
+      if (brandId && brandId.toString().length > 10) { // Simple check if it's an ObjectId
+        query.vendorId = brandId;
+        delete query.brandId;
+      }
     }
 
     if (req.query.search) {
@@ -377,16 +418,61 @@ const getPublicHomeContent = async (req, res) => {
  */
 const getPublicHomeData = async (req, res) => {
   try {
-    const { cityId } = req.query;
+    const { cityId, lat, lng } = req.query;
+    const userLocation = (lat && lng) ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null;
 
     // Fetch both in parallel
-    const [categoriesRes, homeContent] = await Promise.all([
-      Category.find({ status: 'active', cityIds: cityId ? cityId : { $exists: true } })
-        .select('title slug homeIconUrl homeBadge hasSaleBadge')
-        .sort({ homeOrder: 1 })
+    const [allCategories, homeContent] = await Promise.all([
+      Category.find({ status: 'active', showOnHome: true })
+        .select('title slug homeIconUrl homeBadge hasSaleBadge showOnHome vendorId cityIds')
+        .sort({ homeOrder: 1, createdAt: -1 })
         .lean(),
       HomeContent.getHomeContent(cityId)
     ]);
+
+    const { findNearbyVendors } = require('../../services/locationService');
+    const Vendor = require('../../models/Vendor');
+
+    // Filter categories based on nearby vendor availability
+    const nearbyCategories = await Promise.all(allCategories.map(async (cat) => {
+      // 1. If it's a platform category (no vendorId)
+      if (!cat.vendorId) {
+        // If we have location, check if any vendor is nearby for this category
+        if (userLocation) {
+          const vendors = await findNearbyVendors(userLocation, 10, { service: cat.title, city: cityId });
+          return vendors.length > 0 ? cat : null;
+        }
+        // If no location, check if category belongs to current city
+        if (cityId && cat.cityIds && cat.cityIds.some(id => id.toString() === cityId)) {
+          return cat;
+        }
+        return null;
+      }
+
+      // 2. If it's a vendor-specific category
+      if (cat.vendorId) {
+        const ownerVendor = await Vendor.findById(cat.vendorId).select('geoLocation address');
+        if (!ownerVendor) return null;
+
+        if (userLocation) {
+          const { calculateDistance } = require('../../services/locationService');
+          const vLoc = ownerVendor.geoLocation?.coordinates 
+            ? { lat: ownerVendor.geoLocation.coordinates[1], lng: ownerVendor.geoLocation.coordinates[0] }
+            : { lat: ownerVendor.address?.lat, lng: ownerVendor.address?.lng };
+          
+          if (vLoc.lat && vLoc.lng) {
+            const distance = calculateDistance(userLocation, vLoc);
+            return distance <= 10 ? cat : null;
+          }
+        }
+        // Fallback: If no location provided, show it if it matches city (vendor categories are city-wide for now)
+        return cat;
+      }
+
+      return null;
+    }));
+
+    const categoriesRes = nearbyCategories.filter(Boolean);
 
     const formattedCategories = categoriesRes.map(cat => ({
       id: cat._id.toString(),
@@ -394,7 +480,8 @@ const getPublicHomeData = async (req, res) => {
       slug: cat.slug,
       icon: cat.homeIconUrl || '',
       badge: cat.homeBadge || '',
-      hasSaleBadge: cat.hasSaleBadge || false
+      hasSaleBadge: cat.hasSaleBadge || false,
+      showOnHome: cat.showOnHome || false
     }));
 
     let formattedContent = null;

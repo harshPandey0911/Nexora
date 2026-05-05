@@ -16,6 +16,8 @@ const getAllCategories = async (req, res) => {
     if (showOnHome !== undefined) query.showOnHome = showOnHome === 'true';
     if (isPopular !== undefined) query.isPopular = isPopular === 'true';
     if (cityId) query.cityIds = cityId;
+    if (req.query.isVendor === 'true') query.vendorId = { $ne: null };
+    if (req.query.isVendor === 'false') query.vendorId = null;
 
     const categories = await Category.find(query)
       .select('-__v')
@@ -38,6 +40,7 @@ const getAllCategories = async (req, res) => {
         imageUrl: cat.imageUrl,
         status: cat.status,
         isPopular: cat.isPopular,
+        vendorId: cat.vendorId,
         cityIds: cat.cityIds || [],
         metaTitle: cat.metaTitle,
         metaDescription: cat.metaDescription,

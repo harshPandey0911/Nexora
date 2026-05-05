@@ -14,6 +14,33 @@ const vendorService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  addVendorCategory: async (data) => {
+    try {
+      const response = await api.post('/vendors/add-category', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  addVendorService: async (data) => {
+    try {
+      const response = await api.post('/vendors/add-service', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getMyCustomContent: async () => {
+    try {
+      const response = await api.get('/vendors/my-custom-content');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

@@ -109,6 +109,28 @@ const ServicesPage = ({ catalog, setCatalog, selectedCity }) => {
           });
         }
 
+        // Fetch vendor services (services with no brand but with vendorId)
+        const vendorServicesRes = await serviceService.getAll({ isVendor: 'true' });
+        let vendorBrands = [];
+        if (vendorServicesRes.success) {
+          // Group vendor services by vendor to show them as "Virtual Brands"
+          const vendorMap = new Map();
+          vendorServicesRes.services.forEach(svc => {
+            if (svc.vendorId && !vendorMap.has(svc.vendorId._id || svc.vendorId)) {
+              const v = svc.vendorId;
+              vendorMap.set(v._id || v, {
+                id: v._id || v,
+                title: v.businessName || v.name || 'Unknown Vendor',
+                iconUrl: v.profilePhoto || "",
+                isVendor: true,
+                categoryId: svc.categoryId?._id || svc.categoryId,
+                categoryIds: [svc.categoryId?._id || svc.categoryId]
+              });
+            }
+          });
+          vendorBrands = Array.from(vendorMap.values());
+        }
+
         if (categoriesRes.success) {
           mappedCategories = categoriesRes.categories.map(cat => ({
             id: (cat.id || cat._id?.$oid || cat._id)?.toString() || "",
@@ -118,7 +140,7 @@ const ServicesPage = ({ catalog, setCatalog, selectedCity }) => {
         }
 
         setCatalog(prev => {
-          const next = { ...prev, services: mappedBrands, categories: mappedCategories };
+          const next = { ...prev, services: [...mappedBrands, ...vendorBrands], categories: mappedCategories };
           saveCatalog(next);
           return next;
         });
@@ -154,8 +176,12 @@ const ServicesPage = ({ catalog, setCatalog, selectedCity }) => {
 
       try {
         setLoadingServices(true);
-        // Using serviceService to get services for this brand
-        const response = await serviceService.getAll({ brandId: activeBrandId });
+        // If it's a vendor brand, fetch using categoryId and vendorId
+        const params = activeBrand?.isVendor 
+          ? { vendorId: activeBrandId, categoryId: activeBrand.categoryId }
+          : { brandId: activeBrandId };
+        
+        const response = await serviceService.getAll(params);
         if (response.success) {
           setBrandServices(response.services || []);
         } else {
@@ -361,6 +387,7 @@ const ServicesPage = ({ catalog, setCatalog, selectedCity }) => {
                     <div className="flex-1 min-w-0">
                       <div className={`font-bold text-sm truncate ${activeBrandId === brand.id ? 'text-blue-700' : 'text-gray-800'}`}>
                         {brand.title}
+                        {brand.isVendor && <span className="ml-2 text-[8px] bg-orange-100 text-orange-600 px-1 rounded uppercase">Vendor</span>}
                       </div>
                       <div className="text-xs text-gray-400 truncate" title={
                         selectedCategoryFilter !== "all"

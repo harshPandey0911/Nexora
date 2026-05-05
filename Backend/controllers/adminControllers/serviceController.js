@@ -14,10 +14,13 @@ const getAllServices = async (req, res) => {
     const query = {};
     if (status) query.status = status;
     if (brandId) query.brandId = brandId;
+    if (req.query.isVendor === 'true') query.vendorId = { $ne: null };
+    if (req.query.isVendor === 'false') query.vendorId = null;
 
     const services = await Service.find(query)
       .populate('brandId', 'title')
       .populate('categoryId', 'title')
+      .populate('vendorId', 'name businessName')
       .sort({ createdAt: -1 });
 
     res.status(200).json({

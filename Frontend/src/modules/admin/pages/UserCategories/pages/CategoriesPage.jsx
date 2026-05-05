@@ -62,6 +62,7 @@ const CategoriesPage = ({ catalog, setCatalog, selectedCity }) => {
             homeBadge: cat.homeBadge || "",
             hasSaleBadge: cat.hasSaleBadge || false,
             showOnHome: cat.showOnHome !== false,
+            vendorId: cat.vendorId,
           }));
 
           // Update catalog with fetched categories
@@ -472,6 +473,7 @@ const CategoriesPage = ({ catalog, setCatalog, selectedCity }) => {
                     </button>
                   </th>
                   <th className="text-center py-3 px-4 text-sm font-bold text-gray-700 w-32">Status</th>
+                  <th className="text-left py-3 px-4 text-sm font-bold text-gray-700">Type</th>
                   <th className="text-center py-3 px-4 text-sm font-bold text-gray-700 w-32">Actions</th>
                 </tr>
               </thead>
@@ -526,6 +528,19 @@ const CategoriesPage = ({ catalog, setCatalog, selectedCity }) => {
                       <span className={`inline-block px-3 py-1 text-xs font-bold rounded ${c.showOnHome !== false ? "bg-green-500 text-white" : "bg-gray-300 text-gray-700"}`}>
                         {c.showOnHome !== false ? "VISIBLE" : "HIDDEN"}
                       </span>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      {c.vendorId ? (
+                        <div className="flex flex-col items-center">
+                          <span className="inline-block px-2 py-1 text-[10px] font-bold bg-orange-100 text-orange-700 rounded border border-orange-200">
+                            VENDOR
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="inline-block px-2 py-1 text-[10px] font-bold bg-blue-100 text-blue-700 rounded border border-blue-200">
+                          PLATFORM
+                        </span>
+                      )}
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center justify-center gap-2">

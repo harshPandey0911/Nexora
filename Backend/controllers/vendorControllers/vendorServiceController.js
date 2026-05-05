@@ -1,6 +1,7 @@
 const Vendor = require('../../models/Vendor');
 const Category = require('../../models/Category');
 const Booking = require('../../models/Booking');
+const Service = require('../../models/UserService');
 const { validationResult } = require('express-validator');
 
 /**
@@ -131,9 +132,104 @@ const setServicePricing = async (req, res) => {
   }
 };
 
+/**
+ * Add a custom category by vendor
+ */
+const addVendorCategory = async (req, res) => {
+  try {
+    const { title, description, imageUrl, homeIconUrl } = req.body;
+    const vendorId = req.user.id;
+    const vendor = await Vendor.findById(vendorId).select('cityId');
+    const cityIds = vendor?.cityId ? [vendor.cityId] : [];
+
+    if (!title) {
+      return res.status(400).json({ success: false, message: 'Category title is required' });
+    }
+
+    const category = await Category.create({
+      title,
+      description,
+      imageUrl,
+      homeIconUrl: homeIconUrl || imageUrl, // Use imageUrl as fallback for home icon
+      vendorId,
+      cityIds,
+      status: 'active',
+      showOnHome: true // Show on home page so user can see it
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Category added successfully',
+      data: category
+    });
+  } catch (error) {
+    console.error('Add Vendor Category error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Add a custom service/product by vendor
+ */
+const addVendorService = async (req, res) => {
+  try {
+    const { title, description, basePrice, categoryId, iconUrl } = req.body;
+    const vendorId = req.user.id;
+
+    if (!title || !basePrice || !categoryId) {
+      return res.status(400).json({ success: false, message: 'Title, price, and category are required' });
+    }
+
+    const service = await Service.create({
+      title,
+      description,
+      basePrice,
+      categoryId,
+      vendorId,
+      iconUrl,
+      status: 'active'
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Service added successfully',
+      data: service
+    });
+  } catch (error) {
+    console.error('Add Vendor Service error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Get all custom categories and services created by the vendor
+ */
+const getMyCustomContent = async (req, res) => {
+  try {
+    const vendorId = req.user.id;
+
+    const categories = await Category.find({ vendorId });
+    const services = await Service.find({ vendorId }).populate('categoryId', 'title');
+
+    res.status(200).json({
+      success: true,
+      data: {
+        categories,
+        services
+      }
+    });
+  } catch (error) {
+    console.error('Get My Custom Content error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   getMyServices,
   getVendorServices,
   updateServiceAvailability,
-  setServicePricing
+  setServicePricing,
+  addVendorCategory,
+  addVendorService,
+  getMyCustomContent
 };

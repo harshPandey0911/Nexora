@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiUser, FiEdit2, FiMapPin, FiPhone, FiMail, FiBriefcase, FiStar, FiArrowRight, FiSettings, FiChevronRight, FiCreditCard, FiLogOut, FiTrash2 } from 'react-icons/fi';
+import { FiUser, FiEdit2, FiMapPin, FiPhone, FiMail, FiBriefcase, FiStar, FiArrowRight, FiSettings, FiChevronRight, FiCreditCard, FiLogOut, FiTrash2, FiPlus } from 'react-icons/fi';
 import { FaWallet } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { vendorTheme as themeColors } from '../../../../theme';
@@ -24,6 +24,7 @@ const Profile = () => {
     { id: 2, label: 'Wallet', icon: FaWallet, path: '/vendor/wallet' },
     { id: 5, label: 'My Ratings', icon: FiStar, path: '/vendor/my-ratings' },
     { id: 10, label: 'My Services', icon: FiBriefcase, path: '/vendor/my-services' },
+    { id: 11, label: 'Add Custom Offering', icon: FiPlus, path: '/vendor/add-custom-content', highlight: true },
     { id: 7, label: 'Manage Address', icon: FiMapPin, path: '/vendor/address-management' },
     { id: 8, label: 'Settings', icon: FiSettings, path: '/vendor/settings' },
     { id: 9, label: 'About Cleaning Expert Services', icon: null, customIcon: 'S', path: '/vendor/about-cleaning-expert' },
@@ -384,7 +385,11 @@ const Profile = () => {
               <button
                 key={item.id}
                 onClick={() => navigate(item.path)}
-                className="w-full flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-teal-200 hover:shadow-md transition-all active:scale-[0.98]"
+                className={`w-full flex items-center justify-between p-4 rounded-2xl shadow-sm border transition-all active:scale-[0.98] ${
+                  item.highlight 
+                  ? 'bg-gradient-to-r from-teal-50 to-white border-teal-200 shadow-md ring-1 ring-teal-100' 
+                  : 'bg-white border-gray-100 hover:border-teal-200 hover:shadow-md'
+                }`}
               >
                 <div className="flex items-center gap-4">
                   {item.customIcon ? (
@@ -401,18 +406,19 @@ const Profile = () => {
                     IconComponent && (
                       <div
                         className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors"
-                        style={{ backgroundColor: hexToRgba(themeColors.button, 0.1) }}
+                        style={{ backgroundColor: item.highlight ? hexToRgba(themeColors.button, 0.2) : hexToRgba(themeColors.button, 0.1) }}
                       >
-                        <IconComponent className="w-6 h-6" style={{ color: themeColors.button }} />
+                        <IconComponent className={`w-6 h-6 ${item.highlight ? 'scale-110' : ''}`} style={{ color: themeColors.button }} />
                       </div>
                     )
                   )}
-                  <span className="text-[15px] font-bold text-gray-800 text-left">
+                  <span className={`text-[15px] font-bold text-left ${item.highlight ? 'text-teal-800' : 'text-gray-800'}`}>
                     {item.label}
+                    {item.highlight && <span className="ml-2 text-[10px] bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full uppercase tracking-wider">New</span>}
                   </span>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center">
-                  <FiChevronRight className="w-5 h-5 text-gray-400" />
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.highlight ? 'bg-teal-100' : 'bg-gray-50'}`}>
+                  <FiChevronRight className={`w-5 h-5 ${item.highlight ? 'text-teal-600' : 'text-gray-400'}`} />
                 </div>
               </button>
             );

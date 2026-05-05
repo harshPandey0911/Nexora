@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiBriefcase, FiStar, FiCheckCircle, FiChevronRight, FiInfo, FiActivity } from 'react-icons/fi';
+import { FiBriefcase, FiStar, FiCheckCircle, FiChevronRight, FiInfo, FiActivity, FiPlus } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { vendorTheme as themeColors } from '../../../../theme';
 import Header from '../../components/layout/Header';
@@ -82,6 +82,13 @@ const MyServices = () => {
             <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></div>
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Authorized Portfolios</h2>
           </div>
+          <button 
+            onClick={() => navigate('/vendor/add-custom-content')}
+            className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-teal-100 active:scale-95 transition-all"
+          >
+            <FiPlus className="w-3 h-3" />
+            Add New
+          </button>
         </div>
 
         {/* Services List */}

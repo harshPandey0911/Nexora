@@ -68,6 +68,7 @@ const BillingPage = lazyLoad(() => import('../pages/BillingPage'));
 const SupportList = lazyLoad(() => import('../pages/Support/index'));
 const TicketDetails = lazyLoad(() => import('../pages/Support/TicketDetails'));
 const MyServices = lazyLoad(() => import('../pages/MyServices'));
+const AddCustomContent = lazyLoad(() => import('../pages/AddCustomContent'));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -127,6 +128,7 @@ const VendorRoutes = () => {
               <Route path="/my-ratings" element={<ProtectedRoute userType="vendor"><MyRatings /></ProtectedRoute>} />
               <Route path="/about-cleaning-expert" element={<ProtectedRoute userType="vendor"><AboutCleaningExpert /></ProtectedRoute>} />
               <Route path="/my-services" element={<ProtectedRoute userType="vendor"><MyServices /></ProtectedRoute>} />
+              <Route path="/add-custom-content" element={<ProtectedRoute userType="vendor"><AddCustomContent /></ProtectedRoute>} />
               <Route path="/support" element={<ProtectedRoute userType="vendor"><SupportList /></ProtectedRoute>} />
               <Route path="/support/:id" element={<ProtectedRoute userType="vendor"><TicketDetails /></ProtectedRoute>} />
             </Routes>

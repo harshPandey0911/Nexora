@@ -10,7 +10,13 @@ const userServiceSchema = new mongoose.Schema({
   brandId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Brand',
-    required: [true, 'Please provide a brand ID'],
+    // required: [true, 'Please provide a brand ID'],
+    index: true
+  },
+  vendorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Vendor',
+    default: null,
     index: true
   },
   // Added based on user request "category -> brand -> service", 

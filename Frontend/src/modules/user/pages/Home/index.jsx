@@ -44,6 +44,10 @@ const Home = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [address, setAddress] = useState(localStorage.getItem('currentAddress') || 'Select Location');
+  const [coords, setCoords] = useState(() => {
+    const saved = localStorage.getItem('currentCoords');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [houseNumber, setHouseNumber] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -158,6 +162,11 @@ const Home = () => {
           window.location.reload();
         }, 500);
       }
+      if (locationObj.lat && locationObj.lng) {
+        const newCoords = { lat: locationObj.lat, lng: locationObj.lng };
+        setCoords(newCoords);
+        localStorage.setItem('currentCoords', JSON.stringify(newCoords));
+      }
     }
     setHouseNumber(savedHouseNumber);
     setIsAddressModalOpen(false);
@@ -208,6 +217,11 @@ const Home = () => {
                         selectCity(null);
                       }
                     }
+
+                    // Save coords for distance filtering
+                    const newCoords = { lat: latitude, lng: longitude };
+                    setCoords(newCoords);
+                    localStorage.setItem('currentCoords', JSON.stringify(newCoords));
                   }
                 }
               } catch (error) {
@@ -256,7 +270,7 @@ const Home = () => {
         setLoading(true);
         const cityId = currentCity?._id || currentCity?.id;
 
-        const response = await publicCatalogService.getHomeData(cityId);
+        const response = await publicCatalogService.getHomeData(cityId, coords);
 
         if (response.success) {
           if (response.categories) {
@@ -295,7 +309,7 @@ const Home = () => {
 
     fetchData();
     fetchBanners();
-  }, [currentCity]);
+  }, [currentCity, coords]);
   // Open category modal from navigation state (e.g. from Cart 'Add Services')
   useEffect(() => {
     if (!loading && categories.length > 0 && (location.state?.openCategoryId || location.state?.openCategoryName)) {
