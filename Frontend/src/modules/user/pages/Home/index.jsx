@@ -551,10 +551,6 @@ const Home = () => {
                 </motion.section>
               )}
 
-              {/* Scrap Promotion Section */}
-              <motion.section variants={itemVariants}>
-                <ScrapPromotionCard onClick={() => navigate('/user/shop')} />
-              </motion.section>
 
 
               {/* Curated Services */}
