@@ -90,7 +90,7 @@ const PromoCarousel = memo(({ promos, onPromoClick }) => {
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-hide snap-x snap-mandatory"
+        className="flex gap-0 overflow-x-auto px-0 pb-2 scrollbar-hide snap-x snap-mandatory"
         style={{ scrollBehavior: 'smooth' }}
       >
         {promotionalCards.map((promo, index) => (

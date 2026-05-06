@@ -88,7 +88,7 @@ const LoadingFallback = () => (
   <LogoLoader />
 );
 
-// Import Live Booking Card
+import ThemeManager from '../../../components/common/ThemeManager';
 import LiveBookingCard from '../components/booking/LiveBookingCard';
 
 const UserRoutes = () => {
@@ -111,50 +111,52 @@ const UserRoutes = () => {
   const isPublicPage = location.pathname.includes('/login') || location.pathname.includes('/signup');
 
   return (
-    <ErrorBoundary>
-      {/* Main content area - leaves space for bottom nav when needed */}
-      <div className={shouldShowBottomNav ? "pb-24" : ""}>
-        <Suspense fallback={<LoadingFallback />}>
-          <PageTransition>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<PublicRoute userType="user"><Login /></PublicRoute>} />
-              <Route path="/signup" element={<PublicRoute userType="user"><Signup /></PublicRoute>} />
+    <ThemeManager theme="user">
+      <ErrorBoundary>
+        {/* Main content area - leaves space for bottom nav when needed */}
+        <div className={shouldShowBottomNav ? "pb-24" : ""}>
+          <Suspense fallback={<LoadingFallback />}>
+            <PageTransition>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<PublicRoute userType="user"><Login /></PublicRoute>} />
+                <Route path="/signup" element={<PublicRoute userType="user"><Signup /></PublicRoute>} />
 
-              {/* Protected routes (auth required) */}
-              <Route path="/" element={<ProtectedRoute userType="user"><Home /></ProtectedRoute>} />
-              <Route path="/native" element={<ProtectedRoute userType="user"><Native /></ProtectedRoute>} />
+                {/* Protected routes (auth required) */}
+                <Route path="/" element={<ProtectedRoute userType="user"><Home /></ProtectedRoute>} />
+                <Route path="/native" element={<ProtectedRoute userType="user"><Native /></ProtectedRoute>} />
 
-              <Route path="/rewards" element={<ProtectedRoute userType="user"><Rewards /></ProtectedRoute>} />
-              <Route path="/account" element={<ProtectedRoute userType="user"><Account /></ProtectedRoute>} />
-              <Route path="/cart" element={<ProtectedRoute userType="user"><Cart /></ProtectedRoute>} />
-              <Route path="/checkout" element={<ProtectedRoute userType="user"><Checkout /></ProtectedRoute>} />
-              <Route path="/my-bookings" element={<ProtectedRoute userType="user"><MyBookings /></ProtectedRoute>} />
-              <Route path="/booking/:id" element={<ProtectedRoute userType="user"><BookingDetails /></ProtectedRoute>} />
-              <Route path="/booking/:id/track" element={<ProtectedRoute userType="user"><BookingTrack /></ProtectedRoute>} />
-              <Route path="/booking-confirmation/:id" element={<ProtectedRoute userType="user"><BookingConfirmation /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute userType="user"><Settings /></ProtectedRoute>} />
-              <Route path="/manage-payment-methods" element={<ProtectedRoute userType="user"><ManagePaymentMethods /></ProtectedRoute>} />
-              <Route path="/manage-addresses" element={<ProtectedRoute userType="user"><ManageAddresses /></ProtectedRoute>} />
-              <Route path="/wallet" element={<ProtectedRoute userType="user"><Wallet /></ProtectedRoute>} />
-              <Route path="/my-plan" element={<ProtectedRoute userType="user"><MyPlan /></ProtectedRoute>} />
-              <Route path="/my-plan/:id" element={<ProtectedRoute userType="user"><PlanDetails /></ProtectedRoute>} />
-              <Route path="/my-rating" element={<ProtectedRoute userType="user"><MyRating /></ProtectedRoute>} />
-              <Route path="/about-cleaning-expert" element={<ProtectedRoute userType="user"><AboutCleaningExpert /></ProtectedRoute>} />
-              <Route path="/update-profile" element={<ProtectedRoute userType="user"><UpdateProfile /></ProtectedRoute>} />
-              <Route path="/notifications" element={<ProtectedRoute userType="user"><Notifications /></ProtectedRoute>} />
-              <Route path="/help-support" element={<ProtectedRoute userType="user"><HelpSupport /></ProtectedRoute>} />
-              <Route path="/cancellation-policy" element={<ProtectedRoute userType="user"><CancellationPolicy /></ProtectedRoute>} />
-            </Routes>
-          </PageTransition>
-        </Suspense>
-      </div>
+                <Route path="/rewards" element={<ProtectedRoute userType="user"><Rewards /></ProtectedRoute>} />
+                <Route path="/account" element={<ProtectedRoute userType="user"><Account /></ProtectedRoute>} />
+                <Route path="/cart" element={<ProtectedRoute userType="user"><Cart /></ProtectedRoute>} />
+                <Route path="/checkout" element={<ProtectedRoute userType="user"><Checkout /></ProtectedRoute>} />
+                <Route path="/my-bookings" element={<ProtectedRoute userType="user"><MyBookings /></ProtectedRoute>} />
+                <Route path="/booking/:id" element={<ProtectedRoute userType="user"><BookingDetails /></ProtectedRoute>} />
+                <Route path="/booking/:id/track" element={<ProtectedRoute userType="user"><BookingTrack /></ProtectedRoute>} />
+                <Route path="/booking-confirmation/:id" element={<ProtectedRoute userType="user"><BookingConfirmation /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute userType="user"><Settings /></ProtectedRoute>} />
+                <Route path="/manage-payment-methods" element={<ProtectedRoute userType="user"><ManagePaymentMethods /></ProtectedRoute>} />
+                <Route path="/manage-addresses" element={<ProtectedRoute userType="user"><ManageAddresses /></ProtectedRoute>} />
+                <Route path="/wallet" element={<ProtectedRoute userType="user"><Wallet /></ProtectedRoute>} />
+                <Route path="/my-plan" element={<ProtectedRoute userType="user"><MyPlan /></ProtectedRoute>} />
+                <Route path="/my-plan/:id" element={<ProtectedRoute userType="user"><PlanDetails /></ProtectedRoute>} />
+                <Route path="/my-rating" element={<ProtectedRoute userType="user"><MyRating /></ProtectedRoute>} />
+                <Route path="/about-cleaning-expert" element={<ProtectedRoute userType="user"><AboutCleaningExpert /></ProtectedRoute>} />
+                <Route path="/update-profile" element={<ProtectedRoute userType="user"><UpdateProfile /></ProtectedRoute>} />
+                <Route path="/notifications" element={<ProtectedRoute userType="user"><Notifications /></ProtectedRoute>} />
+                <Route path="/help-support" element={<ProtectedRoute userType="user"><HelpSupport /></ProtectedRoute>} />
+                <Route path="/cancellation-policy" element={<ProtectedRoute userType="user"><CancellationPolicy /></ProtectedRoute>} />
+              </Routes>
+            </PageTransition>
+          </Suspense>
+        </div>
 
-      {/* These components are OUTSIDE Suspense so they persist during page loads */}
-      {!isBookingDetailsPage && !isBookingConfirmationPage && !isPublicPage && <LiveBookingCard hasBottomNav={shouldShowBottomNav} />}
-      {shouldShowBottomNav && <BottomNav />}
-      {(location.pathname === '/user' || location.pathname === '/user/') && <Footer />}
-    </ErrorBoundary>
+        {/* These components are OUTSIDE Suspense so they persist during page loads */}
+        {!isBookingDetailsPage && !isBookingConfirmationPage && !isPublicPage && <LiveBookingCard hasBottomNav={shouldShowBottomNav} />}
+        {shouldShowBottomNav && <BottomNav />}
+        {(location.pathname === '/user' || location.pathname === '/user/') && <Footer />}
+      </ErrorBoundary>
+    </ThemeManager>
   );
 };
 

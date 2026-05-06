@@ -9,10 +9,14 @@ const Logo = forwardRef(({ className = "h-8 w-auto", ...props }, ref) => {
   return (
     <img
       ref={ref}
-      src="/cleaning-expert-logo.png"
-      alt="Cleaning Expert Services"
-      className={`${className} aspect-square object-cover rounded-full shadow-sm border border-gray-100`}
+      src="https://res.cloudinary.com/dcl98vsqm/image/upload/v1715424754/Homster/Home/nexora_icon_n.png"
+      alt="Nexora"
+      className={`${className} object-contain`}
       {...props}
+      onError={(e) => {
+        // Fallback to a stable placeholder if the custom one fails
+        e.target.src = "https://img.icons8.com/color/96/n.png";
+      }}
     />
   );
 });

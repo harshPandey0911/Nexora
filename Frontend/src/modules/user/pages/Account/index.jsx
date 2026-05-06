@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { themeColors } from '../../../../theme';
+import { themeColors, getColorWithOpacity } from '../../../../theme';
 import { userAuthService } from '../../../../services/authService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { motion } from 'framer-motion';
@@ -138,7 +138,7 @@ const Account = () => {
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group mb-3"
-      style={{ '--hover-border': `${themeColors.brand.teal}30` }}
+      style={{ '--hover-border': `${getColorWithOpacity('teal', 0.3)}` }}
     >
       <div className="flex items-center gap-4">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors`}
@@ -147,7 +147,7 @@ const Account = () => {
             color: color === 'text-red-500' ? '#EF4444' : 'inherit'
           }}
           onMouseEnter={(e) => {
-            if (color !== 'text-red-500') e.currentTarget.style.backgroundColor = `${themeColors.brand.teal}15`;
+            if (color !== 'text-red-500') e.currentTarget.style.backgroundColor = getColorWithOpacity('teal', 0.15);
           }}
           onMouseLeave={(e) => {
             if (color !== 'text-red-500') e.currentTarget.style.backgroundColor = '#F8FAFC';
@@ -196,11 +196,11 @@ const Account = () => {
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(at 0% 0%, ${themeColors?.brand?.teal || '#347989'}25 0%, transparent 70%),
-              radial-gradient(at 100% 0%, ${themeColors?.brand?.yellow || '#D68F35'}20 0%, transparent 70%),
-              radial-gradient(at 100% 100%, ${themeColors?.brand?.orange || '#BB5F36'}15 0%, transparent 75%),
-              radial-gradient(at 0% 100%, ${themeColors?.brand?.teal || '#347989'}10 0%, transparent 70%),
-              radial-gradient(at 50% 50%, ${themeColors?.brand?.teal || '#347989'}03 0%, transparent 100%),
+              radial-gradient(at 0% 0%, ${getColorWithOpacity('teal', 0.25)} 0%, transparent 70%),
+              radial-gradient(at 100% 0%, ${getColorWithOpacity('yellow', 0.20)} 0%, transparent 70%),
+              radial-gradient(at 100% 100%, ${getColorWithOpacity('orange', 0.15)} 0%, transparent 75%),
+              radial-gradient(at 0% 100%, ${getColorWithOpacity('teal', 0.10)} 0%, transparent 70%),
+              radial-gradient(at 50% 50%, ${getColorWithOpacity('teal', 0.03)} 0%, transparent 100%),
               #FFFFFF
             `
           }}
@@ -208,7 +208,7 @@ const Account = () => {
         {/* Elegant Dot Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage: `radial-gradient(${themeColors?.brand?.teal || '#347989'} 0.8px, transparent 0.8px)`,
+            backgroundImage: `radial-gradient(var(--brand-teal) 0.8px, transparent 0.8px)`,
             backgroundSize: '32px 32px'
           }}
         />
@@ -239,7 +239,7 @@ const Account = () => {
           {/* Elevated Profile Card */}
           <motion.div
             variants={itemVariants}
-            className="bg-white rounded-[28px] p-5 shadow-[0_32px_64px_-16px_rgba(52,121,137,0.15)] mb-8 relative overflow-hidden border border-white"
+            className="bg-white rounded-[28px] p-5 shadow-[0_32px_64px_-16px_rgba(var(--brand-teal-rgb),0.15)] mb-8 relative overflow-hidden border border-white"
           >
             {/* Vivid Brand Accents */}
             <div className="absolute top-0 right-0 w-48 h-48 rounded-full -mr-20 -mt-20 blur-3xl opacity-[0.2]"
@@ -299,8 +299,8 @@ const Account = () => {
               onClick={() => navigate('/user/my-plan')}
               className="relative overflow-hidden mb-6 rounded-[28px] p-6 text-white cursor-pointer group transition-all"
               style={{
-                background: `linear-gradient(135deg, ${themeColors.brand.teal} -10%, ${themeColors.brand.orange} 120%)`,
-                boxShadow: `0 20px 40px -12px ${themeColors.brand.teal}40`
+                background: `linear-gradient(135deg, var(--brand-teal) -10%, var(--brand-orange) 120%)`,
+                boxShadow: `0 20px 40px -12px ${getColorWithOpacity('teal', 0.4)}`
               }}
             >
               {/* Decorative elements */}
@@ -339,7 +339,7 @@ const Account = () => {
               className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group"
             >
               <div className="w-10 h-10 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
-                style={{ backgroundColor: `${themeColors.brand.teal}15`, color: themeColors.brand.teal }}
+                style={{ backgroundColor: getColorWithOpacity('teal', 0.15), color: 'var(--brand-teal)' }}
               >
                 <MdAccountBalanceWallet className="w-5 h-5" />
               </div>

@@ -21,10 +21,10 @@ const OfferBannerSlider = ({ banners }) => {
   };
 
   return (
-    <div className="px-5 mb-4 w-full">
+    <div className="mb-4 w-full px-0">
       <Swiper
         modules={[Autoplay, Pagination]}
-        spaceBetween={12}
+        spaceBetween={0}
         slidesPerView={1}
         autoplay={{
           delay: 3000,
@@ -34,7 +34,7 @@ const OfferBannerSlider = ({ banners }) => {
           clickable: true,
           dynamicBullets: true,
         }}
-        className="rounded-[24px] overflow-hidden shadow-sm lg:rounded-[32px]"
+        className="w-full overflow-hidden shadow-sm"
       >
         {banners.map((banner) => (
           <SwiperSlide key={banner._id}>

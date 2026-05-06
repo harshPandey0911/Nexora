@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useLayoutEffect, lazy, Suspense } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { themeColors } from '../../../../theme';
+import { themeColors, getColorWithOpacity } from '../../../../theme';
 import Header from '../../components/layout/Header';
 import BottomNav from '../../components/layout/BottomNav';
-import SearchBar from './components/SearchBar';
+import HeroBanner from './components/HeroBanner';
+import ServiceQuickLinks from './components/ServiceQuickLinks';
 import ServiceCategories from './components/ServiceCategories';
 import { publicCatalogService } from '../../../../services/catalogService';
 import { useCart } from '../../../../context/CartContext';
@@ -465,19 +466,18 @@ const Home = () => {
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(at 0% 0%, ${themeColors?.brand?.teal || '#347989'}25 0%, transparent 70%),
-              radial-gradient(at 100% 0%, ${themeColors?.brand?.yellow || '#D68F35'}20 0%, transparent 70%),
-              radial-gradient(at 100% 100%, ${themeColors?.brand?.orange || '#BB5F36'}15 0%, transparent 75%),
-              radial-gradient(at 0% 100%, ${themeColors?.brand?.teal || '#347989'}10 0%, transparent 70%),
-              radial-gradient(at 50% 50%, ${themeColors?.brand?.teal || '#347989'}03 0%, transparent 100%),
-              #FFFFFF
+              radial-gradient(at 0% 0%, ${getColorWithOpacity('teal', 0.15)} 0%, transparent 70%),
+              radial-gradient(at 100% 0%, ${getColorWithOpacity('teal', 0.10)} 0%, transparent 70%),
+              radial-gradient(at 100% 100%, ${getColorWithOpacity('teal', 0.05)} 0%, transparent 75%),
+              radial-gradient(at 0% 100%, ${getColorWithOpacity('teal', 0.08)} 0%, transparent 70%),
+              #F0F9FF
             `
           }}
         />
         {/* Elegant Dot Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage: `radial-gradient(${themeColors?.brand?.teal || '#347989'} 0.8px, transparent 0.8px)`,
+            backgroundImage: `radial-gradient(var(--brand-teal) 0.8px, transparent 0.8px)`,
             backgroundSize: '32px 32px'
           }}
         />
@@ -491,17 +491,47 @@ const Home = () => {
       >
         <motion.div
           variants={itemVariants}
-          className="backdrop-blur-xl sticky top-0 z-50 border-b border-black/[0.03] rounded-b-[24px] shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300"
+          className="backdrop-blur-xl sticky top-0 z-50 border-b border-black/[0.03] transition-all duration-300"
           style={{ backgroundColor: 'rgba(255, 255, 255, 0.4)' }}
         >
           <Header
             location={address}
             onLocationClick={handleLocationClick}
           />
-          <div className="px-5 pb-5 pt-1 max-w-lg lg:max-w-2xl mx-auto w-full">
-            <SearchBar onInputClick={() => setIsSearchOpen(true)} />
-          </div>
         </motion.div>
+
+        {!isSearchOpen && <HeroBanner banners={offerBanners} onSearchClick={() => setIsSearchOpen(true)} />}
+
+        {/* Dynamic Service Quick Links - New Premium Design */}
+        {homeContent?.isCategoriesVisible !== false && (
+          <motion.section variants={itemVariants}>
+            <ServiceQuickLinks 
+              categories={categories} 
+              onCategoryClick={handleCategoryClick} 
+            />
+          </motion.section>
+        )}
+
+        {/* Hero Section - Promo Carousel */}
+        {homeContent?.isPromosVisible !== false && (
+          <motion.section variants={itemVariants} className="relative z-0">
+            <PromoCarousel
+              promos={(homeContent?.promos || []).sort((a, b) => (a.order || 0) - (b.order || 0)).map(promo => ({
+                id: promo.id || promo._id,
+                title: promo.title || '',
+                subtitle: promo.subtitle || promo.description || '',
+                buttonText: promo.buttonText || 'Book now',
+                className: promo.gradientClass || 'from-[#00A6A6] to-[#008a8a]',
+                image: toAssetUrl(promo.imageUrl),
+                targetCategoryId: promo.targetCategoryId,
+                slug: promo.slug,
+                scrollToSection: promo.scrollToSection,
+                route: '/'
+              }))}
+              onPromoClick={handlePromoClick}
+            />
+          </motion.section>
+        )}
 
         <main className="pt-6 space-y-8 pb-24 max-w-screen-xl mx-auto w-full">
           {!isLocationSupported ? (
@@ -529,34 +559,12 @@ const Home = () => {
             </div>
           ) : (
             <>
-              {/* Sliding Offer Banners */}
-              {!isSearchOpen && <OfferBannerSlider banners={offerBanners} />}
-
-              {/* Hero Section - Promo Carousel */}
-              {homeContent?.isPromosVisible !== false && (
-                <motion.section variants={itemVariants} className="relative z-0">
-                  <PromoCarousel
-                    promos={(homeContent?.promos || []).sort((a, b) => (a.order || 0) - (b.order || 0)).map(promo => ({
-                      id: promo.id || promo._id,
-                      title: promo.title || '',
-                      subtitle: promo.subtitle || promo.description || '',
-                      buttonText: promo.buttonText || 'Book now',
-                      className: promo.gradientClass || 'from-[#00A6A6] to-[#008a8a]',
-                      image: toAssetUrl(promo.imageUrl),
-                      targetCategoryId: promo.targetCategoryId,
-                      slug: promo.slug,
-                      scrollToSection: promo.scrollToSection,
-                      route: '/'
-                    }))}
-                    onPromoClick={handlePromoClick}
-                  />
-                </motion.section>
-              )}
-
-              {/* Categories Section */}
-              {homeContent?.isCategoriesVisible !== false && (
+              {/* All Categories Section (Optional/Secondary) */}
+              {homeContent?.isCategoriesVisible !== false && categories.length > 4 && (
                 <motion.section variants={itemVariants} className="relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-b from-blue-50/30 to-transparent pointer-events-none -z-10" />
+                  <div className="px-5 mb-4">
+                    <h2 className="text-lg font-black text-gray-900">Explore All Categories</h2>
+                  </div>
                   <ServiceCategories
                     categories={categories}
                     onCategoryClick={handleCategoryClick}

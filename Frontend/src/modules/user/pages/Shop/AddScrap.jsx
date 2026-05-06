@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { z } from "zod";
 
 import api from '../../../../services/api';
-import { themeColors } from '../../../../theme';
+import { themeColors, getColorWithOpacity } from '../../../../theme';
 import AddressSelectionModal from '../Checkout/components/AddressSelectionModal';
 import { uploadToCloudinary } from '../../../../utils/cloudinaryUpload';
 import flutterBridge from '../../../../utils/flutterBridge';
@@ -198,11 +198,11 @@ const AddScrap = () => {
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(at 0% 0%, ${themeColors?.brand?.teal || '#347989'}25 0%, transparent 70%),
-              radial-gradient(at 100% 0%, ${themeColors?.brand?.yellow || '#D68F35'}20 0%, transparent 70%),
-              radial-gradient(at 100% 100%, ${themeColors?.brand?.orange || '#BB5F36'}15 0%, transparent 75%),
-              radial-gradient(at 0% 100%, ${themeColors?.brand?.teal || '#347989'}10 0%, transparent 70%),
-              radial-gradient(at 50% 50%, ${themeColors?.brand?.teal || '#347989'}03 0%, transparent 100%),
+              radial-gradient(at 0% 0%, ${getColorWithOpacity('teal', 0.25)} 0%, transparent 70%),
+              radial-gradient(at 100% 0%, ${getColorWithOpacity('yellow', 0.20)} 0%, transparent 70%),
+              radial-gradient(at 100% 100%, ${getColorWithOpacity('orange', 0.15)} 0%, transparent 75%),
+              radial-gradient(at 0% 100%, ${getColorWithOpacity('teal', 0.10)} 0%, transparent 70%),
+              radial-gradient(at 50% 50%, ${getColorWithOpacity('teal', 0.03)} 0%, transparent 100%),
               #FFFFFF
             `
           }}
@@ -210,7 +210,7 @@ const AddScrap = () => {
         {/* Elegant Dot Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage: `radial-gradient(${themeColors?.brand?.teal || '#347989'} 0.8px, transparent 0.8px)`,
+            backgroundImage: `radial-gradient(var(--brand-teal) 0.8px, transparent 0.8px)`,
             backgroundSize: '32px 32px'
           }}
         />
@@ -419,7 +419,7 @@ const AddScrap = () => {
                     }
                   }}
                   className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-teal-100 active:scale-95 transition-all"
-                  style={{ backgroundColor: `${themeColors.button}10` }}
+                  style={{ backgroundColor: `${getColorWithOpacity('teal', 0.1)}` }}
                 >
                   <div className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg"
                     style={{ backgroundColor: themeColors.button }}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiShoppingCart, FiTrash2, FiPlus, FiMinus, FiLoader, FiBell } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
-import { themeColors } from '../../../../theme';
+import { themeColors, getColorWithOpacity } from '../../../../theme';
 import BottomNav from '../../components/layout/BottomNav';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { useCart } from '../../../../context/CartContext';
@@ -130,11 +130,11 @@ const Cart = () => {
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(at 0% 0%, ${themeColors?.brand?.teal || '#347989'}25 0%, transparent 70%),
-              radial-gradient(at 100% 0%, ${themeColors?.brand?.yellow || '#D68F35'}20 0%, transparent 70%),
-              radial-gradient(at 100% 100%, ${themeColors?.brand?.orange || '#BB5F36'}15 0%, transparent 75%),
-              radial-gradient(at 0% 100%, ${themeColors?.brand?.teal || '#347989'}10 0%, transparent 70%),
-              radial-gradient(at 50% 50%, ${themeColors?.brand?.teal || '#347989'}03 0%, transparent 100%),
+              radial-gradient(at 0% 0%, ${getColorWithOpacity('teal', 0.25)} 0%, transparent 70%),
+              radial-gradient(at 100% 0%, ${getColorWithOpacity('yellow', 0.20)} 0%, transparent 70%),
+              radial-gradient(at 100% 100%, ${getColorWithOpacity('orange', 0.15)} 0%, transparent 75%),
+              radial-gradient(at 0% 100%, ${getColorWithOpacity('teal', 0.10)} 0%, transparent 70%),
+              radial-gradient(at 50% 50%, ${getColorWithOpacity('teal', 0.03)} 0%, transparent 100%),
               #FFFFFF
             `
           }}
@@ -142,7 +142,7 @@ const Cart = () => {
         {/* Elegant Dot Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage: `radial-gradient(${themeColors?.brand?.teal || '#347989'} 0.8px, transparent 0.8px)`,
+            backgroundImage: `radial-gradient(var(--brand-teal) 0.8px, transparent 0.8px)`,
             backgroundSize: '32px 32px'
           }}
         />
@@ -227,8 +227,8 @@ const Cart = () => {
                         <div
                           className="w-16 h-16 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
                           style={{
-                            backgroundColor: `${themeColors.brand.teal}15`,
-                            border: `2px solid ${themeColors.brand.teal}20`
+                            backgroundColor: getColorWithOpacity('teal', 0.15),
+                            border: `2px solid ${getColorWithOpacity('teal', 0.20)}`
                           }}
                         >
                           <img
@@ -312,15 +312,15 @@ const Cart = () => {
                         className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95 shadow-md"
                         style={{
                           backgroundColor: themeColors.button,
-                          boxShadow: `0 2px 6px ${themeColors.brand.teal}4D`
+                          boxShadow: `0 2px 6px ${getColorWithOpacity('teal', 0.3)}`
                         }}
                         onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = themeColors.brand.teal;
-                          e.target.style.boxShadow = `0 4px 12px ${themeColors.brand.teal}66`;
+                          e.target.style.backgroundColor = 'var(--brand-teal)';
+                          e.target.style.boxShadow = `0 4px 12px ${getColorWithOpacity('teal', 0.4)}`;
                         }}
                         onMouseLeave={(e) => {
                           e.target.style.backgroundColor = themeColors.button;
-                          e.target.style.boxShadow = `0 2px 6px ${themeColors.brand.teal}4D`;
+                          e.target.style.boxShadow = `0 2px 6px ${getColorWithOpacity('teal', 0.3)}`;
                         }}
                       >
                         Book

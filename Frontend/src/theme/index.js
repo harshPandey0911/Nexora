@@ -24,10 +24,21 @@ export const getThemeColor = (colorPath) => {
   return value;
 };
 
+/**
+ * Get a theme color with specific opacity
+ * @param {string} colorName 'teal', 'yellow', or 'orange'
+ * @param {number} opacity 0 to 1
+ * @returns {string} rgba color string
+ */
+export const getColorWithOpacity = (colorName, opacity) => {
+  return `rgba(var(--brand-${colorName}-rgb), ${opacity})`;
+};
+
 // Common theme utilities
 export const theme = {
   colors: themeColors,
   getColor: getThemeColor,
+  getOpacity: getColorWithOpacity,
 };
 
 export default theme;

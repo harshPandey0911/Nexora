@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiClock, FiMapPin, FiCheckCircle, FiXCircle, FiLoader, FiCalendar, FiChevronRight } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
-import { themeColors } from '../../../../theme';
+import { themeColors, getColorWithOpacity } from '../../../../theme';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import NotificationBell from '../../components/common/NotificationBell';
 import { motion } from 'framer-motion';
@@ -158,11 +158,11 @@ const MyBookings = () => {
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(at 0% 0%, ${themeColors?.brand?.teal || '#347989'}25 0%, transparent 70%),
-              radial-gradient(at 100% 0%, ${themeColors?.brand?.yellow || '#D68F35'}20 0%, transparent 70%),
-              radial-gradient(at 100% 100%, ${themeColors?.brand?.orange || '#BB5F36'}15 0%, transparent 75%),
-              radial-gradient(at 0% 100%, ${themeColors?.brand?.teal || '#347989'}10 0%, transparent 70%),
-              radial-gradient(at 50% 50%, ${themeColors?.brand?.teal || '#347989'}03 0%, transparent 100%),
+              radial-gradient(at 0% 0%, ${getColorWithOpacity('teal', 0.25)} 0%, transparent 70%),
+              radial-gradient(at 100% 0%, ${getColorWithOpacity('yellow', 0.20)} 0%, transparent 70%),
+              radial-gradient(at 100% 100%, ${getColorWithOpacity('orange', 0.15)} 0%, transparent 75%),
+              radial-gradient(at 0% 100%, ${getColorWithOpacity('teal', 0.10)} 0%, transparent 70%),
+              radial-gradient(at 50% 50%, ${getColorWithOpacity('teal', 0.03)} 0%, transparent 100%),
               #FFFFFF
             `
           }}
@@ -170,7 +170,7 @@ const MyBookings = () => {
         {/* Elegant Dot Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage: `radial-gradient(${themeColors?.brand?.teal || '#347989'} 0.8px, transparent 0.8px)`,
+            backgroundImage: `radial-gradient(var(--brand-teal) 0.8px, transparent 0.8px)`,
             backgroundSize: '32px 32px'
           }}
         />

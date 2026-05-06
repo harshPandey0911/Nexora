@@ -211,8 +211,8 @@ const Signup = () => {
   return (
     <div className="min-h-[100dvh] bg-gray-50 flex flex-col justify-start sm:justify-center py-12 sm:px-6 lg:px-8 relative overflow-x-hidden">
       {/* Decorative Background Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#347989] opacity-[0.03] rounded-full blur-3xl animate-floating" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#D68F35] opacity-[0.03] rounded-full blur-3xl animate-floating" style={{ animationDelay: '2s' }} />
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[var(--brand-teal)] opacity-[0.03] rounded-full blur-3xl animate-floating" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[var(--brand-yellow)] opacity-[0.03] rounded-full blur-3xl animate-floating" style={{ animationDelay: '2s' }} />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8 relative z-10 animate-fade-in">
         <Logo className="h-16 w-auto transform hover:scale-110 transition-transform duration-500 mx-auto" />
@@ -226,7 +226,7 @@ const Signup = () => {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0 relative z-10">
         <div className="bg-white py-8 px-4 shadow-2xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100 relative overflow-hidden animate-slide-in-bottom">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#347989] via-[#D68F35] to-[#BB5F36]" />
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[var(--brand-teal)] via-[var(--brand-yellow)] to-[var(--brand-orange)]" />
 
           {step === 'details' ? (
             <form onSubmit={handleDetailsSubmit} className="space-y-6">
@@ -234,7 +234,7 @@ const Signup = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/user/login')}
-                  className="flex items-center text-sm text-gray-500 hover:text-[#347989] transition-colors mb-4 animate-fade-in"
+                  className="flex items-center text-sm text-gray-500 hover:text-[var(--brand-teal)] transition-colors mb-4 animate-fade-in"
                 >
                   <FiChevronLeft className="mr-1" /> Back to Login
                 </button>
@@ -245,7 +245,7 @@ const Signup = () => {
                   Full Name
                 </label>
                 <div className="relative rounded-xl shadow-sm group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none group-focus-within:text-[#347989] transition-colors">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none group-focus-within:text-[var(--brand-teal)] transition-colors">
                     <FiUser className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
@@ -268,7 +268,7 @@ const Signup = () => {
                   Email <span className="text-gray-400 text-xs font-normal ml-1">(Optional)</span>
                 </label>
                 <div className="relative rounded-xl shadow-sm group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none group-focus-within:text-[#347989] transition-colors">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none group-focus-within:text-[var(--brand-teal)] transition-colors">
                     <FiMail className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
@@ -290,7 +290,7 @@ const Signup = () => {
                     Phone Number
                   </label>
                   <div className="relative rounded-xl shadow-sm group">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none group-focus-within:text-[#347989] transition-colors">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none group-focus-within:text-[var(--brand-teal)] transition-colors">
                       <FiPhone className="h-5 w-5 text-gray-400" />
                     </div>
                     <div className="absolute inset-y-0 left-10 flex items-center pointer-events-none">
@@ -338,7 +338,7 @@ const Signup = () => {
               <button
                 type="button"
                 onClick={() => setStep('details')}
-                className="flex items-center text-sm text-gray-500 hover:text-[#347989] transition-colors mb-4 animate-fade-in"
+                className="flex items-center text-sm text-gray-500 hover:text-[var(--brand-teal)] transition-colors mb-4 animate-fade-in"
               >
                 <FiChevronLeft className="mr-1" /> Edit details
               </button>
@@ -419,7 +419,7 @@ const Signup = () => {
 
         <p className="mt-8 text-center text-sm text-gray-500 animate-fade-in animate-stagger-5">
           Already have an account?{' '}
-          <Link to="/user/login" className="font-semibold text-[#347989] hover:text-[#D68F35] transition-colors duration-300">
+          <Link to="/user/login" className="font-semibold text-[var(--brand-teal)] hover:text-[var(--brand-yellow)] transition-colors duration-300">
             Sign in
           </Link>
         </p>

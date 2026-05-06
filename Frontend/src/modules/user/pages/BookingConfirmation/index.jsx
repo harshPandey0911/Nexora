@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { themeColors } from '../../../../theme';
+import { themeColors, getColorWithOpacity } from '../../../../theme';
 import {
   FiCheckCircle,
   FiMapPin,
@@ -45,31 +45,31 @@ const SearchingAnimation = () => {
       <div className="relative w-48 h-48 flex items-center justify-center mb-6">
         {/* Outer Ripples */}
         <div className="absolute inset-0 rounded-full border-2 opacity-20 animate-ping"
-          style={{ borderColor: themeColors.brand.teal, animationDuration: '3s' }}></div>
+          style={{ borderColor: 'var(--brand-teal)', animationDuration: '3s' }}></div>
         <div className="absolute inset-4 rounded-full border opacity-40 animate-ping"
-          style={{ borderColor: themeColors.brand.teal, animationDuration: '3s', animationDelay: '0.6s' }}></div>
+          style={{ borderColor: 'var(--brand-teal)', animationDuration: '3s', animationDelay: '0.6s' }}></div>
 
         {/* Rotating Scanner Gradient */}
         <div className="absolute inset-0 rounded-full animate-spin opacity-30"
           style={{
-            background: `conic-gradient(transparent 180deg, ${themeColors.brand.teal})`,
+            background: `conic-gradient(transparent 180deg, var(--brand-teal))`,
             animationDuration: '4s'
           }}></div>
 
         {/* Center Core */}
         <div className="relative z-10 w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center p-1">
           <div className="w-full h-full rounded-full flex items-center justify-center relative overflow-hidden"
-            style={{ background: `linear-gradient(135deg, ${themeColors.brand.teal}15, ${themeColors.brand.teal}05)` }}>
+            style={{ background: `linear-gradient(135deg, ${getColorWithOpacity('teal', 0.15)}, ${getColorWithOpacity('teal', 0.05)})` }}>
             <div className="w-3 h-3 rounded-full shadow-lg animate-pulse"
-              style={{ backgroundColor: themeColors.brand.teal }}></div>
+              style={{ backgroundColor: 'var(--brand-teal)' }}></div>
             <div className="absolute w-full h-full animate-pulse opacity-30 rounded-full"
-              style={{ backgroundColor: themeColors.brand.teal }}></div>
+              style={{ backgroundColor: 'var(--brand-teal)' }}></div>
           </div>
         </div>
 
         {/* Floating Dots Animation */}
-        <div className="absolute top-8 right-8 w-2 h-2 rounded-full animate-bounce opacity-50" style={{ backgroundColor: themeColors.brand.orange, animationDelay: '0.2s' }}></div>
-        <div className="absolute bottom-6 left-6 w-2 h-2 rounded-full animate-bounce opacity-50" style={{ backgroundColor: themeColors.brand.yellow, animationDelay: '1.5s' }}></div>
+        <div className="absolute top-8 right-8 w-2 h-2 rounded-full animate-bounce opacity-50" style={{ backgroundColor: 'var(--brand-orange)', animationDelay: '0.2s' }}></div>
+        <div className="absolute bottom-6 left-6 w-2 h-2 rounded-full animate-bounce opacity-50" style={{ backgroundColor: 'var(--brand-yellow)', animationDelay: '1.5s' }}></div>
       </div>
 
       {/* Status Text */}
@@ -242,11 +242,11 @@ const BookingConfirmation = () => {
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(at 0% 0%, ${themeColors?.brand?.teal || '#347989'}25 0%, transparent 70%),
-              radial-gradient(at 100% 0%, ${themeColors?.brand?.yellow || '#D68F35'}20 0%, transparent 70%),
-              radial-gradient(at 100% 100%, ${themeColors?.brand?.orange || '#BB5F36'}15 0%, transparent 75%),
-              radial-gradient(at 0% 100%, ${themeColors?.brand?.teal || '#347989'}10 0%, transparent 70%),
-              radial-gradient(at 50% 50%, ${themeColors?.brand?.teal || '#347989'}03 0%, transparent 100%),
+              radial-gradient(at 0% 0%, ${getColorWithOpacity('teal', 0.25)} 0%, transparent 70%),
+              radial-gradient(at 100% 0%, ${getColorWithOpacity('yellow', 0.20)} 0%, transparent 70%),
+              radial-gradient(at 100% 100%, ${getColorWithOpacity('orange', 0.15)} 0%, transparent 75%),
+              radial-gradient(at 0% 100%, ${getColorWithOpacity('teal', 0.10)} 0%, transparent 70%),
+              radial-gradient(at 50% 50%, ${getColorWithOpacity('teal', 0.03)} 0%, transparent 100%),
               #FFFFFF
             `
           }}
@@ -254,7 +254,7 @@ const BookingConfirmation = () => {
         {/* Elegant Dot Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage: `radial-gradient(${themeColors?.brand?.teal || '#347989'} 0.8px, transparent 0.8px)`,
+            backgroundImage: `radial-gradient(var(--brand-teal) 0.8px, transparent 0.8px)`,
             backgroundSize: '32px 32px'
           }}
         />
