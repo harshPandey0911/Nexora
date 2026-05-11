@@ -175,7 +175,7 @@ const EditProfile = () => {
               phone: storedData.phone || '',
               email: storedData.email || '',
               address: addressData,
-              serviceCategory: storedData.service || storedData.serviceCategory || '',
+              serviceCategories: Array.isArray(storedData.service) ? storedData.service : (storedData.service ? [storedData.service] : (storedData.serviceCategory ? [storedData.serviceCategory] : [])),
               profilePhoto: storedData.profilePhoto || '',
               aadharDocument: storedData.aadharDocument || (storedData.aadhar && storedData.aadhar.document) || '',
             });
