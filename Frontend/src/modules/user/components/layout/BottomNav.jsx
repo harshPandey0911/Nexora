@@ -79,8 +79,8 @@ const BottomNav = React.memo(() => {
           const buttonRect = button.getBoundingClientRect();
 
           setIndicatorStyle({
-            left: buttonRect.left - navRect.left + (buttonRect.width / 2) - 16, // Center the 32px indicator
-            width: 32
+            x: buttonRect.left - navRect.left + (buttonRect.width / 2),
+            width: buttonRect.width
           });
         }
       }
@@ -122,21 +122,22 @@ const BottomNav = React.memo(() => {
       >
         <div ref={navRef} className="flex items-center justify-around max-w-md mx-auto relative">
 
-          {/* Animated Sliding Indicator */}
+          {/* Sliding Ball Background */}
           <motion.div
-            className="absolute -top-3 h-1 rounded-full"
+            className="absolute h-12 w-12 rounded-full z-0"
             animate={{
-              left: indicatorStyle.left,
-              width: indicatorStyle.width,
-              background: activeColor?.gradient || navItemColors.home.gradient,
+              x: indicatorStyle.x - 24, // Centering the 48px (h-12) ball
+              background: activeColor?.bg || navItemColors.home.bg,
             }}
             transition={{
               type: "spring",
-              stiffness: 380,
+              stiffness: 300,
               damping: 30
             }}
             style={{
-              boxShadow: `0 2px 12px ${activeColor?.shadow || navItemColors.home.shadow}`,
+              top: '50%',
+              y: '-50%',
+              boxShadow: `0 8px 25px ${activeColor?.shadow || navItemColors.home.shadow}`,
             }}
           />
 
@@ -152,30 +153,16 @@ const BottomNav = React.memo(() => {
                 whileTap={{ scale: 0.9 }}
                 className="flex flex-col items-center justify-center w-16 h-14 rounded-2xl transition-all duration-200 relative"
               >
-                {/* Active Background Glow */}
-                <AnimatePresence>
-                  {isActive && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute inset-1 rounded-xl"
-                      style={{
-                        background: itemColor.bg,
-                      }}
-                    />
-                  )}
-                </AnimatePresence>
+                {/* Individual background glow removed in favor of sliding ball */}
 
                 <div className="relative z-10 flex flex-col items-center justify-center">
                   <motion.div
                     className="relative mb-1"
                     animate={{
-                      scale: isActive ? 1.1 : 1,
-                      y: isActive ? -2 : 0
+                      scale: isActive ? 1.15 : 1,
+                      y: isActive ? -4 : 0
                     }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
                   >
                     <IconComponent
                       className="w-6 h-6 transition-colors duration-200"
