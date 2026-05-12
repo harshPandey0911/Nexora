@@ -10,7 +10,8 @@ const {
     setServicePricing,
     addVendorCategory,
     addVendorService,
-    getMyCustomContent
+    getMyCustomContent,
+    removeVendorService
 } = require('../../controllers/vendorControllers/vendorServiceController');
 
 // Validation rules
@@ -28,6 +29,7 @@ router.get('/my-services', authenticate, isVendor, getMyServices);
 router.get('/services', authenticate, isVendor, getVendorServices);
 router.put('/services/:serviceId/availability', authenticate, isVendor, updateAvailabilityValidation, updateServiceAvailability);
 router.put('/services/:serviceId/pricing', authenticate, isVendor, setPricingValidation, setServicePricing);
+router.delete('/services/:categoryId', authenticate, isVendor, removeVendorService);
 
 // Custom Vendor Content
 router.post('/add-category', authenticate, isVendor, addVendorCategory);

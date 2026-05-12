@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FiSave, FiX, FiLink, FiUserPlus, FiSearch, FiChevronDown, FiCamera, FiUpload, FiMapPin } from 'react-icons/fi';
+import { FiSave, FiX, FiLink, FiUserPlus, FiSearch, FiChevronDown, FiCamera, FiUpload, FiMapPin, FiPlusCircle, FiCheck } from 'react-icons/fi';
 import AddressSelectionModal from '../../../user/pages/Checkout/components/AddressSelectionModal';
 import { vendorTheme as themeColors } from '../../../../theme';
 import Header from '../../components/layout/Header';
@@ -353,7 +353,6 @@ const AddEditWorker = () => {
   // selectedCategoriesData and allAvailableSkills removed as they are no longer needed
 
   return (
-  return (
     <div className="min-h-screen pb-20 bg-white">
       <Header title={isEdit ? 'Edit Worker' : 'Add Worker'} />
 
@@ -365,7 +364,7 @@ const AddEditWorker = () => {
             <button
               onClick={() => setActiveTab('new')}
               className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${activeTab === 'new'
-                ? 'bg-black text-white shadow-xl shadow-gray-200'
+                ? 'bg-[#0D463C] text-white shadow-xl shadow-[#0D463C]/20'
                 : 'text-gray-400'
                 }`}
             >
@@ -375,7 +374,7 @@ const AddEditWorker = () => {
             <button
               onClick={() => setActiveTab('link')}
               className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${activeTab === 'link'
-                ? 'bg-black text-white shadow-xl shadow-gray-200'
+                ? 'bg-[#0D463C] text-white shadow-xl shadow-[#0D463C]/20'
                 : 'text-gray-400'
                 }`}
             >
@@ -388,7 +387,7 @@ const AddEditWorker = () => {
         {/* Link Existing Mode (Black Theme) */}
         {activeTab === 'link' && !isEdit && (
           <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 text-center space-y-6">
-            <div className="w-20 h-20 rounded-3xl bg-gray-50 flex items-center justify-center mx-auto mb-2 border border-gray-100 text-black shadow-sm">
+            <div className="w-20 h-20 rounded-3xl bg-gray-50 flex items-center justify-center mx-auto mb-2 border border-gray-100 text-[#0D463C] shadow-sm">
               <FiSearch className="w-8 h-8" />
             </div>
             <div>
@@ -404,7 +403,7 @@ const AddEditWorker = () => {
                 value={linkPhone}
                 onChange={(e) => setLinkPhone(e.target.value)}
                 placeholder="0000000000"
-                className="w-full px-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl focus:border-black focus:bg-white outline-none text-center text-2xl font-black tracking-[0.2em] text-gray-900"
+                className="w-full px-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl focus:border-[#0D463C] focus:bg-white outline-none text-center text-2xl font-black tracking-[0.2em] text-gray-900"
                 maxLength={10}
               />
             </div>
@@ -412,7 +411,7 @@ const AddEditWorker = () => {
             <button
               onClick={handleLinkWorker}
               disabled={loading}
-              className="w-full py-5 text-white rounded-[24px] font-black text-[11px] uppercase tracking-[0.2em] bg-black shadow-2xl shadow-gray-200 active:scale-95 transition-all flex items-center justify-center gap-3 mt-4"
+              className="w-full py-5 text-white rounded-[24px] font-black text-[11px] uppercase tracking-[0.2em] bg-[#0D463C] shadow-2xl shadow-[#0D463C]/20 active:scale-95 transition-all flex items-center justify-center gap-3 mt-4"
             >
               {loading ? 'Processing...' : 'Search & Sync'}
             </button>
@@ -438,7 +437,7 @@ const AddEditWorker = () => {
                       <FiUserPlus className="w-10 h-10 mb-2" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="absolute inset-0 bg-[#0D463C]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <FiCamera className="text-white w-6 h-6" />
                   </div>
                   <input
@@ -449,7 +448,7 @@ const AddEditWorker = () => {
                     onChange={handlePhotoChange}
                   />
                 </div>
-                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-black rounded-2xl flex items-center justify-center shadow-lg border-2 border-white">
+                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-[#0D463C] rounded-2xl flex items-center justify-center shadow-lg border-2 border-white">
                   <FiPlusCircle className="text-white w-5 h-5" />
                 </div>
               </div>
@@ -468,7 +467,7 @@ const AddEditWorker = () => {
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
                     placeholder="ENTER NAME"
-                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:border-black focus:bg-white outline-none text-xs font-black text-gray-900 uppercase tracking-widest transition-all"
+                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:border-[#0D463C] focus:bg-white outline-none text-xs font-black text-gray-900 uppercase tracking-widest transition-all"
                   />
                 </div>
 
@@ -479,7 +478,7 @@ const AddEditWorker = () => {
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     placeholder="0000000000"
-                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:border-black focus:bg-white outline-none text-xs font-black text-gray-900 tracking-[0.2em] transition-all"
+                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:border-[#0D463C] focus:bg-white outline-none text-xs font-black text-gray-900 tracking-[0.2em] transition-all"
                     maxLength={10}
                   />
                 </div>
@@ -491,7 +490,7 @@ const AddEditWorker = () => {
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     placeholder="EMAIL (OPTIONAL)"
-                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:border-black focus:bg-white outline-none text-xs font-black text-gray-900 uppercase tracking-widest transition-all"
+                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:border-[#0D463C] focus:bg-white outline-none text-xs font-black text-gray-900 uppercase tracking-widest transition-all"
                   />
                 </div>
               </div>
@@ -502,7 +501,7 @@ const AddEditWorker = () => {
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Residence Address</h4>
 
               <div className="p-5 bg-gray-50 rounded-[28px] border border-gray-100 flex items-start gap-4">
-                <FiMapPin className="text-black w-5 h-5 mt-0.5" />
+                <FiMapPin className="text-[#0D463C] w-5 h-5 mt-0.5" />
                 <p className="text-[11px] font-bold text-gray-900 leading-relaxed tracking-tighter">
                   {formData.address?.fullAddress ||
                     (formData.address?.addressLine1 ? `${formData.address.addressLine1}, ${formData.address.city}` : 'GEOGRAPHICAL ADDRESS NOT SET')
@@ -512,7 +511,7 @@ const AddEditWorker = () => {
 
               <button
                 onClick={() => setIsAddressModalOpen(true)}
-                className="w-full py-4 bg-gray-50 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest border border-gray-100 hover:bg-white hover:border-black transition-all flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gray-50 text-gray-900 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-gray-100 hover:bg-white hover:border-[#0D463C] transition-all flex items-center justify-center gap-2"
               >
                 Configure Map Location
               </button>
@@ -528,7 +527,7 @@ const AddEditWorker = () => {
                 <div className="relative">
                   <button
                     onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between focus:border-black focus:bg-white outline-none"
+                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between focus:border-[#0D463C] focus:bg-white outline-none"
                   >
                     <span className={`text-[11px] font-black uppercase tracking-widest truncate ${formData.serviceCategories.length > 0 ? 'text-gray-900' : 'text-gray-300'}`}>
                       {formData.serviceCategories.length > 0
@@ -551,7 +550,7 @@ const AddEditWorker = () => {
                             >
                               <span className="text-[10px] font-black text-gray-800 uppercase tracking-widest group-hover:translate-x-1 transition-transform">{cat.title}</span>
                               {formData.serviceCategories.includes(cat.title) && (
-                                <div className="w-2 h-2 rounded-full bg-black" />
+                                <div className="w-2 h-2 rounded-full bg-[#0D463C]" />
                               )}
                             </button>
                           ))
@@ -574,7 +573,7 @@ const AddEditWorker = () => {
                         {cat}
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleCategory(cat); }}
-                          className="ml-2 text-gray-400 hover:text-black"
+                          className="ml-2 text-gray-400 hover:text-[#0D463C]"
                         >
                           <FiX className="w-3 h-3" />
                         </button>
@@ -596,12 +595,12 @@ const AddEditWorker = () => {
                     value={formData.aadhar.number}
                     onChange={(e) => handleInputChange('aadhar.number', e.target.value)}
                     placeholder="0000 0000 0000"
-                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:border-black focus:bg-white outline-none text-xs font-black text-gray-900 tracking-[0.3em] transition-all"
+                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:border-[#0D463C] focus:bg-white outline-none text-xs font-black text-gray-900 tracking-[0.3em] transition-all"
                     maxLength={12}
                   />
                 </div>
 
-                <div className="border-2 border-dashed border-gray-100 rounded-[32px] p-10 text-center transition-all hover:border-black bg-gray-50 group cursor-pointer relative">
+                <div className="border-2 border-dashed border-gray-100 rounded-[32px] p-10 text-center transition-all hover:border-[#0D463C] bg-gray-50 group cursor-pointer relative">
                   <input
                     id="worker-aadhar-upload"
                     type="file"
@@ -612,7 +611,7 @@ const AddEditWorker = () => {
                   <div className="flex flex-col items-center">
                     {aadharFile ? (
                       <div className="flex flex-col items-center gap-3">
-                        <div className="w-14 h-14 bg-black text-white rounded-2xl flex items-center justify-center shadow-lg">
+                        <div className="w-14 h-14 bg-[#0D463C] text-white rounded-2xl flex items-center justify-center shadow-lg">
                           <FiCheck className="w-6 h-6" />
                         </div>
                         <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest truncate max-w-[200px]">{aadharFile.name}</span>
@@ -622,7 +621,7 @@ const AddEditWorker = () => {
                         <div className="w-14 h-14 bg-gray-100 text-gray-400 rounded-2xl flex items-center justify-center">
                           <FiUpload className="w-6 h-6" />
                         </div>
-                        <p className="text-[10px] font-black text-black uppercase tracking-widest">Document Staged</p>
+                        <p className="text-[10px] font-black text-[#0D463C] uppercase tracking-widest">Document Staged</p>
                       </div>
                     ) : (
                       <>
@@ -642,7 +641,7 @@ const AddEditWorker = () => {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full py-6 text-white rounded-[32px] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-gray-200 active:scale-95 transition-all flex items-center justify-center gap-3 bg-black"
+              className="w-full py-6 text-white rounded-[32px] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-[#0D463C]/20 active:scale-95 transition-all flex items-center justify-center gap-3 bg-[#0D463C]"
             >
               {loading ? 'Finalizing...' : (isEdit ? 'Save Updates' : 'Authorize Worker')}
             </button>

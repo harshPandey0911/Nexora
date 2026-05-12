@@ -638,11 +638,11 @@ export default function BookingDetails() {
               </p>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <div className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-black text-white shadow-lg shadow-gray-200">
+              <div className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-[#0D463C] text-white shadow-lg shadow-[#0D463C]/20">
                 {booking.status.replace('_', ' ')}
               </div>
               {booking.assignedTo?.name === 'You (Self)' && (
-                <span className="text-[9px] font-black text-black bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100 uppercase tracking-widest">
+                <span className="text-[9px] font-black text-[#0D463C] bg-[#0D463C]/5 px-2.5 py-1 rounded-lg border border-[#0D463C]/10 uppercase tracking-widest">
                   Personal Job
                 </span>
               )}
@@ -655,7 +655,7 @@ export default function BookingDetails() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center border border-gray-100">
-                <FiUser className="w-7 h-7 text-black" />
+                <FiUser className="w-7 h-7 text-[#0D463C]" />
               </div>
               <div>
                 <p className="text-lg font-black text-gray-900">{booking.user?.name || booking.customerName || 'Customer'}</p>
@@ -664,7 +664,7 @@ export default function BookingDetails() {
             </div>
             <button
               onClick={handleCallUser}
-              className="w-12 h-12 rounded-2xl bg-black flex items-center justify-center shadow-lg shadow-gray-200 active:scale-90 transition-all"
+              className="w-12 h-12 rounded-2xl bg-[#0D463C] flex items-center justify-center shadow-lg shadow-[#0D463C]/20 active:scale-90 transition-all"
             >
               <FiPhone className="w-5 h-5 text-white" />
             </button>
@@ -675,13 +675,13 @@ export default function BookingDetails() {
         <div className="bg-white rounded-[32px] p-6 mb-4 shadow-sm border border-gray-100">
           <div className="flex items-start gap-4 mb-4">
             <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
-              <FiMapPin className="w-5 h-5 text-black" />
+              <FiMapPin className="w-5 h-5 text-[#0D463C]" />
             </div>
             <div className="flex-1">
               <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Service Location</p>
               <p className="text-sm font-black text-gray-900 leading-relaxed">{booking.location.address}</p>
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-[10px] font-black text-black bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100 uppercase tracking-tighter">
+                <span className="text-[10px] font-black text-[#0D463C] bg-[#0D463C]/5 px-2 py-0.5 rounded-md border border-[#0D463C]/10 uppercase tracking-tighter">
                   {booking.location.distance} away
                 </span>
               </div>
@@ -708,8 +708,8 @@ export default function BookingDetails() {
                     tabIndex="-1"
                   ></iframe>
                   {/* Overlay to intercept clicks */}
-                  <div className="absolute inset-0 bg-transparent group-hover:bg-black/5 transition-colors flex items-center justify-center">
-                    <span className="bg-black text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                  <div className="absolute inset-0 bg-transparent group-hover:bg-[#0D463C]/5 transition-colors flex items-center justify-center">
+                    <span className="bg-[#0D463C] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
                       Open Full Map
                     </span>
                   </div>
@@ -721,7 +721,7 @@ export default function BookingDetails() {
           <div className="flex gap-3">
             <button
               onClick={() => navigate(`/vendor/booking/${booking.id || id}/map`)}
-              className="flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-gray-200 flex items-center justify-center gap-2 transition-all active:scale-95 bg-white text-black"
+              className="flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-gray-200 flex items-center justify-center gap-2 transition-all active:scale-95 bg-white text-gray-900"
             >
               <FiMapPin className="w-4 h-4" />
               View Map
@@ -734,7 +734,7 @@ export default function BookingDetails() {
                   : encodeURIComponent(booking.location.address);
                 window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
               }}
-              className="flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-gray-200 bg-black"
+              className="flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-[#0D463C]/20 bg-[#0D463C]"
             >
               <FiNavigation className="w-4 h-4" />
               Navigate

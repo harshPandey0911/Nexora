@@ -23,6 +23,8 @@ const Wallet = () => {
   });
   const [transactions, setTransactions] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useLayoutEffect(() => {
     const html = document.documentElement;
@@ -55,6 +57,7 @@ const Wallet = () => {
 
       if (walletRes.success) {
         setWallet(walletRes.data);
+        setPayoutAmount(walletRes.data.dues || 0);
       }
 
       if (txnRes.success) {
@@ -65,6 +68,34 @@ const Wallet = () => {
       toast.error('Failed to load wallet data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePayout = async () => {
+    const amount = parseFloat(payoutAmount);
+    if (!amount || amount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      const res = await vendorWalletService.requestSettlement({ 
+        amount: amount,
+        notes: 'Vendor self-settlement'
+      });
+
+      if (res.success) {
+        toast.success("Settlement request sent successfully!");
+        loadWalletData(); // Refresh wallet
+      } else {
+        toast.error(res.message || "Failed to initiate settlement");
+      }
+    } catch (error) {
+      console.error('Payout error:', error);
+      toast.error(error.response?.data?.message || "Failed to process payout");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -138,81 +169,39 @@ const Wallet = () => {
       </header>
 
       <main className="px-5">
-        {/* Available Earnings Card (Accent Gradient) */}
+        {/* Single Total Balance Section */}
         <div 
-          className="rounded-[32px] p-6 shadow-xl shadow-gray-200/20 mb-6 relative overflow-hidden"
-          style={{ background: themeColors.accentGradient }}
+          className="rounded-[40px] p-10 shadow-2xl shadow-[#0D463C]/10 mb-8 relative overflow-hidden text-center"
+          style={{ background: '#0D463C' }}
         >
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.05)_0%,transparent_50%)]" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full -ml-32 -mb-32 blur-3xl" />
           
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
-                <FiArrowUp className="w-5 h-5 text-white" />
+            <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.4em] mb-6">Current Wallet Balance</p>
+            <h2 className="text-6xl font-black text-white tracking-tighter mb-10">₹{(wallet.dues || 0).toLocaleString()}</h2>
+            
+            <div className="bg-white/10 backdrop-blur-md rounded-[32px] p-8 border border-white/10 max-w-sm mx-auto">
+              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-4">Payout Amount</p>
+              <div className="relative mb-6">
+                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-white/30">₹</span>
+                <input 
+                  type="number"
+                  placeholder="0"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-6 text-center text-2xl font-black text-white placeholder:text-white/20 outline-none focus:bg-white/10 transition-all"
+                  value={payoutAmount}
+                  onChange={(e) => setPayoutAmount(e.target.value)}
+                />
               </div>
-              <p className="text-[11px] font-black text-white/60 uppercase tracking-widest">Available Earnings</p>
-            </div>            
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-3xl font-black text-white leading-none">₹{wallet.balance.toFixed(2)}</p>
-                <p className="text-[10px] font-bold text-white/40 mt-3 uppercase tracking-wider">Settlements are processed weekly</p>
-              </div>
-              <div className="bg-white/10 px-3 py-1.5 rounded-xl backdrop-blur-sm">
-                <span className="text-[10px] font-black text-white uppercase tracking-widest">Auto Settlement</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-white rounded-[28px] p-5 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center">
-                <FiArrowDown className="w-4 h-4 text-black" />
-              </div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Amount Due</p>
-            </div>
-            <p className="text-xl font-black text-gray-900">₹{wallet.dues?.toLocaleString() || 0}</p>
-            {wallet.dues > 0 && (
               <button 
-                onClick={() => navigate('/vendor/wallet/settle')}
-                className="mt-3 w-full py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
+                onClick={handlePayout}
+                disabled={isProcessing}
+                className="w-full py-5 bg-white text-[#0D463C] rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all disabled:opacity-50"
               >
-                Pay Now
+                {isProcessing ? 'Processing...' : 'Request Payout'}
               </button>
-            )}
-          </div>
-
-          <div className="bg-white rounded-[28px] p-5 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center">
-                <FiCheckCircle className="w-4 h-4 text-black" />
-              </div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Total Settled</p>
             </div>
-            <p className="text-xl font-black text-gray-900">₹{wallet.totalSettled?.toLocaleString() || 0}</p>
           </div>
-        </div>
-
-        {/* Cash Limit Indicator (Black Theme) */}
-        <div className="bg-white rounded-[28px] p-5 shadow-sm border border-gray-100 mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] font-black text-gray-900 uppercase tracking-wider">Cash Collection Limit</p>
-            <p className="text-[11px] font-black text-black">
-              ₹{(wallet.dues || 0).toLocaleString()} / ₹{(wallet.cashLimit || 10000).toLocaleString()}
-            </p>
-          </div>
-          <div className="w-full h-2 bg-gray-50 rounded-full overflow-hidden mb-2">
-            <div
-              className={`h-full transition-all duration-700 ${
-                (wallet.dues / (wallet.cashLimit || 10000)) > 0.8 ? 'bg-red-500' : 'bg-black'
-              }`}
-              style={{ width: `${Math.min(100, (wallet.dues / (wallet.cashLimit || 10000)) * 100)}%` }}
-            />
-          </div>
-          <p className="text-[9px] font-bold text-gray-300">
-            * Pay dues regularly to avoid account blocking.
-          </p>
         </div>
 
         {/* Filter Buttons (Black Theme) */}
@@ -228,7 +217,7 @@ const Wallet = () => {
               onClick={() => setFilter(filterOption.id)}
               className={`px-6 py-2.5 rounded-full font-black text-xs whitespace-nowrap transition-all duration-300 ${
                 filter === filterOption.id
-                  ? 'bg-black text-white shadow-lg shadow-gray-200'
+                  ? 'bg-[#0D463C] text-white shadow-lg shadow-[#0D463C]/20'
                   : 'bg-white text-gray-400 border border-gray-100'
               }`}
             >

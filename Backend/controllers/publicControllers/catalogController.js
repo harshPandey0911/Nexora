@@ -50,7 +50,7 @@ const getPublicCategories = async (req, res) => {
 
       // 2. If it's a vendor-specific category
       if (cat.vendorId) {
-        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true }).select('address');
+        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true, availability: 'AVAILABLE' }).select('address');
         if (!ownerVendor) return null;
 
         if (cityName && ownerVendor.address?.city) {
@@ -147,7 +147,7 @@ const getPublicBrands = async (req, res) => {
       .populate({
         path: 'vendorId',
         select: 'name businessName profilePhoto isOnline',
-        match: { isOnline: true }
+        match: { isOnline: true, availability: 'AVAILABLE' }
       })
       .lean();
       
@@ -543,7 +543,7 @@ const getPublicHomeData = async (req, res) => {
 
       // 2. If it's a vendor-specific category
       if (cat.vendorId) {
-        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true }).select('geoLocation address');
+        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true, availability: 'AVAILABLE' }).select('geoLocation address');
         if (!ownerVendor) return null;
 
         if (userLocation) {
@@ -680,11 +680,71 @@ const getPublicHomeData = async (req, res) => {
   }
 };
 
+/**
+ * Search categories and brands
+ * GET /api/public/search?q=query
+ */
+const searchCatalog = async (req, res) => {
+  try {
+    const { q, cityId } = req.query;
+    if (!q || q.length < 2) return res.status(200).json({ success: true, results: [] });
+
+    const escapedSearch = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escapedSearch, 'i');
+
+    // Fetch categories and brands matching the search query
+    const [categories, brands] = await Promise.all([
+      Category.find({ 
+        title: regex, 
+        status: 'active' 
+      })
+      .select('title slug homeIconUrl description vendorId')
+      .limit(10)
+      .lean(),
+      
+      Brand.find({ 
+        title: regex, 
+        status: 'active' 
+      })
+      .select('title slug iconUrl logo imageUrl categoryIds')
+      .limit(10)
+      .lean()
+    ]);
+
+    // Format results for frontend
+    const results = [
+      ...categories.map(c => ({ 
+        id: c._id.toString(), 
+        title: c.title, 
+        slug: c.slug, 
+        type: 'category', 
+        icon: c.homeIconUrl, 
+        description: c.description,
+        isVendor: !!c.vendorId
+      })),
+      ...brands.map(b => ({ 
+        id: b._id.toString(), 
+        title: b.title, 
+        slug: b.slug, 
+        type: 'brand', 
+        icon: b.iconUrl || b.logo || b.imageUrl,
+        categoryId: b.categoryIds && b.categoryIds.length > 0 ? b.categoryIds[0].toString() : null
+      }))
+    ];
+
+    res.status(200).json({ success: true, results });
+  } catch (error) {
+    console.error('Search catalog error:', error);
+    res.status(500).json({ success: false, message: 'Search failed' });
+  }
+};
+
 module.exports = {
   getPublicCategories,
   getPublicBrands,
   getPublicBrandBySlug,
   getPublicServices,
   getPublicHomeContent,
-  getPublicHomeData
+  getPublicHomeData,
+  searchCatalog
 };

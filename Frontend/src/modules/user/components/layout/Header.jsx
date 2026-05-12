@@ -115,10 +115,6 @@ const Header = ({ location: address, onLocationClick, navLinks: dynamicNavLinks,
 
             {/* Icons Group */}
             <div className="flex items-center gap-0.5 sm:gap-3">
-              <button className="p-2 text-gray-500 hover:bg-gray-50 rounded-full transition-colors">
-                <HiOutlineSearch className="w-5 h-5 sm:w-6 sm:h-6" />
-              </button>
-              
               <Link to="/user/cart" className="relative p-2 text-gray-500 hover:bg-gray-50 rounded-full transition-colors">
                 <HiOutlineShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                 {cartCount > 0 && (

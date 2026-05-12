@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiBriefcase, FiStar, FiChevronRight, FiInfo, FiPlus } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+import { FiBriefcase, FiStar, FiChevronRight, FiInfo, FiPlus, FiTrash2, FiAlertCircle } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
 import { vendorTheme as themeColors } from '../../../../theme';
 import BottomNav from '../../components/layout/BottomNav';
 import vendorService from '../../services/vendorService';
+import { toast } from 'react-hot-toast';
 
 const MyServices = () => {
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
+  const [showConfirm, setShowConfirm] = useState(null); // stores categoryId to be removed
+  const [isRemoving, setIsRemoving] = useState(false);
 
   useLayoutEffect(() => {
     const html = document.documentElement;
@@ -29,25 +32,41 @@ const MyServices = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const loadServices = async () => {
-      try {
-        setLoading(true);
-        const res = await vendorService.getMyServices();
-        if (res.success) {
-          setServices(res.data || []);
-        }
-      } catch (error) {
-        console.error('Error loading services:', error);
-      } finally {
-        setLoading(false);
+  const loadServices = async () => {
+    try {
+      setLoading(true);
+      const res = await vendorService.getMyServices();
+      if (res.success) {
+        setServices(res.data || []);
       }
-    };
+    } catch (error) {
+      console.error('Error loading services:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadServices();
   }, []);
 
-  return (
+  const handleRemoveService = async (categoryId) => {
+    try {
+      setIsRemoving(true);
+      const res = await vendorService.removeService(categoryId);
+      if (res.success) {
+        toast.success(res.message || 'Service removed');
+        setServices(prev => prev.filter(s => s.id !== categoryId));
+        setShowConfirm(null);
+      }
+    } catch (error) {
+      console.error('Remove service error:', error);
+      toast.error(error.response?.data?.message || 'Failed to remove service');
+    } finally {
+      setIsRemoving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-24" style={{ background: '#FFFFFF' }}>
       <header className="px-6 py-5 flex items-center justify-between bg-transparent">
@@ -140,9 +159,20 @@ const MyServices = () => {
                     <div>
                       <div className="flex items-center justify-between">
                         <h3 className="text-lg font-black text-gray-900 truncate tracking-tight">{service.title}</h3>
-                        <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg">
-                          <span className="text-[10px] font-black text-amber-600">{service.stats.rating}</span>
-                          <FiStar className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowConfirm(service.id);
+                            }}
+                            className="p-2 rounded-xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+                          >
+                            <FiTrash2 className="w-3.5 h-3.5" />
+                          </button>
+                          <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg">
+                            <span className="text-[10px] font-black text-amber-600">{service.stats.rating}</span>
+                            <FiStar className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
+                          </div>
                         </div>
                       </div>
                       <p className="text-[10px] text-gray-500 line-clamp-2 mt-1 leading-relaxed font-medium">
@@ -198,6 +228,59 @@ const MyServices = () => {
           </div>
         </div>
       </main>
+
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {showConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowConfirm(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white rounded-[32px] p-8 shadow-2xl overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50" />
+              
+              <div className="relative z-10 text-center">
+                <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <FiAlertCircle className="w-8 h-8 text-red-500" />
+                </div>
+                <h3 className="text-xl font-black text-gray-900 mb-3">Remove Service?</h3>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-8 leading-relaxed px-4">
+                  Are you sure you want to remove this service from your portfolio? You won't receive new jobs for this category.
+                </p>
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowConfirm(null)}
+                    className="flex-1 py-4 rounded-2xl bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleRemoveService(showConfirm)}
+                    disabled={isRemoving}
+                    className="flex-1 py-4 rounded-2xl bg-black text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-gray-200 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    {isRemoving ? (
+                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      'Remove'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <BottomNav />
     </div>

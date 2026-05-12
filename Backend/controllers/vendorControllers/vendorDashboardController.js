@@ -156,7 +156,7 @@ const getDashboardStats = async (req, res) => {
 
     // 6. Fetch fresh vendor data for stats
     const Vendor = require('../../models/Vendor');
-    const vendorProfile = await Vendor.findById(vendorId).select('performanceScore level commissionRate isOnline');
+    const vendorProfile = await Vendor.findById(vendorId).select('performanceScore level commissionRate isOnline availability');
 
     res.status(200).json({
       success: true,
@@ -174,7 +174,7 @@ const getDashboardStats = async (req, res) => {
           vendorEarnings: vendorEarnings,
           workersOnline,
           rating: parseFloat(rating.toFixed(1)),
-          isOnline: vendorProfile?.isOnline ?? req.user.isOnline,
+          isOnline: (vendorProfile?.availability === 'AVAILABLE') ?? (req.user.availability === 'AVAILABLE'),
           performanceScore: vendorProfile?.performanceScore || 0,
           level: vendorProfile?.level || 3,
           commissionRate: vendorProfile?.commissionRate || 15,

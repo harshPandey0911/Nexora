@@ -38,24 +38,30 @@ const ActiveJobs = memo(() => {
   }, []);
 
   // Memoize loadJobs to prevent recreation
-  const loadJobs = useCallback(async (currentFilter, currentSearch) => {
+  const loadJobs = useCallback(async (currentFilter, currentSearch, silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const response = await getBookings({
-        status: currentFilter,
+        status: currentFilter === 'all' ? undefined : currentFilter,
         q: currentSearch,
-        limit: 50 // Fetch more than default since we removed client-side filter
+        limit: 50
       });
-      const jobsData = response.data || [];
+      
+      const jobsData = response.data || response || [];
       // Map API response to Component State structure
-      const mappedJobs = jobsData.map(job => ({
+      const mappedJobs = (Array.isArray(jobsData) ? jobsData : []).map(job => ({
         id: job._id || job.id,
-        serviceType: job.serviceName || 'Service',
+        serviceType: job.serviceName || job.serviceType || 'Service',
         user: {
-          name: job.userId?.name || 'Customer'
+          name: job.userId?.name || job.customerName || 'Customer'
         },
         location: {
-          address: job.address?.addressLine1 || 'Address not available'
+          address: (() => {
+            const a = job.address;
+            if (!a) return 'Address not available';
+            if (typeof a === 'string') return a;
+            return `${a.addressLine1 || ''} ${a.city || ''} ${a.addressLine2 || ''}`.trim();
+          })()
         },
         price: (job.finalAmount ? job.finalAmount * 0.9 : 0).toFixed(2),
         status: job.status,
@@ -68,9 +74,9 @@ const ActiveJobs = memo(() => {
       setJobs(mappedJobs);
     } catch (error) {
       console.error('Error loading jobs:', error);
-      toast.error('Failed to load jobs');
+      if (!silent) toast.error('Failed to load jobs');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -78,16 +84,15 @@ const ActiveJobs = memo(() => {
   useEffect(() => {
     const timer = setTimeout(() => {
       loadJobs(filter, searchQuery);
-    }, filter === 'all' && searchQuery === '' ? 0 : 500); // Only debounce if active searching
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [filter, searchQuery, loadJobs]);
 
   useEffect(() => {
-    window.addEventListener('vendorJobsUpdated', () => loadJobs(filter, searchQuery));
-    return () => {
-      window.removeEventListener('vendorJobsUpdated', () => loadJobs(filter, searchQuery));
-    };
+    const handleUpdate = () => loadJobs(filter, searchQuery, true);
+    window.addEventListener('vendorJobsUpdated', handleUpdate);
+    return () => window.removeEventListener('vendorJobsUpdated', handleUpdate);
   }, [loadJobs, filter, searchQuery]);
 
   // filteredJobs is now just the jobs from the server
@@ -137,7 +142,7 @@ const ActiveJobs = memo(() => {
   }, []);
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: '#FFFFFF' }}>
+    <div className="min-h-screen pb-32" style={{ background: '#FFFFFF' }}>
       <header className="px-6 py-5 flex items-center justify-between bg-transparent">
         <h1 className="text-xl font-black text-gray-900">Active Jobs</h1>
         <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center border border-gray-100">
@@ -155,7 +160,7 @@ const ActiveJobs = memo(() => {
               placeholder="Search by customer name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white rounded-[24px] py-4 pl-12 pr-4 text-sm font-bold text-gray-900 shadow-sm border border-gray-100 focus:border-black outline-none transition-all"
+              className="w-full bg-white rounded-[24px] py-4 pl-12 pr-4 text-sm font-bold text-gray-900 shadow-sm border border-gray-100 focus:border-[#0D463C] outline-none transition-all"
             />
           </div>
         </div>
@@ -173,7 +178,7 @@ const ActiveJobs = memo(() => {
               onClick={() => setFilter(filterOption.id)}
               className={`px-6 py-2.5 rounded-full font-black text-xs whitespace-nowrap transition-all duration-300 ${
                 filter === filterOption.id
-                  ? 'bg-black text-white shadow-lg shadow-gray-200'
+                  ? 'bg-[#0D463C] text-white shadow-lg shadow-[#0D463C]/20'
                   : 'bg-white text-gray-400 border border-gray-100'
               }`}
             >
@@ -211,7 +216,8 @@ const ActiveJobs = memo(() => {
         ) : (
           <div className="space-y-5">
             {filteredJobs.map((job) => {
-              const isCompleted = job.status?.toLowerCase() === 'completed';
+              const status = job.status?.toUpperCase();
+              const isCancelled = status === 'CANCELLED';
 
               return (
                 <div
@@ -219,84 +225,62 @@ const ActiveJobs = memo(() => {
                   onClick={() => navigate(`/vendor/booking/${job.id}`)}
                   className="bg-white rounded-[32px] p-5 shadow-sm border border-gray-100 cursor-pointer active:scale-98 transition-all duration-200 relative group"
                 >
-                  <div className="flex items-center gap-4 mb-4">
-                    {/* Status Icon */}
-                    <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
-                      <FiBriefcase className="w-6 h-6 text-black" />
+                  <div className="flex items-start gap-4 mb-5">
+                    {/* Suitcase Icon Container */}
+                    <div className="w-16 h-16 rounded-[24px] bg-gray-50 flex items-center justify-center shrink-0 border border-black/[0.03]">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7 8V6C7 4.89543 7.89543 4 9 4H15C16.1046 4 17 4.89543 17 6V8M3 10C3 8.89543 3.89543 8 5 8H19C20.1046 8 21 8.89543 21 10V18C21 19.1046 20.1046 20 19 20H5C3.89543 20 3 19.1046 3 18V10Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M3 12H21" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                     </div>
 
-                    {/* Job Header */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="text-sm font-black text-gray-900 truncate">
+                    {/* Job Details */}
+                    <div className="flex-1 min-w-0 pt-1">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <h4 className="text-[15px] font-[1000] text-gray-900 truncate">
                           {job.user?.name || 'Customer'}
                         </h4>
-                        <span className="text-[11px] font-black text-black">
-                          {isCompleted ? `₹${job.price}` : '---'}
-                        </span>
+                        <button className="text-gray-400 p-1">
+                          <svg width="16" height="4" viewBox="0 0 16 4" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="2" cy="2" r="2" fill="currentColor"/>
+                            <circle cx="8" cy="2" r="2" fill="currentColor"/>
+                            <circle cx="14" cy="2" r="2" fill="currentColor"/>
+                          </svg>
+                        </button>
                       </div>
+                      
                       <div className="flex items-center gap-2">
-                        <p className="text-[11px] font-bold text-gray-500">
+                        <p className="text-[11px] font-bold text-gray-400 truncate">
                           {job.serviceType}
                         </p>
-                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-black text-white uppercase tracking-widest">
+                        <span className="text-[9px] font-black px-2 py-0.5 rounded bg-[#0D463C] text-white uppercase tracking-widest leading-relaxed whitespace-nowrap">
                           {job.status.replace('_', ' ')}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Info Grid */}
-                  <div className="grid grid-cols-2 gap-3 mb-5 px-1">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
-                      <div className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center">
-                        <FiMapPin className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="truncate">{job.location?.address}</span>
+                  {/* Info Row (Location & Time) */}
+                  <div className="space-y-2 mb-5 px-1">
+                    <div className="flex items-start gap-2 text-[11px] font-bold text-gray-400">
+                      <FiMapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      <span className="break-words leading-relaxed">{job.location?.address}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
-                      <div className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center">
-                        <FiClock className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="truncate">{job.timeSlot?.time}</span>
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-gray-400">
+                      <FiClock className="w-3.5 h-3.5 shrink-0" />
+                      <span>{job.timeSlot?.time}</span>
                     </div>
                   </div>
 
-                  {/* Assigned Info */}
-                  {job.assignedTo && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-2xl mb-4">
-                      <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-sm">
-                        <FiUser className="w-3 h-3 text-black" />
-                      </div>
-                      <p className="text-[10px] font-bold text-gray-500">
-                        Assigned: <span className="text-gray-900">{job.assignedTo.name}</span>
-                      </p>
+                  {/* Assignment Pill */}
+                  <div className="bg-[#F8F9FA] rounded-[18px] py-3 px-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                      <FiUser className="w-4 h-4 text-gray-400" />
                     </div>
-                  )}
-
-                  {/* Actions */}
-                  {['ACCEPTED', 'CONFIRMED'].includes(job.status?.toUpperCase()) && !job.assignedTo && (
-                    <div className="flex gap-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAssignToSelf(job.id);
-                        }}
-                        className="flex-1 py-3 rounded-2xl bg-white border border-black text-black text-[11px] font-black hover:bg-gray-50 transition-colors"
-                      >
-                        DO IT MYSELF
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/vendor/booking/${job.id}/assign-worker`);
-                        }}
-                        className="flex-1 py-3 rounded-2xl bg-black text-white text-[11px] font-black shadow-lg shadow-gray-200"
-                      >
-                        ASSIGN WORKER
-                      </button>
-                    </div>
-                  )}
+                    <p className="text-[11px] font-bold text-gray-400">
+                      Assigned: <span className="text-gray-900 font-black">{job.assignedTo?.name || 'Unassigned'}</span>
+                    </p>
+                  </div>
                 </div>
               );
             })}

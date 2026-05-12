@@ -511,82 +511,62 @@ const Dashboard = memo(() => {
         />
       </div>
 
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-5 flex items-center justify-between relative z-10">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/60 border-b border-black/[0.03] px-5 py-3.5 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-black/[0.02] flex items-center justify-center">
             <FiBriefcase className="w-5 h-5 text-gray-900" />
           </div>
-          <h1 className="text-xl font-[1000] text-gray-900 tracking-tight flex items-center gap-1">
+          <h1 className="text-xl font-[1000] text-gray-900 tracking-tight">
             Vendor<span className="text-teal-600">Hub</span>
           </h1>
         </div>
+        
         <div className="flex items-center gap-3">
+          {/* Top Integrated Toggle */}
+          <button
+            onClick={handleToggleOnline}
+            disabled={isToggling}
+            className={`relative w-12 h-6.5 rounded-full transition-all duration-500 flex items-center px-1 shadow-inner ${
+              isOnline ? 'bg-[#0D463C]' : 'bg-gray-200'
+            }`}
+          >
+            <motion.div
+              animate={{ x: isOnline ? 22 : 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              className="w-4.5 h-4.5 bg-white rounded-full shadow-md flex items-center justify-center"
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[#0D463C]' : 'bg-gray-300'}`} />
+            </motion.div>
+          </button>
+
           <motion.div 
             whileTap={{ scale: 0.9 }}
-            className="w-11 h-11 rounded-2xl bg-white shadow-sm flex items-center justify-center relative border border-black/[0.03]"
+            className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center relative border border-black/[0.03]"
             onClick={() => navigate('/vendor/notifications')}
           >
             <FiBell className="w-5 h-5 text-gray-400" />
             {stats.pendingAlerts > 0 && (
-              <span className="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+              <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-red-500 rounded-full border-2 border-white" />
             )}
           </motion.div>
+          
           <motion.div 
             whileTap={{ scale: 0.9 }}
-            className="w-11 h-11 rounded-2xl bg-white shadow-sm overflow-hidden border border-black/[0.03] cursor-pointer"
+            className="w-10 h-10 rounded-xl bg-white shadow-sm overflow-hidden border border-black/[0.03] cursor-pointer"
             onClick={() => navigate('/vendor/profile')}
           >
             {vendorProfile?.photo ? (
               <img src={vendorProfile.photo} alt="Profile" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                <FiUser className="w-6 h-6 text-gray-400" />
+                <FiUser className="w-5 h-5 text-gray-400" />
               </div>
             )}
           </motion.div>
         </div>
       </header>
 
-      <main className="pt-0">
-        {/* Simplified Status Toggle (Black Theme) */}
-        <div className="px-5 pb-5 pt-2">
-          <div className="bg-white rounded-[24px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
-                <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-300'} animate-pulse`} />
-              </div>
-              <div>
-                <h3 className="text-xs font-black text-gray-900">{isOnline ? 'System Online' : 'System Offline'}</h3>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-                  {isOnline ? 'Receiving new leads' : 'Unavailable for leads'}
-                </p>
-              </div>
-            </div>
-            
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleToggleOnline();
-              }}
-              disabled={isToggling}
-              className={`relative w-14 h-7 rounded-full transition-all duration-500 flex items-center px-1 shadow-inner ${
-                isOnline ? 'bg-black' : 'bg-gray-200'
-              }`}
-            >
-              <motion.div
-                animate={{ x: isOnline ? 28 : 0 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                className="w-5 h-5 bg-white rounded-full shadow-md flex items-center justify-center"
-              >
-                {isToggling ? (
-                  <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-black' : 'bg-gray-300'}`} />
-                )}
-              </motion.div>
-            </button>
-          </div>
-        </div>
+      <main className="pt-4">
 
         {/* Premium Performance Card */}
         <div className="px-5 pb-8 relative z-10">
