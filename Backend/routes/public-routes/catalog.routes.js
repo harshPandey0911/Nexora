@@ -6,7 +6,8 @@ const {
   getPublicBrandBySlug,
   getPublicServices,
   getPublicHomeContent,
-  getPublicHomeData
+  getPublicHomeData,
+  searchCatalog
 } = require('../../controllers/publicControllers/catalogController');
 
 // Public routes - no authentication required
@@ -16,5 +17,6 @@ router.get('/brands/slug/:slug', getPublicBrandBySlug);
 router.get('/services', getPublicServices); // New services
 router.get('/home-content', getPublicHomeContent);
 router.get('/home-data', getPublicHomeData);
+router.get('/search', searchCatalog);
 
 module.exports = router;

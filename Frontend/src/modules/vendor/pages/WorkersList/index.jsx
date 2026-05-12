@@ -110,7 +110,7 @@ const WorkersList = () => {
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate('/vendor/workers/add')}
-          className="w-10 h-10 rounded-xl bg-teal-600 text-white shadow-lg shadow-teal-600/20 flex items-center justify-center"
+          className="w-10 h-10 rounded-xl bg-[#0D463C] text-white shadow-lg shadow-[#0D463C]/20 flex items-center justify-center"
         >
           <FiPlus className="w-5 h-5" />
         </motion.button>
@@ -143,8 +143,8 @@ const WorkersList = () => {
               onClick={() => setFilter(option.id)}
               className={`px-6 py-2.5 rounded-full font-black text-[11px] uppercase tracking-wider whitespace-nowrap transition-all duration-300 ${
                 filter === option.id
-                  ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/20'
-                  : 'bg-white/60 backdrop-blur-md text-gray-500 border border-white/60'
+                  ? 'bg-[#0D463C] text-white shadow-lg shadow-[#0D463C]/20'
+                  : 'bg-white text-gray-500 border border-gray-100'
               }`}
             >
               {option.label}
@@ -184,51 +184,56 @@ const WorkersList = () => {
                   key={worker.id}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate(`/vendor/workers/${worker.id}/edit`)}
-                  className="bg-white/70 backdrop-blur-md rounded-[32px] p-4 shadow-sm border border-white/60 flex items-center gap-4 relative active:scale-98 transition-all hover:shadow-xl hover:shadow-teal-500/5"
+                  className="bg-white rounded-[32px] p-5 shadow-sm border border-gray-100 flex items-center gap-4 relative active:scale-98 transition-all"
                 >
-                  {/* Photo */}
+                  {/* Profile Photo & Status Dot */}
                   <div className="relative shrink-0">
-                    <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white shadow-sm border border-black/[0.03]">
+                    <div className="w-16 h-16 rounded-[20px] overflow-hidden bg-gray-50 border border-black/[0.03] flex items-center justify-center">
                       {worker.profilePhoto ? (
                         <img src={worker.profilePhoto} alt={worker.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                          <FiUser className="w-8 h-8 text-gray-300" />
-                        </div>
+                        <FiUser className="w-8 h-8 text-gray-300" />
                       )}
                     </div>
-                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                      isOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse' : 'bg-gray-300'
-                    }`} />
+                    {isOnline && (
+                      <div className="absolute top-0 -right-1 w-4 h-4 rounded-full bg-[#00D26A] border-2 border-white shadow-sm" />
+                    )}
                   </div>
 
-                  {/* Info */}
+                  {/* Worker Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <h3 className="text-[15px] font-[1000] text-gray-900 truncate">{worker.name}</h3>
-                      <div className="flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-lg">
-                        <FiStar className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                        <span className="text-[10px] font-black text-yellow-700">{worker.rating || '4.5'}</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-[15px] font-[1000] text-gray-900 truncate uppercase">
+                        {worker.name}
+                      </h3>
+                      <div className="flex items-center gap-1 bg-[#FFF9E6] px-2 py-0.5 rounded-lg shrink-0">
+                        <FiStar className="w-3 h-3 text-[#FFC107] fill-[#FFC107]" />
+                        <span className="text-[11px] font-black text-[#856404]">{worker.rating || '4.5'}</span>
                       </div>
                     </div>
                     
-                    <p className="text-[11px] font-bold text-gray-400 mb-3 truncate">{worker.phone}</p>
+                    <p className="text-[12px] font-bold text-gray-400 mb-3 tracking-tight">
+                      {worker.phone || 'No phone'}
+                    </p>
                     
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full">
-                        <FiBriefcase className="w-3 h-3" />
-                        <span>{worker.completedJobs || 0} Jobs</span>
+                    <div className="flex items-center gap-4">
+                      {/* Jobs Count Pill */}
+                      <div className="flex items-center gap-1.5 bg-[#E6F7FF] px-3 py-1.5 rounded-full">
+                        <FiBriefcase className="w-3 h-3 text-[#0D463C]" />
+                        <span className="text-[9px] font-[1000] text-[#0D463C] uppercase tracking-wider">
+                          {worker.completedJobs || 0} Jobs
+                        </span>
                       </div>
-                      <span className={`text-[9px] font-black uppercase tracking-widest ${
-                        isOnline ? 'text-green-500' : 'text-gray-300'
-                      }`}>
+                      
+                      {/* Availability Status */}
+                      <span className="text-[9px] font-[1000] text-[#0D463C] uppercase tracking-[0.1em]">
                         {isOnline ? 'Available' : 'Offline'}
                       </span>
                     </div>
                   </div>
 
-                  {/* Arrow */}
-                  <div className="w-10 h-10 rounded-full bg-gray-50/50 flex items-center justify-center shrink-0">
+                  {/* Navigation Arrow */}
+                  <div className="shrink-0 ml-1">
                     <FiChevronRight className="w-5 h-5 text-gray-300" />
                   </div>
                 </motion.div>
