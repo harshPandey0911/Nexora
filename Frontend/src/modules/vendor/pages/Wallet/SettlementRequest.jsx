@@ -358,7 +358,7 @@ const SettlementRequest = () => {
                     Take a Photo
                   </button>
                 )}
-                
+
                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors bg-white">
                   <FiUpload className="w-8 h-8 text-gray-400 mb-2" />
                   <span className="text-sm text-gray-700 font-semibold">
