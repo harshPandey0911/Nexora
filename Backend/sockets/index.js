@@ -240,21 +240,23 @@ const updateVendorOnlineStatus = async (vendorId, isOnline, socketId) => {
       currentSocketId: socketId
     };
 
-    if (isOnline) {
-      updateData.availability = 'AVAILABLE';
-    } else {
+    if (!isOnline) {
       updateData.lastSeenAt = new Date();
       updateData.availability = 'OFFLINE';
     }
+    // Note: We don't automatically set availability to 'AVAILABLE' on connect.
+    // This allows vendors to stay 'OFFLINE' even if their app is open (socket connected).
 
     // Update MongoDB
-    await Vendor.findByIdAndUpdate(vendorId, updateData);
+    const updatedVendor = await Vendor.findByIdAndUpdate(vendorId, updateData, { new: true });
 
     // Update Redis cache (fast lookup)
     await setVendorOnline(vendorId, isOnline);
-    await setVendorAvailability(vendorId, updateData.availability);
+    if (updateData.availability) {
+      await setVendorAvailability(vendorId, updateData.availability);
+    }
 
-    console.log(`[Socket] Vendor ${vendorId} is now ${isOnline ? 'ONLINE' : 'OFFLINE'}`);
+    console.log(`[Socket] Vendor ${vendorId} is now ${isOnline ? 'CONNECTED' : 'DISCONNECTED'} (Availability: ${updatedVendor?.availability})`);
   } catch (error) {
     console.error('[Socket] Error updating vendor online status:', error);
   }
@@ -265,19 +267,22 @@ const updateWorkerOnlineStatus = async (workerId, isOnline, socketId) => {
   try {
     const Worker = require('../models/Worker');
 
-    const updateData = {
-      status: isOnline ? 'ONLINE' : 'OFFLINE',
-      // currentSocketId: socketId // Add to model if needed
-    };
+    const updateData = {};
 
-    if (!isOnline) {
-      updateData.lastSeenAt = new Date(); // Add to model if needed
+    if (isOnline) {
+      // Just mark as technically connected/active if needed, 
+      // but for workers we usually use 'status' for both.
+      // If they are connecting, we can keep their existing status.
+    } else {
+      updateData.status = 'OFFLINE';
+      updateData.lastSeenAt = new Date();
     }
 
-    // Update MongoDB
-    await Worker.findByIdAndUpdate(workerId, updateData);
+    if (Object.keys(updateData).length > 0) {
+      await Worker.findByIdAndUpdate(workerId, updateData);
+    }
 
-    console.log(`[Socket] Worker ${workerId} is now ${isOnline ? 'ONLINE' : 'OFFLINE'}`);
+    console.log(`[Socket] Worker ${workerId} is now ${isOnline ? 'CONNECTED' : 'DISCONNECTED'}`);
   } catch (error) {
     console.error('[Socket] Error updating worker online status:', error);
   }

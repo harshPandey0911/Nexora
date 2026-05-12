@@ -41,6 +41,15 @@ const vendorService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  removeService: async (categoryId) => {
+    try {
+      const response = await api.delete(`/vendors/services/${categoryId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

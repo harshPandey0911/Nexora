@@ -50,7 +50,7 @@ const getPublicCategories = async (req, res) => {
 
       // 2. If it's a vendor-specific category
       if (cat.vendorId) {
-        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true }).select('address');
+        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true, availability: 'AVAILABLE' }).select('address');
         if (!ownerVendor) return null;
 
         if (cityName && ownerVendor.address?.city) {
@@ -147,7 +147,7 @@ const getPublicBrands = async (req, res) => {
       .populate({
         path: 'vendorId',
         select: 'name businessName profilePhoto isOnline',
-        match: { isOnline: true }
+        match: { isOnline: true, availability: 'AVAILABLE' }
       })
       .lean();
       
@@ -543,7 +543,7 @@ const getPublicHomeData = async (req, res) => {
 
       // 2. If it's a vendor-specific category
       if (cat.vendorId) {
-        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true }).select('geoLocation address');
+        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true, availability: 'AVAILABLE' }).select('geoLocation address');
         if (!ownerVendor) return null;
 
         if (userLocation) {

@@ -26,23 +26,23 @@ const getMyServices = async (req, res) => {
     const assignedCategoryNames = Array.from(new Set([...(vendor.service || []), ...(vendor.categories || [])]));
     console.log('[getMyServices] assignedCategoryNames:', assignedCategoryNames);
 
-    if (assignedCategoryNames.length === 0) {
-      return res.status(200).json({
-        success: true,
-        data: []
-      });
-    }
-
     // 2. Fetch Category details:
     // - Categories assigned by name in the vendor profile
     // - Categories created specifically by this vendor (using vendorId)
-    const categories = await Category.find({
+    const query = {
       $or: [
-        { title: { $in: assignedCategoryNames.map(name => new RegExp(`^${name}$`, 'i')) } },
         { vendorId: vendorId }
       ],
       status: 'active'
-    }).select('title imageUrl homeIconUrl description slug vendorId');
+    };
+
+    if (assignedCategoryNames.length > 0) {
+      query.$or.push({ 
+        title: { $in: assignedCategoryNames.map(name => new RegExp(`^${name}$`, 'i')) } 
+      });
+    }
+
+    const categories = await Category.find(query).select('title imageUrl homeIconUrl description slug vendorId');
     
     console.log(`[getMyServices] Found ${categories.length} total categories (assigned + custom) for vendor ${vendorId}`);
 
@@ -207,6 +207,61 @@ const addVendorService = async (req, res) => {
 };
 
 /**
+ * Remove a service/category from vendor's portfolio
+ */
+const removeVendorService = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const vendorId = req.user.id;
+
+    console.log(`[removeVendorService] Removing category ${categoryId} for vendor ${vendorId}`);
+
+    // 1. Find the category to get its title
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+
+    const vendor = await Vendor.findById(vendorId);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
+    }
+
+    // 2. If it's a custom category created by THIS vendor
+    if (category.vendorId && category.vendorId.toString() === vendorId.toString()) {
+      // Option A: Set to inactive so it doesn't show up but history is preserved
+      category.status = 'inactive';
+      await category.save();
+      console.log(`[removeVendorService] Custom category ${category.title} marked inactive`);
+    }
+
+    // 3. Always remove from the vendor's assigned list (handles both platform and custom)
+    const categoryTitle = category.title;
+    
+    // Remove from 'service' array
+    if (vendor.service && vendor.service.length > 0) {
+      vendor.service = vendor.service.filter(s => s.toLowerCase() !== categoryTitle.toLowerCase());
+    }
+
+    // Remove from 'categories' array
+    if (vendor.categories && vendor.categories.length > 0) {
+      vendor.categories = vendor.categories.filter(c => c.toLowerCase() !== categoryTitle.toLowerCase());
+    }
+
+    await vendor.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Service "${categoryTitle}" removed from your portfolio`
+    });
+
+  } catch (error) {
+    console.error('Remove Vendor Service error:', error);
+    res.status(500).json({ success: false, message: 'Failed to remove service' });
+  }
+};
+
+/**
  * Get all custom categories and services created by the vendor
  */
 const getMyCustomContent = async (req, res) => {
@@ -236,5 +291,6 @@ module.exports = {
   setServicePricing,
   addVendorCategory,
   addVendorService,
-  getMyCustomContent
+  getMyCustomContent,
+  removeVendorService
 };
