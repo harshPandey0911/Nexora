@@ -72,10 +72,10 @@ const ServicesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24">
+    <div className="min-h-screen bg-transparent pb-24">
       {/* Header Section */}
-      <div className="bg-white border-b border-gray-100 pt-10 pb-12 px-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="bg-transparent border-b border-gray-100 pt-10 pb-12 px-6">
+        <div className="max-w-[1400px] mx-auto">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -123,7 +123,7 @@ const ServicesPage = () => {
       </div>
 
       {/* Categories Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-[1400px] mx-auto px-6 py-12">
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
             {[...Array(12)].map((_, i) => (

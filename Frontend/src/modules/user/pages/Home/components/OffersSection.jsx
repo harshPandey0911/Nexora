@@ -6,8 +6,8 @@ const OffersSection = ({ data }) => {
   const { title, subtitle, items } = data;
 
   return (
-    <section id="offers" className="py-16 px-6 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+    <section id="offers" className="py-16 px-6 bg-transparent">
+      <div className="max-w-[1400px] mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">{title || 'Exclusive Offers'}</h2>
           <p className="text-gray-600 text-lg">{subtitle}</p>

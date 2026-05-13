@@ -11,8 +11,8 @@ const HowItWorks = ({ data }) => {
   };
 
   return (
-    <section className="py-16 px-5 bg-white overflow-hidden">
-      <div className="max-w-screen-xl mx-auto">
+    <section className="py-16 px-5 bg-transparent overflow-hidden">
+      <div className="max-w-[1400px] mx-auto">
         <div className="text-center mb-16">
           <motion.h2 
             initial={{ opacity: 0, y: -20 }}

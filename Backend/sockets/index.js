@@ -242,7 +242,6 @@ const updateVendorOnlineStatus = async (vendorId, isOnline, socketId) => {
 
     if (!isOnline) {
       updateData.lastSeenAt = new Date();
-      updateData.availability = 'OFFLINE';
     }
     // Note: We don't automatically set availability to 'AVAILABLE' on connect.
     // This allows vendors to stay 'OFFLINE' even if their app is open (socket connected).
@@ -270,11 +269,8 @@ const updateWorkerOnlineStatus = async (workerId, isOnline, socketId) => {
     const updateData = {};
 
     if (isOnline) {
-      // Just mark as technically connected/active if needed, 
-      // but for workers we usually use 'status' for both.
-      // If they are connecting, we can keep their existing status.
+      // Just mark as technically connected/active if needed
     } else {
-      updateData.status = 'OFFLINE';
       updateData.lastSeenAt = new Date();
     }
 

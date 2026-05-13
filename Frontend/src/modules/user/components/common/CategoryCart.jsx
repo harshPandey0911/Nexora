@@ -250,7 +250,7 @@ const CategoryCart = ({
               borderTopRightRadius: '24px'
             }}
           >
-            <div className="max-w-screen-xl mx-auto">
+            <div className="max-w-[1400px] mx-auto">
               <div className="mb-4 pb-2">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium text-gray-600">Subtotal ({cartCount} {cartCount === 1 ? 'item' : 'items'})</span>

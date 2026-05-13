@@ -39,9 +39,9 @@ const BottomNav = React.memo(() => {
   };
 
   return (
-    <nav className="fixed bottom-6 left-0 right-0 z-[100] px-4 pointer-events-none lg:hidden">
-      <div 
-        className="max-w-md mx-auto h-20 bg-white/90 backdrop-blur-2xl rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/20 px-4 pointer-events-auto flex items-center justify-between"
+    <nav className="fixed bottom-6 left-0 right-0 z-50 flex justify-center lg:hidden px-4">
+      <div
+        className="flex items-center justify-between bg-white/90 backdrop-blur-xl px-2 py-2 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-100/50 w-full max-w-sm"
       >
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
@@ -50,58 +50,49 @@ const BottomNav = React.memo(() => {
           return (
             <button
               key={item.id}
-              onClick={() => handleTabClick(item.path)}
-              className="relative flex flex-col items-center justify-center w-1/4 h-full"
+              onClick={() => navigate(item.path)}
+              className="relative flex items-center justify-center transition-all duration-300"
             >
-              {/* Active Glow */}
-              <AnimatePresence>
-                {isActive && (
-                  <motion.div
-                    layoutId="active-bg"
-                    className="absolute inset-x-1 inset-y-2 rounded-2xl"
-                    style={{ background: `rgba(13, 148, 136, 0.08)` }}
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-              </AnimatePresence>
-
-              <div className="relative z-10 flex flex-col items-center gap-1">
-                <motion.div
-                  animate={{ 
-                    scale: isActive ? 1.2 : 1,
-                    y: isActive ? -2 : 0 
-                  }}
-                  className="relative"
-                >
-                  <Icon 
-                    className={`w-6 h-6 transition-colors duration-300 ${isActive ? 'text-teal-600' : 'text-gray-400'}`}
+              <motion.div
+                layout
+                initial={false}
+                animate={{
+                  width: isActive ? 'auto' : '48px',
+                  backgroundColor: isActive ? '#0D463C' : 'transparent',
+                }}
+                className={`flex items-center gap-2 px-3 h-11 rounded-full overflow-hidden`}
+              >
+                <div className="relative">
+                  <Icon
+                    className={`w-5 h-5 transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-400'
+                      }`}
                   />
                   {item.isCart && cartCount > 0 && (
                     <span className="absolute -top-2 -right-3 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-lg">
                       {cartCount > 9 ? '9+' : cartCount}
                     </span>
                   )}
-                </motion.div>
-                <span className={`text-[10px] font-bold tracking-tight transition-colors duration-300 ${isActive ? 'text-teal-600' : 'text-gray-400'}`}>
-                  {item.label}
-                </span>
-              </div>
+              </motion.div>
+              <span className={`text-[10px] font-bold tracking-tight transition-colors duration-300 ${isActive ? 'text-teal-600' : 'text-gray-400'}`}>
+                {item.label}
+              </span>
+            </div>
 
-              {/* Bottom Dot */}
-              <AnimatePresence>
-                {isActive && (
-                  <motion.div
-                    layoutId="active-dot"
-                    className="absolute bottom-2 w-1 h-1 bg-teal-600 rounded-full"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-              </AnimatePresence>
+              {/* Bottom Dot */ }
+          <AnimatePresence>
+            {isActive && (
+              <motion.div
+                layoutId="active-dot"
+                className="absolute bottom-2 w-1 h-1 bg-teal-600 rounded-full"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
+          </AnimatePresence>
             </button>
-          );
+      );
         })}
-      </div>
-    </nav>
+    </div>
+    </nav >
   );
 });
 
