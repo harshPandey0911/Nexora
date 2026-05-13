@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FiPhone, FiArrowRight, FiChevronLeft, FiCheckCircle } from 'react-icons/fi';
+import { FiPhone, FiArrowRight, FiChevronLeft, FiCheckCircle, FiLock, FiSmartphone } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
-import { themeColors } from '../../../theme';
+import { vendorTheme as themeColors } from '../../../theme';
 import { sendOTP, verifyLogin } from '../services/authService';
 import Logo from '../../../components/common/Logo';
 
@@ -179,46 +179,72 @@ const VendorLogin = () => {
   const brandColor = themeColors.brand?.teal || '#347989';
 
   return (
-    <div className="min-h-[100dvh] bg-white flex flex-col justify-center py-12 px-5 relative overflow-hidden">
-      
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-12 relative z-10 animate-fade-in">
-        <div className="w-24 h-24 bg-black rounded-[40px] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-gray-200 transform hover:rotate-6 transition-transform duration-500">
-          <Logo className="h-12 w-auto invert" />
-        </div>
-        <h2 className="text-sm font-black text-black uppercase tracking-[0.4em] mb-3">
-          {step === 'phone' ? 'Authorized Access' : 'Security Verification'}
-        </h2>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-loose">
-          {step === 'phone' ? 'Nexora Go Network Gateway' : `Encryption Code Sent to ${phoneNumber}`}
-        </p>
-      </div>
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{
+        background: 'linear-gradient(135deg, #00a6a6 0%, #008a8a 50%, #006b6b 100%)'
+      }}
+    >
+      <div className="w-full max-w-md">
+        {/* White Card */}
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
+          {/* Icon */}
+          <div className="flex justify-center mb-6">
+            <div
+              className="w-16 h-16 rounded-xl flex items-center justify-center"
+              style={{
+                background: `linear-gradient(135deg, ${themeColors.button} 0%, #008a8a 100%)`,
+                boxShadow: `0 4px 12px rgba(0, 166, 166, 0.3)`
+              }}
+            >
+              {step === 'phone' ? (
+                <FiSmartphone className="w-8 h-8 text-white" />
+              ) : (
+                <FiLock className="w-8 h-8 text-white" />
+              )}
+            </div>
+          </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <div className="bg-white py-10 px-8 shadow-2xl shadow-gray-200/50 rounded-[48px] border border-gray-50 relative overflow-hidden animate-slide-in-bottom">
-          
+          {/* Title */}
+          <h1 className="text-3xl font-bold text-gray-900 text-center mb-2">
+            {step === 'phone' ? 'Vendor Login' : 'Verify OTP'}
+          </h1>
+          <p className="text-gray-600 text-center mb-8">
+            {step === 'phone' 
+              ? 'Enter your mobile number to access your portal' 
+              : `Enter the 6-digit code sent to +91 ${phoneNumber}`}
+          </p>
+
+          {/* Form Content */}
           {step === 'phone' ? (
-            <form onSubmit={handlePhoneSubmit} className="space-y-8">
-              <div className="space-y-2">
-                <label htmlFor="phone" className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">
-                  Mobile Identity
+            <form onSubmit={handlePhoneSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Mobile Number
                 </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-black">
-                    <FiPhone className="h-5 w-5" />
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                    <FiPhone className="w-5 h-5 text-gray-400" />
                   </div>
-                  <div className="absolute inset-y-0 left-12 flex items-center pointer-events-none">
-                    <span className="text-gray-300 font-black text-xs border-r border-gray-100 pr-3">+91</span>
+                  <div className="absolute left-12 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium border-r pr-3 mr-2">
+                    +91
                   </div>
                   <input
                     ref={phoneInputRef}
-                    id="phone"
-                    name="phone"
                     type="tel"
-                    required
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    className="block w-full pl-24 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-3xl text-gray-900 text-sm font-black tracking-[0.2em] focus:bg-white focus:border-black outline-none transition-all duration-300"
                     placeholder="0000000000"
+                    className="w-full pl-24 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent text-gray-900 font-medium tracking-wider"
+                    onFocus={(e) => {
+                      e.target.style.borderColor = themeColors.button;
+                      e.target.style.boxShadow = `0 0 0 3px rgba(0, 166, 166, 0.1)`;
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#d1d5db';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                    required
                   />
                 </div>
               </div>
@@ -226,34 +252,43 @@ const VendorLogin = () => {
               <button
                 type="submit"
                 disabled={isLoading || !phoneNumber || phoneNumber.length < 10}
-                className="group relative w-full flex justify-center py-5 px-6 bg-black text-white text-[11px] font-black uppercase tracking-[0.3em] rounded-[24px] shadow-2xl shadow-gray-200 transition-all duration-500 hover:scale-[1.02] active:scale-95 disabled:opacity-20"
+                className="w-full py-3 rounded-xl text-white font-semibold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                style={{
+                  background: `linear-gradient(135deg, ${themeColors.button} 0%, #008a8a 100%)`,
+                  boxShadow: '0 4px 12px rgba(0, 166, 166, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 166, 166, 0.4)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 166, 166, 0.3)';
+                }}
               >
-                {isLoading ? 'Processing...' : (
-                  <span className="flex items-center">
-                    Initiate Login
-                    <FiArrowRight className="ml-3 group-hover:translate-x-2 transition-transform" />
-                  </span>
-                )}
+                {isLoading ? 'Sending...' : 'Initiate Login'}
+                {!isLoading && <FiArrowRight />}
               </button>
             </form>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-6">
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
+                onClick={() => {
                   setOtp(['', '', '', '', '', '']);
                   setOtpToken('');
                   setStep('phone');
                   setResendTimer(0);
                 }}
-                className="inline-flex items-center text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-black transition-colors"
+                className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
               >
-                <FiChevronLeft className="mr-2" /> Modify Identity
+                <FiChevronLeft className="mr-1" /> Use different number
               </button>
 
-              <form onSubmit={handleOtpSubmit} className="space-y-10">
-                <div className="flex justify-between gap-3">
+              <form onSubmit={handleOtpSubmit} className="space-y-6">
+                <div className="flex justify-between gap-2">
                   {otp.map((digit, index) => (
                     <input
                       key={index}
@@ -264,9 +299,20 @@ const VendorLogin = () => {
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      className="w-full h-16 text-center text-xl font-black bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-black outline-none transition-all duration-300"
+                      className="w-12 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-xl focus:outline-none transition-all"
                       style={{
-                        color: digit ? 'black' : 'gray'
+                        borderColor: digit ? themeColors.button : '#d1d5db',
+                        boxShadow: digit ? `0 0 0 3px rgba(0, 166, 166, 0.1)` : 'none'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = themeColors.button;
+                        e.target.style.boxShadow = `0 0 0 3px rgba(0, 166, 166, 0.1)`;
+                      }}
+                      onBlur={(e) => {
+                        if (!e.target.value) {
+                          e.target.style.borderColor = '#d1d5db';
+                          e.target.style.boxShadow = 'none';
+                        }
                       }}
                     />
                   ))}
@@ -289,7 +335,8 @@ const VendorLogin = () => {
                       }
                     }}
                     disabled={resendTimer > 0}
-                    className="text-[10px] font-black uppercase tracking-widest text-black disabled:text-gray-300 transition-all"
+                    className="text-sm font-semibold transition-all"
+                    style={{ color: resendTimer > 0 ? '#d1d5db' : themeColors.button }}
                   >
                     {resendTimer > 0
                       ? `Resend available in ${Math.floor(resendTimer / 60)}:${String(resendTimer % 60).padStart(2, '0')}`
@@ -300,23 +347,37 @@ const VendorLogin = () => {
                 <button
                   type="submit"
                   disabled={isLoading || otp.join('').length !== 6}
-                  className="group relative w-full flex justify-center py-5 px-6 bg-black text-white text-[11px] font-black uppercase tracking-[0.3em] rounded-[24px] shadow-2xl shadow-gray-200 transition-all duration-500 hover:scale-[1.02] active:scale-95 disabled:opacity-20"
+                  className="w-full py-3 rounded-xl text-white font-semibold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{
+                    background: `linear-gradient(135deg, ${themeColors.button} 0%, #008a8a 100%)`,
+                    boxShadow: '0 4px 12px rgba(0, 166, 166, 0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!e.currentTarget.disabled) {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 166, 166, 0.4)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 166, 166, 0.3)';
+                  }}
                 >
-                  {isLoading ? 'Verifying...' : (
-                    <span className="flex items-center">
-                      Authorize Portal
-                      <FiArrowRight className="ml-3 group-hover:translate-x-2 transition-transform" />
-                    </span>
-                  )}
+                  {isLoading ? 'Verifying...' : 'Authorize Portal'}
+                  {!isLoading && <FiCheckCircle />}
                 </button>
               </form>
             </div>
           )}
         </div>
 
-        <p className="mt-12 text-center">
-          <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">New to the network?</span>{' '}
-          <Link to="/vendor/signup" className="text-[10px] font-black text-black uppercase tracking-widest border-b-2 border-black ml-2 hover:bg-black hover:text-white transition-all px-1">
+        {/* Bottom Link */}
+        <p className="mt-8 text-center text-white/90">
+          <span className="text-sm">New to the network?</span>{' '}
+          <Link 
+            to="/vendor/signup" 
+            className="text-sm font-bold border-b-2 border-white ml-1 hover:text-white transition-all pb-0.5"
+          >
             Apply Now
           </Link>
         </p>

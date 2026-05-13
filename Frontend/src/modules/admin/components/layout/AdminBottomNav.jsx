@@ -42,7 +42,7 @@ const AdminBottomNav = () => {
   };
 
   const navContent = (
-    <nav 
+    <nav
       className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-[9999] shadow-[0_-2px_10px_rgba(0,0,0,0.05)] lg:hidden"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -59,9 +59,8 @@ const AdminBottomNav = () => {
               to={item.path}
               className="flex flex-col items-center justify-center flex-1 h-full gap-1">
               <motion.div
-                className={`relative flex items-center justify-center ${
-                  active ? "text-[#2874F0]" : "text-[#878787]"
-                }`}
+                className={`relative flex items-center justify-center ${active ? "text-[#2874F0]" : "text-[#878787]"
+                  }`}
                 variants={iconVariants}
                 initial="inactive"
                 animate={active ? "active" : "inactive"}>
@@ -75,9 +74,8 @@ const AdminBottomNav = () => {
                 />
               </motion.div>
               <span
-                className={`text-xs font-medium ${
-                  active ? "text-primary-600" : "text-gray-500"
-                }`}>
+                className={`text-xs font-medium ${active ? "text-primary-600" : "text-gray-500"
+                  }`}>
                 {item.label}
               </span>
             </Link>

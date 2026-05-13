@@ -1,14 +1,19 @@
-import React, { useMemo } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FiHome, FiCalendar, FiShoppingCart, FiUser } from 'react-icons/fi';
-import { HiHome, HiCalendar, HiShoppingCart, HiUser } from 'react-icons/hi';
+import { FiHome, FiGift, FiShoppingCart, FiUser, FiTrash2, FiCalendar, FiShoppingBag } from 'react-icons/fi';
+import { HiHome, HiGift, HiShoppingCart, HiUser, HiTrash, HiCalendar } from 'react-icons/hi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../../../context/CartContext';
+import { userTheme as themeColors } from '../../../../theme';
+
+
 
 const BottomNav = React.memo(() => {
   const navigate = useNavigate();
   const location = useLocation();
+  const navRef = useRef(null);
   const { cartCount } = useCart();
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
   const navItems = useMemo(() => [
     { id: 'home', label: 'Home', icon: FiHome, filledIcon: HiHome, path: '/user' },
@@ -27,6 +32,11 @@ const BottomNav = React.memo(() => {
   };
 
   const activeTab = getActiveTab();
+  const activeIndex = navItems.findIndex(item => item.id === activeTab);
+
+  const handleTabClick = (path) => {
+    navigate(path);
+  };
 
   return (
     <nav className="fixed bottom-6 left-0 right-0 z-50 flex justify-center lg:hidden px-4">
@@ -57,43 +67,35 @@ const BottomNav = React.memo(() => {
                     className={`w-5 h-5 transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-400'
                       }`}
                   />
-                  {item.isCart && cartCount > 0 && !isActive && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                  {item.isCart && cartCount > 0 && (
+                    <span className="absolute -top-2 -right-3 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-lg">
                       {cartCount > 9 ? '9+' : cartCount}
                     </span>
                   )}
-                </div>
-
-                <AnimatePresence mode="popLayout">
-                  {isActive && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="text-[12px] font-black text-white whitespace-nowrap pr-1"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
               </motion.div>
+              <span className={`text-[10px] font-bold tracking-tight transition-colors duration-300 ${isActive ? 'text-teal-600' : 'text-gray-400'}`}>
+                {item.label}
+              </span>
+            </div>
 
-              {item.isCart && cartCount > 0 && isActive && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm"
-                >
-                  {cartCount > 9 ? '9+' : cartCount}
-                </motion.span>
-              )}
+              {/* Bottom Dot */ }
+          <AnimatePresence>
+            {isActive && (
+              <motion.div
+                layoutId="active-dot"
+                className="absolute bottom-2 w-1 h-1 bg-teal-600 rounded-full"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
+          </AnimatePresence>
             </button>
-          );
+      );
         })}
-      </div>
-    </nav>
+    </div>
+    </nav >
   );
 });
+
 
 BottomNav.displayName = 'BottomNav';
 

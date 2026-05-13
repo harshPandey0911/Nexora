@@ -78,7 +78,7 @@ const getDashboardStats = async (req, res) => {
     // 6. Get Recent Jobs
     const recentJobs = await Booking.find({ workerId: worker._id })
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(10)
       .populate('userId', 'name')
       .populate('serviceId', 'title');
 

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { FiUser, FiEdit2, FiMapPin, FiBriefcase, FiStar, FiSettings, FiChevronRight, FiLogOut, FiPlus, FiUsers } from 'react-icons/fi';
 import { FaWallet } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { vendorTheme as themeColors } from '../../../../theme';
 import { vendorAuthService } from '../../../../services/authService';
-import BottomNav from '../../components/layout/BottomNav';
 import LogoLoader from '../../../../components/common/LogoLoader';
 
 const Profile = () => {
@@ -160,120 +160,154 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: '#FFFFFF' }}>
-      <header className="px-6 py-5 flex items-center justify-between bg-transparent">
-        <h1 className="text-xl font-black text-gray-900">My Profile</h1>
-        <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center border border-gray-100">
-          <FiSettings className="w-5 h-5 text-black" />
-        </div>
+    <div className="min-h-screen pb-28 relative" style={{ background: '#FFFFFF' }}>
+      {/* Premium Background Pattern */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0"
+          style={{
+            background: `
+              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.1) 0%, transparent 70%),
+              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
+              #F8FAFC
+            `
+          }}
+        />
+      </div>
+
+      <header className="px-6 py-6 flex items-center justify-between relative z-10">
+        <h1 className="text-2xl font-[1000] text-gray-900 tracking-tight">Identity Hub</h1>
+        <motion.button 
+          whileTap={{ scale: 0.9 }}
+          onClick={() => navigate('/vendor/settings')}
+          className="w-12 h-12 rounded-[20px] bg-white shadow-sm flex items-center justify-center border border-black/[0.03] group"
+        >
+          <FiSettings className="w-5 h-5 text-gray-400 group-hover:text-teal-600 transition-colors" />
+        </motion.button>
       </header>
 
-      <main className="px-5">
-        {/* Profile Header Card (Teal Gradient) */}
+      <main className="px-5 relative z-10 max-w-lg mx-auto">
+        {/* Profile Master Card (Teal Gradient) */}
         <div 
-          className="rounded-[32px] p-6 shadow-xl shadow-gray-200/20 mb-8 relative overflow-hidden"
-          style={{ background: themeColors.accentGradient }}
+          className="rounded-[40px] p-8 shadow-[0_20px_50px_rgba(13,148,136,0.15)] mb-10 relative overflow-hidden group"
+          style={{ background: 'linear-gradient(135deg, #0D9488 0%, #0F766E 100%)' }}
         >
-          {/* Ambient Glow */}
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.05)_0%,transparent_50%)]" />
+          {/* Decorative Elements */}
+          <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000" />
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/10 rounded-full blur-2xl" />
 
-          <div className="relative z-10 flex items-center gap-5">
-            {/* Profile Image */}
-            <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-[24px] bg-white/20 border-2 border-white/30 overflow-hidden backdrop-blur-md flex items-center justify-center">
+          <div className="relative z-10 flex flex-col items-center text-center">
+            {/* Master Avatar */}
+            <div className="relative mb-6">
+              <div className="w-28 h-28 rounded-[36px] bg-white/20 border-4 border-white/30 overflow-hidden backdrop-blur-xl flex items-center justify-center shadow-2xl">
                 {profile.photo ? (
                   <img src={profile.photo} alt={profile.name} className="w-full h-full object-cover" />
                 ) : (
-                  <FiUser className="w-10 h-10 text-white/40" />
+                  <div className="w-full h-full bg-teal-800/50 flex items-center justify-center">
+                    <FiUser className="w-12 h-12 text-teal-200/50" />
+                  </div>
                 )}
               </div>
-              <button 
+              <motion.button 
+                whileTap={{ scale: 0.9 }}
                 onClick={() => navigate('/vendor/profile/details')}
-                className="absolute -bottom-1 -right-1 w-7 h-7 bg-white rounded-xl shadow-md flex items-center justify-center border border-gray-100"
+                className="absolute -bottom-2 -right-2 w-10 h-10 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-teal-50 text-teal-600"
               >
-                <FiEdit2 className="w-3.5 h-3.5 text-black" />
-              </button>
+                <FiEdit2 className="w-4 h-4" />
+              </motion.button>
             </div>
 
-            <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-black text-white truncate mb-0.5">{profile.name}</h2>
-              <p className="text-xs font-bold text-white/60 mb-3 truncate">{profile.businessName || 'PlugPro Partner'}</p>
+            <div className="w-full">
+              <h2 className="text-2xl font-[1000] text-white truncate mb-1 tracking-tight">{profile.name}</h2>
+              <p className="text-[10px] font-black text-teal-100/60 uppercase tracking-[0.25em] mb-6">
+                {profile.businessName || 'Verified Elite Partner'}
+              </p>
               
-              <div className="flex items-center gap-3">
-                <div className="px-2.5 py-1.5 bg-white/10 rounded-xl backdrop-blur-md flex items-center gap-1.5">
-                  <FiStar className="w-3 h-3 text-white fill-white" />
-                  <span className="text-[10px] font-black text-white">{profile.rating.toFixed(1)}</span>
+              <div className="flex items-center justify-center gap-4">
+                <div className="px-4 py-2 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10 flex items-center gap-2">
+                  <FiStar className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                  <span className="text-[11px] font-[1000] text-white tracking-wide">{profile.rating.toFixed(1)} Rating</span>
                 </div>
-                <div className="px-2.5 py-1.5 bg-white/10 rounded-xl backdrop-blur-md flex items-center gap-1.5">
-                  <FiBriefcase className="w-3 h-3 text-white" />
-                  <span className="text-[10px] font-black text-white">{profile.totalJobs} Jobs</span>
+                <div className="px-4 py-2 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10 flex items-center gap-2">
+                  <FiBriefcase className="w-3.5 h-3.5 text-teal-200" />
+                  <span className="text-[11px] font-[1000] text-white tracking-wide">{profile.totalJobs} Deployments</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Quick Summary Grid (Black theme) */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        {/* Dynamic Action Grid (High Contrast) */}
+        <div className="grid grid-cols-3 gap-5 mb-10">
           {[
-            { label: 'Wallet', icon: FaWallet, path: '/vendor/wallet' },
-            { label: 'Jobs', icon: FiBriefcase, path: '/vendor/jobs' },
-            { label: 'Workers', icon: FiUsers, path: '/vendor/workers' },
+            { label: 'Financials', icon: FaWallet, path: '/vendor/wallet', color: 'teal' },
+            { label: 'Operations', icon: FiBriefcase, path: '/vendor/jobs', color: 'indigo' },
+            { label: 'Team', icon: FiUsers, path: '/vendor/workers', color: 'orange' },
           ].map((item, idx) => (
-            <button
+            <motion.button
               key={idx}
+              whileTap={{ scale: 0.95 }}
               onClick={() => navigate(item.path)}
-              className="bg-white rounded-[24px] p-4 shadow-sm border border-gray-100 flex flex-col items-center text-center active:scale-95 transition-all group"
+              className="bg-white rounded-[32px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-black/[0.02] flex flex-col items-center text-center group hover:bg-black transition-all duration-500"
             >
-              <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center mb-2 group-hover:bg-black transition-all">
-                <item.icon className="w-5 h-5 text-black group-hover:text-white" />
+              <div className="w-12 h-12 rounded-[20px] bg-gray-50 flex items-center justify-center mb-3 group-hover:bg-white/10 transition-all">
+                <item.icon className="w-5 h-5 text-gray-900 group-hover:text-white" />
               </div>
-              <span className="text-[10px] font-black text-gray-900 uppercase tracking-wider">{item.label}</span>
-            </button>
+              <span className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest group-hover:text-white transition-colors">{item.label}</span>
+            </motion.button>
           ))}
         </div>
 
-        {/* Settings Menu (Minimalist Black) */}
-        <div className="space-y-4 mb-8">
-          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 px-1">Management</h3>
+        {/* Management Ecosystem (Teal Accent) */}
+        <div className="space-y-4 mb-12">
+          <div className="flex items-center justify-between px-2 mb-6">
+            <h3 className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.25em]">Partner Ecosystem</h3>
+            <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+          </div>
           
           {menuItems.map((item) => {
             const IconComponent = item.icon || FiSettings;
             return (
-              <button
+              <motion.button
                 key={item.id}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center justify-between p-4 rounded-[28px] border transition-all active:scale-[0.98] ${
+                className={`w-full flex items-center justify-between p-5 rounded-[32px] border transition-all duration-500 ${
                   item.highlight 
-                  ? 'bg-black border-black shadow-lg shadow-gray-200 text-white' 
-                  : 'bg-white border-gray-100 text-gray-900 shadow-sm'
+                  ? 'bg-black border-black shadow-2xl shadow-black/10 text-white' 
+                  : 'bg-white/70 backdrop-blur-md border-white/60 text-gray-900 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:border-teal-500/20'
                 }`}
               >
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                    item.highlight ? 'bg-white/10' : 'bg-gray-50'
+                <div className="flex items-center gap-5">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border transition-all ${
+                    item.highlight ? 'bg-white/10 border-white/10' : 'bg-gray-50 border-black/[0.02]'
                   }`}>
                     {item.customIcon ? (
-                      <span className={`text-sm font-black ${item.highlight ? 'text-white' : 'text-black'}`}>{item.customIcon}</span>
+                      <span className={`text-base font-[1000] ${item.highlight ? 'text-white' : 'text-gray-900'}`}>{item.customIcon}</span>
                     ) : (
-                      <IconComponent className={`w-5 h-5 ${item.highlight ? 'text-white' : 'text-black'}`} />
+                      <IconComponent className={`w-6 h-6 ${item.highlight ? 'text-white' : 'text-gray-900'}`} />
                     )}
                   </div>
-                  <span className="text-sm font-black tracking-tight">{item.label}</span>
+                  <div className="text-left">
+                    <span className="text-[13px] font-[1000] tracking-tight block">{item.label}</span>
+                    <span className={`text-[8px] font-black uppercase tracking-widest opacity-40 ${item.highlight ? 'text-white/60' : 'text-gray-400'}`}>
+                      Access Module
+                    </span>
+                  </div>
                 </div>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                   item.highlight ? 'bg-white/10' : 'bg-gray-50'
                 }`}>
                   <FiChevronRight className={`w-5 h-5 ${item.highlight ? 'text-white' : 'text-gray-300'}`} />
                 </div>
-              </button>
+              </motion.button>
             );
           })}
         </div>
 
-        {/* Danger Zone */}
-        <div className="mb-10">
-          <button
+        {/* Termination Controller */}
+        <div className="mb-12">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             onClick={async () => {
               try {
                 await vendorAuthService.logout();
@@ -284,15 +318,18 @@ const Profile = () => {
                 navigate('/vendor/login');
               }
             }}
-            className="w-full py-5 rounded-[28px] bg-red-50 border border-red-100 text-red-500 text-sm font-black flex items-center justify-center gap-3 active:scale-95 transition-all"
+            className="w-full py-6 rounded-[32px] bg-rose-50 border border-rose-100 text-rose-500 text-[11px] font-[1000] uppercase tracking-[0.25em] flex items-center justify-center gap-4 active:scale-95 transition-all shadow-xl shadow-rose-900/5 group"
           >
-            <FiLogOut className="w-5 h-5" />
-            LOGOUT ACCOUNT
-          </button>
+            <FiLogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            Terminate Session
+          </motion.button>
+          
+          <div className="mt-8 flex flex-col items-center gap-2 opacity-30">
+            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Powered by Nexora Operational Intelligence</p>
+            <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest">Build v2.4.0-Premium</p>
+          </div>
         </div>
       </main>
-
-      <BottomNav />
     </div>
   );
 };

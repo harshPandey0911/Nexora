@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { FiUser, FiEdit2, FiMapPin, FiPhone, FiMail, FiBriefcase } from 'react-icons/fi';
 import { vendorAuthService } from '../../../../services/authService';
 import { vendorTheme as themeColors } from '../../../../theme';
@@ -123,34 +124,58 @@ const ProfileDetails = () => {
   }, []);
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: themeColors.backgroundGradient }}>
-      <Header title="Profile Details" />
+    <div className="min-h-screen pb-28 relative" style={{ background: '#FFFFFF' }}>
+      {/* Premium Background Pattern */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0"
+          style={{
+            background: `
+              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.1) 0%, transparent 70%),
+              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
+              #F8FAFC
+            `
+          }}
+        />
+      </div>
 
-      <main className="px-4 pt-4 pb-6">
-        {/* Header with Edit Button */}
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-gray-900 text-lg">Profile Information</h3>
-          <button
-            onClick={() => navigate('/vendor/profile/edit')}
-            className="p-2 rounded-lg hover:scale-105 transition-all flex items-center gap-1.5"
-            style={{
-              background: `linear-gradient(135deg, ${themeColors.button} 0%, ${themeColors.icon} 100%)`,
-              color: '#FFFFFF',
-              boxShadow: `0 2px 8px ${hexToRgba(themeColors.button, 0.3)}`,
-            }}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-5 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-4">
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-xl bg-white shadow-sm border border-black/[0.02] flex items-center justify-center"
           >
-            <FiEdit2 className="w-4 h-4" />
-            <span className="text-sm font-semibold">Edit</span>
-          </button>
+            <FiUser className="w-5 h-5 text-gray-900 rotate-180" />
+          </motion.button>
+          <h1 className="text-xl font-[1000] text-gray-900 tracking-tight">Identity Details</h1>
+        </div>
+        <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-black/[0.02] flex items-center justify-center">
+          <FiBriefcase className="w-5 h-5 text-teal-600" />
+        </div>
+      </header>
+
+      <main className="px-5 pt-8 relative z-10 max-w-lg mx-auto">
+        {/* Header Section with Master Edit Trigger */}
+        <div className="flex items-center justify-between mb-8 px-2">
+          <div>
+            <h3 className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.25em]">Master Profile</h3>
+            <p className="text-[8px] font-black text-teal-600 uppercase tracking-widest mt-0.5">Verified Data Architecture</p>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/vendor/profile/edit')}
+            className="px-6 py-2.5 rounded-full bg-black text-white text-[10px] font-[1000] uppercase tracking-widest shadow-xl shadow-black/10 flex items-center gap-2"
+          >
+            <FiEdit2 className="w-3.5 h-3.5" />
+            Update
+          </motion.button>
         </div>
 
-        {/* Profile Info - Compact List */}
-        <div className="space-y-4 mb-6">
-
-          {/* Profile Photo Section */}
-          <div className="flex justify-center mb-2">
-            <div className="w-28 h-28 rounded-full p-1 bg-white shadow-lg relative">
-              <div className="w-full h-full rounded-full overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-100">
+        {/* Master Avatar Hub */}
+        <div className="flex justify-center mb-10">
+          <div className="relative group">
+            <div className="w-32 h-32 rounded-[44px] p-1 bg-white shadow-2xl relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
+              <div className="w-full h-full rounded-[40px] overflow-hidden bg-gray-50 flex items-center justify-center border border-black/[0.03]">
                 {profile.profilePhoto ? (
                   <img
                     src={profile.profilePhoto}
@@ -158,98 +183,73 @@ const ProfileDetails = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <FiUser className="w-10 h-10 text-gray-300" />
+                  <div className="w-full h-full bg-teal-50 flex items-center justify-center">
+                    <FiUser className="w-12 h-12 text-teal-200" />
+                  </div>
                 )}
               </div>
-              <div
-                className="absolute bottom-1 right-1 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md text-white"
-                style={{ background: themeColors.button }}
-              >
-                <FiUser className="w-4 h-4" />
-              </div>
+            </div>
+            <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-teal-600 shadow-xl flex items-center justify-center border-4 border-white text-white">
+              <FiUser className="w-4 h-4" />
             </div>
           </div>
+        </div>
 
-          {/* Personal Info Group */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">Personal Details</h4>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${themeColors.icon}15` }}>
-                  <FiUser className="w-5 h-5" style={{ color: themeColors.icon }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 font-medium mb-0.5">Full Name</p>
-                  <p className="text-gray-900 font-bold text-sm truncate">{profile.name}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${themeColors.icon}15` }}>
-                  <FiBriefcase className="w-5 h-5" style={{ color: themeColors.icon }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 font-medium mb-0.5">Business Name</p>
-                  <p className="text-gray-900 font-bold text-sm truncate">{profile.businessName}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Info Group */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">Contact Information</h4>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${themeColors.icon}15` }}>
-                  <FiPhone className="w-5 h-5" style={{ color: themeColors.icon }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 font-medium mb-0.5">Mobile Number</p>
-                  <p className="text-gray-900 font-bold text-sm truncate">{profile.phone}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${themeColors.icon}15` }}>
-                  <FiMail className="w-5 h-5" style={{ color: themeColors.icon }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 font-medium mb-0.5">Email Address</p>
-                  <p className="text-gray-900 font-bold text-sm truncate">{profile.email}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${themeColors.icon}15` }}>
-                  <FiMapPin className="w-5 h-5" style={{ color: themeColors.icon }} />
-                </div>
-                <div className="flex-1 min-w-0 pt-1">
-                  <p className="text-xs text-gray-500 font-medium mb-0.5">Address</p>
-                  <p className="text-gray-900 font-bold text-sm leading-relaxed">{profile.address}</p>
-                </div>
+        <div className="space-y-6 mb-12">
+          {/* Data Clusters */}
+          {[
+            { 
+              group: 'Corporate Identity', 
+              items: [
+                { label: 'Master Identity', value: profile.name, icon: FiUser },
+                { label: 'Corporate Entity', value: profile.businessName, icon: FiBriefcase }
+              ] 
+            },
+            { 
+              group: 'Communication Channels', 
+              items: [
+                { label: 'Encryption Link (Mobile)', value: profile.phone, icon: FiPhone },
+                { label: 'Network Access (Email)', value: profile.email, icon: FiMail },
+                { label: 'Geospatial Coordinates', value: profile.address, icon: FiMapPin }
+              ] 
+            }
+          ].map((cluster, cIdx) => (
+            <div key={cIdx} className="bg-white/70 backdrop-blur-md rounded-[36px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60">
+              <h4 className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] mb-6 opacity-60 px-1">{cluster.group}</h4>
+              <div className="space-y-6">
+                {cluster.items.map((item, iIdx) => (
+                  <div key={iIdx} className="flex items-start gap-5 group">
+                    <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center shrink-0 border border-black/[0.02] group-hover:bg-teal-600 group-hover:text-white transition-all duration-500">
+                      <item.icon className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0 pt-1">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 opacity-50">{item.label}</p>
+                      <p className="text-gray-900 font-[1000] text-sm tracking-tight leading-relaxed">{item.value || 'NOT_ASSIGNED'}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          ))}
 
-          {/* Professional Info Group */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4">Professional Profile</h4>
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${themeColors.button}15` }}>
-                <FiBriefcase className="w-5 h-5" style={{ color: themeColors.button }} />
+          {/* Professional Competencies */}
+          <div className="bg-white/70 backdrop-blur-md rounded-[36px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60">
+            <h4 className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] mb-6 opacity-60 px-1">Active Specializations</h4>
+            <div className="flex items-start gap-5">
+              <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center shrink-0 border border-teal-100/50 text-teal-600">
+                <FiBriefcase className="w-5 h-5" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-500 font-medium mb-1.5">Service Categories</p>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="flex-1 min-w-0 pt-1">
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3 opacity-50">Operational Categories</p>
+                <div className="flex flex-wrap gap-2">
                   {profile.serviceCategory && (Array.isArray(profile.serviceCategory) ? profile.serviceCategory : profile.serviceCategory.split(', ')).filter(Boolean).length > 0 ? (
                     (Array.isArray(profile.serviceCategory) ? profile.serviceCategory : profile.serviceCategory.split(', ')).filter(Boolean).map((cat, i) => (
-                      <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 text-xs font-bold border border-teal-100">
+                      <span key={i} className="inline-flex items-center px-4 py-2 rounded-xl bg-teal-600 text-white text-[10px] font-[1000] uppercase tracking-widest shadow-lg shadow-teal-900/10">
                         {cat}
                       </span>
                     ))
                   ) : (
-                    <span className="text-gray-400 text-sm italic">Not set</span>
+                    <span className="text-gray-300 text-[10px] font-black uppercase tracking-widest italic">Provision Pending</span>
                   )}
                 </div>
               </div>

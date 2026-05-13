@@ -104,7 +104,7 @@ const getWallet = async (req, res) => {
 const getTransactions = async (req, res) => {
   try {
     const vendorId = req.user.id;
-    const { page = 1, limit = 20, type, status } = req.query;
+    const { page = 1, limit = 50, type, status } = req.query;
 
     const query = { vendorId };
     if (type) query.type = type;
@@ -812,7 +812,8 @@ const getWithdrawals = async (req, res) => {
  */
 const getEarningsAnalytics = async (req, res) => {
   try {
-    const vendorId = req.user.id;
+    const mongoose = require('mongoose');
+    const vendorId = new mongoose.Types.ObjectId(req.user.id);
     const { period = 'monthly', filter = 'all' } = req.query; // period for chart grouping
 
     // Time ranges

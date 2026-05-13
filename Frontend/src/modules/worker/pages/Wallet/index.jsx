@@ -3,7 +3,6 @@ import { FiDollarSign, FiArrowUp, FiArrowDown, FiClock, FiBell, FiX, FiImage, Fi
 import { AnimatePresence, motion } from 'framer-motion';
 import { workerTheme as themeColors } from '../../../../theme';
 import Header from '../../components/layout/Header';
-import BottomNav from '../../components/layout/BottomNav';
 import workerWalletService from '../../../../services/workerWalletService';
 import { toast } from 'react-hot-toast';
 import LogoLoader from '../../../../components/common/LogoLoader';
@@ -11,11 +10,17 @@ import LogoLoader from '../../../../components/common/LogoLoader';
 const Wallet = () => {
   const [loading, setLoading] = useState(true);
   const [payoutLoading, setPayoutLoading] = useState(false);
-  const [wallet, setWallet] = useState({
-    balance: 0,
-    pendingPayout: 0
+  const [wallet, setWallet] = useState(() => {
+    const cached = localStorage.getItem('workerWalletData');
+    return cached ? JSON.parse(cached) : {
+      balance: 0,
+      pendingPayout: 0
+    };
   });
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState(() => {
+    const cached = localStorage.getItem('workerTransactions');
+    return cached ? JSON.parse(cached) : [];
+  });
   const [filter, setFilter] = useState('all');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [imageModalOpen, setImageModalOpen] = useState(false);
@@ -44,7 +49,7 @@ const Wallet = () => {
 
   const loadWalletData = async () => {
     try {
-      setLoading(true);
+      if (transactions.length === 0) setLoading(true);
       const [walletRes, txnRes] = await Promise.all([
         workerWalletService.getWallet(),
         workerWalletService.getTransactions({ limit: 50 })
@@ -52,10 +57,13 @@ const Wallet = () => {
 
       if (walletRes.success) {
         setWallet(walletRes.data);
+        localStorage.setItem('workerWalletData', JSON.stringify(walletRes.data));
       }
 
       if (txnRes.success) {
-        setTransactions(txnRes.data || []);
+        const txns = txnRes.data || [];
+        setTransactions(txns);
+        localStorage.setItem('workerTransactions', JSON.stringify(txns));
       }
     } catch (error) {
       console.error('Error loading wallet:', error);
@@ -482,8 +490,6 @@ const Wallet = () => {
         )}
       </AnimatePresence>
 
-      {/* Hide BottomNav when modal is open */}
-      {!selectedTransaction && !imageModalOpen && <BottomNav />}
     </div>
   );
 };

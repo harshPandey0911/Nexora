@@ -8,7 +8,7 @@ const { BOOKING_STATUS, PAYMENT_STATUS } = require('../../utils/constants');
 const getAssignedJobs = async (req, res) => {
   try {
     const workerId = req.user.id;
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status, page = 1, limit = 50 } = req.query;
 
     // Build query
     const query = { workerId };

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { FiDollarSign, FiTrendingUp, FiCalendar, FiGift, FiAlertCircle, FiPieChart } from 'react-icons/fi';
 import { FaWallet } from 'react-icons/fa';
 import { vendorTheme as themeColors } from '../../../../theme';
-import BottomNav from '../../components/layout/BottomNav';
 import { getEarningsOverview } from '../../services/earningsService';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -14,11 +13,14 @@ const Earnings = () => {
   const [period, setPeriod] = useState('monthly'); // for chart: daily, weekly, monthly
   const [filter, setFilter] = useState('all'); // for history and breakdown: all, today, week, month
   
-  const [earningsData, setEarningsData] = useState({
-    totals: { total: 0, today: 0, week: 0, month: 0 },
-    breakdown: { totalEarnings: 0, totalDeductions: 0, totalBonuses: 0 },
-    chartData: [],
-    history: []
+  const [earningsData, setEarningsData] = useState(() => {
+    const cached = localStorage.getItem('vendorEarningsData');
+    return cached ? JSON.parse(cached) : {
+      totals: { total: 0, today: 0, week: 0, month: 0 },
+      breakdown: { totalEarnings: 0, totalDeductions: 0, totalBonuses: 0 },
+      chartData: [],
+      history: []
+    };
   });
 
   useLayoutEffect(() => {
@@ -40,11 +42,12 @@ const Earnings = () => {
 
   const fetchEarnings = async () => {
     try {
-      setLoading(true);
+      if (!earningsData.history || earningsData.history.length === 0) setLoading(true);
       setError('');
       const res = await getEarningsOverview({ period, filter });
       if (res.success) {
         setEarningsData(res.data);
+        localStorage.setItem('vendorEarningsData', JSON.stringify(res.data));
       } else {
         setError(res.message || 'Failed to load earnings data');
       }
@@ -83,7 +86,6 @@ const Earnings = () => {
 
   const { totals, breakdown, chartData, history } = earningsData;
 
-  return (
   return (
     <div className="min-h-screen pb-24" style={{ background: '#FFFFFF' }}>
       <header className="px-6 py-5 flex items-center justify-between bg-transparent">
@@ -265,7 +267,7 @@ const Earnings = () => {
                 <p className="text-sm font-bold text-gray-400">No recent activity.</p>
               </div>
             ) : (
-              history.slice(0, 5).map((item) => (
+              history.map((item) => (
                 <div key={item.id} className="bg-white rounded-[24px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.isDeduction ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-black'}`}>
@@ -290,8 +292,6 @@ const Earnings = () => {
         </div>
 
       </main>
-
-      <BottomNav />
     </div>
   );
 };

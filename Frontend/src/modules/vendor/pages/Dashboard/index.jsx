@@ -190,7 +190,7 @@ const Dashboard = memo(() => {
       level: apiStats.level || 3,
       commissionRate: apiStats.commissionRate || 15
     });
-    
+
     // Set online status from API
     if (apiStats.isOnline !== undefined) {
       setIsOnline(apiStats.isOnline);
@@ -240,7 +240,9 @@ const Dashboard = memo(() => {
   }, [processApiResponse]);
 
   useEffect(() => {
-    loadDashboardData();
+    // Only show the big spinner on initial mount or when data is empty
+    const shouldShowSpinner = !stats.activeJobs && recentJobs.length === 0;
+    loadDashboardData(shouldShowSpinner);
   }, [loadDashboardData]);
 
   // Check for redirected state (to open a specific alert modal)
@@ -368,7 +370,7 @@ const Dashboard = memo(() => {
       if (response.success) {
         setIsOnline(newStatus);
         toast.success(`You are now ${newStatus ? 'Online' : 'Offline'}`);
-        
+
         // Update local stats too
         setStats(prev => ({ ...prev, isOnline: newStatus }));
       }
@@ -489,148 +491,138 @@ const Dashboard = memo(() => {
   }
 
   return (
-    <div className="min-h-screen pb-20 relative bg-white">
+    <div className="min-h-screen pb-28 relative" style={{ background: '#FFFFFF' }}>
       {/* Premium Background Pattern */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(at 0% 0%, rgba(var(--brand-teal-rgb), 0.15) 0%, transparent 70%),
-              radial-gradient(at 100% 0%, rgba(var(--brand-yellow-rgb), 0.10) 0%, transparent 70%),
-              radial-gradient(at 100% 100%, rgba(var(--brand-orange-rgb), 0.05) 0%, transparent 75%),
-              radial-gradient(at 0% 100%, rgba(var(--brand-teal-rgb), 0.08) 0%, transparent 70%),
+              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.12) 0%, transparent 70%),
+              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
               #F8FAFC
             `
           }}
         />
-        <div className="absolute inset-0 opacity-[0.03]"
+        <div className="absolute inset-0 opacity-[0.02]"
           style={{
-            backgroundImage: `radial-gradient(var(--brand-teal) 0.8px, transparent 0.8px)`,
+            backgroundImage: `radial-gradient(#0D9488 0.8px, transparent 0.8px)`,
             backgroundSize: '32px 32px'
           }}
         />
       </div>
 
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/60 border-b border-black/[0.03] px-5 py-3.5 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-black/[0.02] flex items-center justify-center">
-            <FiBriefcase className="w-5 h-5 text-gray-900" />
-          </div>
-          <h1 className="text-xl font-[1000] text-gray-900 tracking-tight">
-            Vendor<span className="text-teal-600">Hub</span>
-          </h1>
-        </div>
-        
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-6 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-3">
-          {/* Top Integrated Toggle */}
-          <button
-            onClick={handleToggleOnline}
-            disabled={isToggling}
-            className={`relative w-12 h-6.5 rounded-full transition-all duration-500 flex items-center px-1 shadow-inner ${
-              isOnline ? 'bg-[#0D463C]' : 'bg-gray-200'
+          <div className="w-12 h-12 bg-white rounded-2xl shadow-xl shadow-teal-900/5 flex items-center justify-center border border-black/[0.02]">
+            <div className="text-teal-600 font-[1000] text-xl">⚡</div>
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-[1000] text-gray-900 tracking-tight leading-none">
+              ProHub
+            </h1>
+            <span className="text-[8px] font-black text-teal-600 uppercase tracking-[0.2em] mt-1">Operational Intel</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Minimalist Online Toggle */}
+          <motion.div 
+            whileTap={{ scale: 0.95 }}
+            className={`relative w-14 h-7 rounded-full transition-all duration-700 cursor-pointer shadow-inner ${
+              isOnline ? 'bg-teal-600 shadow-teal-900/20' : 'bg-gray-200'
             }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleOnline();
+            }}
           >
             <motion.div
-              animate={{ x: isOnline ? 22 : 0 }}
+              animate={{ x: isOnline ? 28 : 4 }}
+              className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-lg flex items-center justify-center"
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              className="w-4.5 h-4.5 bg-white rounded-full shadow-md flex items-center justify-center"
             >
-              <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[#0D463C]' : 'bg-gray-300'}`} />
+              <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-teal-600 animate-pulse' : 'bg-gray-300'}`} />
             </motion.div>
-          </button>
+          </motion.div>
 
-          <motion.div 
+          <motion.div
             whileTap={{ scale: 0.9 }}
-            className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center relative border border-black/[0.03]"
+            className="w-12 h-12 rounded-2xl bg-white shadow-xl shadow-black/5 flex items-center justify-center relative border border-black/[0.02] cursor-pointer"
             onClick={() => navigate('/vendor/notifications')}
           >
             <FiBell className="w-5 h-5 text-gray-400" />
             {stats.pendingAlerts > 0 && (
-              <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-red-500 rounded-full border-2 border-white" />
-            )}
-          </motion.div>
-          
-          <motion.div 
-            whileTap={{ scale: 0.9 }}
-            className="w-10 h-10 rounded-xl bg-white shadow-sm overflow-hidden border border-black/[0.03] cursor-pointer"
-            onClick={() => navigate('/vendor/profile')}
-          >
-            {vendorProfile?.photo ? (
-              <img src={vendorProfile.photo} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                <FiUser className="w-5 h-5 text-gray-400" />
-              </div>
+              <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white shadow-sm" />
             )}
           </motion.div>
         </div>
       </header>
 
-      <main className="pt-4">
-
-        {/* Premium Performance Card */}
-        <div className="px-5 pb-8 relative z-10">
-          <div 
-            className="rounded-[32px] p-8 shadow-[0_32px_64px_-16px_rgba(13,148,136,0.2)] relative overflow-hidden"
-            style={{ background: 'linear-gradient(135deg, #0D9488 0%, #064E3B 100%)' }}
+      <main className="pt-8 relative z-10">
+        {/* Premium Performance Dashboard */}
+        <div className="px-5 pb-10">
+          <div
+            className="rounded-[36px] p-6 shadow-[0_30px_60px_-15px_rgba(13,148,136,0.2)] relative overflow-hidden group"
+            style={{ background: 'linear-gradient(135deg, #0D9488 0%, #0F766E 100%)' }}
           >
-            {/* Ambient Background Glows */}
-            <div className="absolute top-0 right-0 w-48 h-48 bg-teal-400/20 rounded-full blur-[80px] -mr-20 -mt-20" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-400/10 rounded-full blur-[60px] -ml-10 -mb-10" />
-            
-            <div className="relative z-10 flex items-center justify-between">
+            {/* Ambient Background Dynamics */}
+            <div className="absolute -top-10 -right-10 w-48 h-48 bg-teal-300/20 rounded-full blur-[80px] group-hover:scale-110 transition-transform duration-1000" />
+            <div className="absolute -bottom-5 -left-5 w-32 h-32 bg-emerald-400/10 rounded-full blur-[60px]" />
+
+            <div className="relative z-10 flex items-center justify-between gap-4">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 rounded-full bg-teal-300 animate-pulse" />
-                  <p className="text-[10px] font-black text-teal-200/60 uppercase tracking-[0.2em]">Live Performance</p>
+                <div className="flex items-center gap-2 mb-2 px-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-teal-300 animate-ping" />
+                  <p className="text-[9px] font-black text-teal-100/60 uppercase tracking-[0.2em]">System Health</p>
                 </div>
-                <h3 className="text-white text-2xl font-[1000] leading-tight mb-4">
-                  Keep up the <br />great work!
+                <h3 className="text-white text-2xl font-[1000] leading-tight mb-5 tracking-tight">
+                  Excellence <br />Achieved.
                 </h3>
-                <motion.button 
+                <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => navigate('/vendor/jobs')}
-                  className="bg-white text-teal-900 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider shadow-xl shadow-teal-900/20 active:scale-95 transition-all"
+                  className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-6 py-3 rounded-2xl text-[9px] font-[1000] uppercase tracking-widest hover:bg-white hover:text-teal-900 transition-all"
                 >
-                  Manage Tasks
+                  View Deployment
                 </motion.button>
               </div>
 
-              {/* Enhanced Circular Progress */}
-              <div className="relative w-28 h-28 flex items-center justify-center">
-                <svg className="w-full h-full -rotate-90 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">
+              {/* Enhanced Performance Analytics */}
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90">
                   <circle
-                    cx="56"
-                    cy="56"
-                    r="46"
-                    stroke="rgba(255,255,255,0.1)"
-                    strokeWidth="10"
+                    cx="48"
+                    cy="48"
+                    r="42"
+                    stroke="rgba(255,255,255,0.08)"
+                    strokeWidth="8"
                     fill="transparent"
                   />
-                  <circle
-                    cx="56"
-                    cy="56"
-                    r="46"
+                  <motion.circle
+                    initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - stats.performanceScore / 100) }}
+                    cx="48"
+                    cy="48"
+                    r="42"
                     stroke="#FFFFFF"
-                    strokeWidth="10"
-                    strokeDasharray={2 * Math.PI * 46}
-                    strokeDashoffset={2 * Math.PI * 46 * (1 - stats.performanceScore / 100)}
+                    strokeWidth="8"
+                    strokeDasharray={2 * Math.PI * 42}
                     strokeLinecap="round"
                     fill="transparent"
-                    className="transition-all duration-1000 ease-out"
+                    transition={{ duration: 1.5, ease: "easeOut" }}
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-white text-2xl font-[1000]">{stats.performanceScore}%</span>
+                  <span className="text-white text-2xl font-[1000] tracking-tighter">{stats.performanceScore}%</span>
+                  <span className="text-[6px] font-black text-teal-100/50 uppercase tracking-[0.2em] mt-0.5">Score</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Content Section */}
-        <div className="px-5 space-y-8 relative z-10">
-          {/* Pending Booking Alerts */}
+        {/* Real-time Content Matrix */}
+        <div className="px-5 space-y-10">
+          {/* Active Job Alert Layer */}
           <PendingBookings
             bookings={pendingBookings}
             maxSearchTimeMins={globalConfig.maxSearchTime}
@@ -640,78 +632,80 @@ const Dashboard = memo(() => {
             }}
           />
 
-          {/* Performance Grid */}
+          {/* Core Analytics Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/60 backdrop-blur-md rounded-[28px] p-5 shadow-sm border border-white/40 flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center mb-3 text-orange-600">
-                <FiCheckCircle className="w-6 h-6" />
+            {[
+              { label: 'Deployed', value: stats.completedJobs, icon: FiCheckCircle, color: 'orange', bg: 'bg-orange-50/50', text: 'text-orange-600' },
+              { label: 'Reputation', value: stats.rating > 0 ? stats.rating.toFixed(1) : 'N/A', icon: FiStar, color: 'blue', bg: 'bg-blue-50/50', text: 'text-blue-600' },
+            ].map((stat, idx) => (
+              <div key={idx} className="bg-white/80 backdrop-blur-md rounded-[32px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 flex flex-col items-center text-center group hover:scale-[1.03] hover:shadow-2xl hover:shadow-teal-900/5 hover:border-teal-100 transition-all duration-300">
+                <div className={`w-12 h-12 rounded-2xl ${stat.bg} flex items-center justify-center mb-3 ${stat.text} group-hover:scale-110 transition-all`}>
+                  <stat.icon className="w-6 h-6" />
+                </div>
+                <p className="text-2xl font-[1000] text-gray-900 tracking-tighter">
+                  {stat.value}
+                </p>
+                <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.15em] mt-1">{stat.label}</p>
               </div>
-              <p className="text-2xl font-[1000] text-gray-900 tracking-tight">
-                {stats.completedJobs}
-              </p>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Completed</p>
-            </div>
-            <div className="bg-white/60 backdrop-blur-md rounded-[28px] p-5 shadow-sm border border-white/40 flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center mb-3 text-blue-600">
-                <FiStar className="w-6 h-6" />
-              </div>
-              <p className="text-2xl font-[1000] text-gray-900 tracking-tight">
-                {stats.rating > 0 ? stats.rating.toFixed(1) : 'N/A'}
-              </p>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Rating</p>
-            </div>
+            ))}
           </div>
 
-          {/* Active Jobs */}
-          <div className="pb-10">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl font-[1000] text-gray-900 tracking-tight">Live Jobs</h2>
+          {/* Operational Stream */}
+          <div className="pb-12">
+            <div className="flex items-center justify-between mb-6 px-1">
+              <div>
+                <h2 className="text-xl font-[1000] text-gray-900 tracking-tight">Active Stream</h2>
+                <p className="text-[9px] font-black text-teal-600 uppercase tracking-widest mt-1">Live Deployment Status</p>
+              </div>
               {recentJobs.length > 0 && (
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => navigate('/vendor/jobs')}
-                  className="text-[11px] font-black text-teal-600 uppercase tracking-widest flex items-center gap-1 bg-teal-50 px-3 py-1.5 rounded-full"
+                  className="text-[10px] font-[1000] text-teal-600 uppercase tracking-widest flex items-center gap-2 bg-white px-5 py-2.5 rounded-full border border-black/[0.03] shadow-sm shadow-black/5"
                 >
-                  All <FiChevronRight />
-                </button>
+                  Manage All <FiArrowRight className="w-3 h-3" />
+                </motion.button>
               )}
             </div>
+
             {recentJobs.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {recentJobs.map((job) => (
                   <motion.div
                     key={job.id}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate(`/vendor/booking/${job.id}`)}
-                    className="bg-white/70 backdrop-blur-md rounded-[32px] p-4 shadow-sm border border-white/60 cursor-pointer hover:shadow-xl hover:shadow-teal-500/5 transition-all duration-300"
+                    className="bg-white/80 backdrop-blur-md rounded-[40px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 cursor-pointer hover:shadow-2xl hover:shadow-teal-500/10 transition-all group"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100/50">
-                        <div className="text-xl">🛠️</div>
+                    <div className="flex items-center gap-5">
+                      <div className="w-16 h-16 rounded-[24px] bg-gray-50 flex items-center justify-center shrink-0 border border-black/[0.02] group-hover:bg-teal-50 transition-colors">
+                        <div className="text-2xl filter drop-shadow-sm group-hover:scale-110 transition-transform">🛠️</div>
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="text-[15px] font-[1000] text-gray-900 truncate">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-[17px] font-[1000] text-gray-900 truncate tracking-tight group-hover:text-teal-700 transition-colors">
                             {job.customerName}
                           </h4>
-                          <span className="text-sm font-black text-teal-600 bg-teal-50 px-2 py-0.5 rounded-lg">
+                          <span className="text-[10px] font-[1000] text-teal-600 bg-teal-50 px-3 py-1 rounded-xl border border-teal-100/50">
                             ₹{job.price}
                           </span>
                         </div>
-                        <p className="text-xs font-bold text-gray-500 mb-3">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 opacity-70">
                           {job.serviceType}
                         </p>
-                        
-                        <div className="flex flex-wrap items-center gap-4">
-                          <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-tight">
-                            <FiMapPin className="w-3.5 h-3.5" />
-                            <span className="truncate max-w-[100px]">{job.location}</span>
+
+                        <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-black/[0.03]">
+                          <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-tight">
+                            <FiMapPin className="w-3.5 h-3.5 text-teal-600" />
+                            <span className="truncate max-w-[120px]">{job.location}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 uppercase tracking-tight">
-                            <FiClock className="w-3.5 h-3.5" />
-                            <span>{job.timeSlot.time}</span>
+                          <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-tight">
+                            <FiClock className="w-3.5 h-3.5 text-teal-600" />
+                            <span>{job?.timeSlot?.time || 'N/A'}</span>
                           </div>
-                          <div className="ml-auto px-2.5 py-1 bg-gray-900 text-white rounded-full text-[8px] font-black uppercase tracking-widest">
+                          <div className={`ml-auto px-4 py-1.5 rounded-full text-[8px] font-[1000] uppercase tracking-widest text-white shadow-lg`}
+                            style={{ backgroundColor: getStatusColor(job.status) }}>
                             {getStatusLabel(job.status)}
                           </div>
                         </div>
@@ -721,12 +715,12 @@ const Dashboard = memo(() => {
                 ))}
               </div>
             ) : (
-              <div className="bg-white/40 backdrop-blur-md rounded-[32px] p-12 shadow-sm border border-white/40 text-center">
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+              <div className="bg-white/40 backdrop-blur-md rounded-[44px] p-16 shadow-inner border border-white/60 text-center">
+                <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-inner grayscale opacity-50">
                   📭
                 </div>
-                <h3 className="text-lg font-black text-gray-900 mb-2">No active jobs</h3>
-                <p className="text-sm text-gray-500 font-medium">New bookings will appear here instantly.</p>
+                <h3 className="text-xl font-[1000] text-gray-900 mb-3 tracking-tight">Operational Calm</h3>
+                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest opacity-60">System is ready for new deployments</p>
               </div>
             )}
           </div>

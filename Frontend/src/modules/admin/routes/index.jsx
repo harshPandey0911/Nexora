@@ -16,6 +16,14 @@ const ScrapItems = lazy(() => import('../pages/Scrap'));
 const Payments = lazy(() => import('../pages/Payments'));
 const Settlements = lazy(() => import('../pages/Settlements'));
 const Reports = lazy(() => import('../pages/Reports'));
+const FooterLinks = lazy(() => import('../pages/FooterLinks'));
+const Reviews = lazy(() => import('../pages/Reviews'));
+const Plans = lazy(() => import('../pages/Plans/Plans'));
+const Commission = lazy(() => import('../pages/Commission'));
+const OfferBanners = lazy(() => import('../pages/OfferBanners'));
+const Support = lazy(() => import('../pages/Support'));
+const TrainingManagement = lazy(() => import('../pages/TrainingManagement'));
+const Settings = lazy(() => import('../pages/Settings'));
 
 // User App Config Pages
 const HomePage = lazy(() => import('../pages/UserCategories/pages/HomePage'));
@@ -42,10 +50,10 @@ const AdminRoutes = () => {
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
         {/* Login route - outside of layout (public) */}
-        <Route path="/login" element={<PublicRoute userType="admin"><Login /></PublicRoute>} />
+        <Route path="login" element={<PublicRoute userType="admin"><Login /></PublicRoute>} />
 
         {/* Protected routes - inside layout */}
-        <Route path="/" element={
+        <Route path="" element={
           <ProtectedRoute userType="admin">
             <AdminLayout />
           </ProtectedRoute>
@@ -70,10 +78,18 @@ const AdminRoutes = () => {
           <Route path="vendors/*" element={<Vendors />} />
           <Route path="workers/*" element={<Workers />} />
           <Route path="bookings/*" element={<Bookings />} />
-          <Route path="scrap-items" element={<ScrapItems />} />
+          <Route path="scrap" element={<ScrapItems />} />
           <Route path="payments/*" element={<Payments />} />
           <Route path="settlements/*" element={<Settlements />} />
           <Route path="reports/*" element={<Reports />} />
+          <Route path="footer-links" element={<FooterLinks />} />
+          <Route path="reviews" element={<Reviews />} />
+          <Route path="plans" element={<Plans />} />
+          <Route path="commission" element={<Commission />} />
+          <Route path="offer-banners" element={<OfferBanners />} />
+          <Route path="support" element={<Support />} />
+          <Route path="training" element={<TrainingManagement />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         {/* 404 Redirect */}

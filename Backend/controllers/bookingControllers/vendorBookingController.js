@@ -12,7 +12,7 @@ const { sendNotificationToUser, sendNotificationToVendor, sendNotificationToWork
 const getVendorBookings = async (req, res) => {
   try {
     const vendorId = req.user.id;
-    const { status, q, page = 1, limit = 20 } = req.query;
+    const { status, q, page = 1, limit = 50 } = req.query;
 
     // ── Get vendor categories from req.user (set in auth middleware) ──
     let vendorCategories = req.user.categories || req.user.service || [];
@@ -28,7 +28,7 @@ const getVendorBookings = async (req, res) => {
     // This Or condition ensures vendors see their own jobs OR relevant unassigned alerts
     const query = {
       $or: [
-        { vendorId: vId, status: { $ne: BOOKING_STATUS.AWAITING_PAYMENT } },
+        { vendorId: vId },
         {
           vendorId: null,
           status: { $in: [BOOKING_STATUS.REQUESTED, BOOKING_STATUS.SEARCHING] },

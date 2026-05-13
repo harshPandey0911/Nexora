@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FiMapPin, FiClock, FiDollarSign, FiUser, FiPhone, FiNavigation, FiArrowRight, FiEdit, FiCheckCircle, FiCreditCard, FiX, FiCheck, FiTool, FiXCircle, FiAward, FiPackage, FiAlertCircle } from 'react-icons/fi';
+import { FiMapPin, FiClock, FiDollarSign, FiUser, FiPhone, FiNavigation, FiArrowRight, FiEdit, FiCheckCircle, FiCreditCard, FiX, FiCheck, FiTool, FiXCircle, FiAward, FiPackage, FiAlertCircle, FiBriefcase, FiUsers, FiActivity } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { vendorTheme as themeColors } from '../../../../theme';
 import Header from '../../components/layout/Header';
@@ -51,7 +51,7 @@ export default function BookingDetails() {
     const html = document.documentElement;
     const body = document.body;
     const root = document.getElementById('root');
-    const bgStyle = themeColors.backgroundGradient;
+    const bgStyle = '#F8FAFC';
 
     if (html) html.style.background = bgStyle;
     if (body) body.style.background = bgStyle;
@@ -624,1058 +624,541 @@ export default function BookingDetails() {
   const hasBill = !!bill;
 
   return (
-    <div className="min-h-screen pb-36" style={{ background: '#FFFFFF' }}>
-      <Header title="Booking Details" />
+    <div className="min-h-screen pb-36 relative" style={{ background: '#FFFFFF' }}>
+      {/* Premium Background Pattern */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0"
+          style={{
+            background: `
+              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.12) 0%, transparent 70%),
+              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
+              #F8FAFC
+            `
+          }}
+        />
+        <div className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `radial-gradient(#0D9488 0.8px, transparent 0.8px)`,
+            backgroundSize: '32px 32px'
+          }}
+        />
+      </div>
 
-      <main className="px-4 py-6">
-        {/* Service Type Card (Black Theme) */}
-        <div className="bg-white rounded-[32px] p-6 mb-4 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1">Service Type</p>
-              <p className="text-2xl font-black text-gray-900">
+      <header className="sticky top-0 z-[60] backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-6 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-4">
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={() => {
+              console.log('Navigating back...');
+              navigate(-1);
+            }}
+            className="w-12 h-12 bg-white rounded-2xl shadow-xl shadow-teal-900/5 border border-black/[0.02] flex items-center justify-center cursor-pointer relative z-50"
+          >
+            <FiX className="w-5 h-5 text-gray-900" />
+          </motion.button>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-[1000] text-gray-900 tracking-tight leading-none">Job Intel</h1>
+            <span className="text-[8px] font-black text-teal-600 uppercase tracking-[0.2em] mt-1">Deployment ID: {id?.slice(-6).toUpperCase()}</span>
+          </div>
+        </div>
+        <div className="w-12 h-12 bg-white rounded-2xl shadow-xl shadow-teal-900/5 border border-black/[0.02] flex items-center justify-center">
+          <FiBriefcase className="w-5 h-5 text-teal-600" />
+        </div>
+      </header>
+
+      <main className="px-5 py-8 relative z-10 max-w-lg mx-auto">
+        {/* Service Archetype Card */}
+        <div className="bg-white/70 backdrop-blur-md rounded-[44px] p-8 mb-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-[1000] uppercase tracking-[0.3em] text-gray-400 mb-3">Service Specialization</p>
+              <h2 className="text-2xl font-[1000] text-gray-900 tracking-tight leading-tight">
                 {booking.serviceType}
-              </p>
+              </h2>
             </div>
-            <div className="flex flex-col items-end gap-2">
-              <div className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-[#0D463C] text-white shadow-lg shadow-[#0D463C]/20">
+            <div className="flex flex-col items-end gap-3 shrink-0">
+              <div className="px-5 py-2.5 rounded-[18px] text-[10px] font-[1000] uppercase tracking-widest bg-teal-600 text-white shadow-2xl shadow-teal-900/20">
                 {booking.status.replace('_', ' ')}
               </div>
               {booking.assignedTo?.name === 'You (Self)' && (
-                <span className="text-[9px] font-black text-[#0D463C] bg-[#0D463C]/5 px-2.5 py-1 rounded-lg border border-[#0D463C]/10 uppercase tracking-widest">
-                  Personal Job
+                <span className="text-[8px] font-black text-teal-700 bg-teal-50 px-3 py-1.5 rounded-xl border border-teal-100/50 uppercase tracking-[0.2em]">
+                  Internal Ops
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* User Info Card (Black Theme) */}
-        <div className="bg-white rounded-[32px] p-6 mb-4 shadow-sm border border-gray-100">
+        {/* Identity Matrix Card */}
+        <div className="bg-white/70 backdrop-blur-md rounded-[44px] p-6 mb-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center border border-gray-100">
-                <FiUser className="w-7 h-7 text-[#0D463C]" />
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 rounded-[28px] bg-gray-50 flex items-center justify-center border border-black/[0.02] shadow-inner">
+                <FiUser className="w-7 h-7 text-gray-900" />
               </div>
               <div>
-                <p className="text-lg font-black text-gray-900">{booking.user?.name || booking.customerName || 'Customer'}</p>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">{booking.user?.phone || booking.customerPhone || 'Phone hidden'}</p>
+                <p className="text-[10px] font-[1000] uppercase tracking-[0.25em] text-gray-400 mb-1.5">Target Client</p>
+                <p className="text-lg font-[1000] text-gray-900 leading-tight tracking-tight">{booking.user?.name || booking.customerName || 'Client'}</p>
+                <p className="text-[11px] font-black text-teal-600/60 uppercase tracking-widest mt-1.5">Verified Network</p>
               </div>
             </div>
-            <button
+            <motion.button
+              whileTap={{ scale: 0.9 }}
               onClick={handleCallUser}
-              className="w-12 h-12 rounded-2xl bg-[#0D463C] flex items-center justify-center shadow-lg shadow-[#0D463C]/20 active:scale-90 transition-all"
+              className="w-14 h-14 rounded-[24px] bg-teal-600 flex items-center justify-center shadow-2xl shadow-teal-900/20 border border-white/20"
             >
-              <FiPhone className="w-5 h-5 text-white" />
-            </button>
+              <FiPhone className="w-6 h-6 text-white" />
+            </motion.button>
           </div>
         </div>
 
-        {/* Address Card with Map (Black Theme) */}
-        <div className="bg-white rounded-[32px] p-6 mb-4 shadow-sm border border-gray-100">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
-              <FiMapPin className="w-5 h-5 text-[#0D463C]" />
+        {/* Geospatial Deployment Base */}
+        <div className="bg-white/70 backdrop-blur-md rounded-[44px] p-6 mb-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
+          <div className="flex items-start gap-5 mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center shrink-0 border border-teal-100/50">
+              <FiMapPin className="w-6 h-6 text-teal-600" />
             </div>
-            <div className="flex-1">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Service Location</p>
-              <p className="text-sm font-black text-gray-900 leading-relaxed">{booking.location.address}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-[10px] font-black text-[#0D463C] bg-[#0D463C]/5 px-2 py-0.5 rounded-md border border-[#0D463C]/10 uppercase tracking-tighter">
-                  {booking.location.distance} away
+            <div className="flex-1 min-w-0 pt-1">
+              <p className="text-[10px] font-[1000] uppercase tracking-[0.25em] text-gray-400 mb-2">Service Base Coordinates</p>
+              <p className="text-[14px] font-[1000] text-gray-900 leading-relaxed tracking-tight">{booking?.location?.address || 'Location not specified'}</p>
+              <div className="flex items-center gap-2 mt-3">
+                <span className="text-[9px] font-[1000] text-teal-700 bg-teal-50 px-3 py-1.5 rounded-xl border border-teal-100/30 uppercase tracking-widest">
+                  {booking?.location?.distance || 'N/A'} Proximal
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Map Embed */}
-          <div className="w-full h-48 rounded-[24px] overflow-hidden mb-5 border border-gray-100 relative group cursor-pointer" onClick={() => navigate(`/vendor/booking/${booking.id}/map`)}>
+          <div className="w-full h-52 rounded-[32px] overflow-hidden mb-6 border border-black/[0.02] relative group cursor-pointer shadow-inner" onClick={() => navigate(`/vendor/booking/${booking.id}/map`)}>
             {(() => {
               const hasCoordinates = booking.location.lat && booking.location.lng && booking.location.lat !== 0 && booking.location.lng !== 0;
-              const mapQuery = hasCoordinates
-                ? `${booking.location.lat},${booking.location.lng}`
-                : encodeURIComponent(booking.location.address);
-
+              const mapQuery = hasCoordinates ? `${booking.location.lat},${booking.location.lng}` : encodeURIComponent(booking.location.address);
               return (
                 <>
                   <iframe
                     width="100%"
                     height="100%"
                     frameBorder="0"
-                    style={{ border: 0, pointerEvents: 'none' }}
+                    style={{ border: 0, pointerEvents: 'none', filter: 'grayscale(0.2) contrast(1.1)' }}
                     src={`https://maps.google.com/maps?q=${mapQuery}&z=15&output=embed`}
                     allowFullScreen
-                    tabIndex="-1"
-                  ></iframe>
-                  {/* Overlay to intercept clicks */}
-                  <div className="absolute inset-0 bg-transparent group-hover:bg-[#0D463C]/5 transition-colors flex items-center justify-center">
-                    <span className="bg-[#0D463C] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                      Open Full Map
-                    </span>
+                  />
+                  <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                    <motion.span 
+                      whileHover={{ scale: 1.05 }}
+                      className="bg-black text-white px-6 py-3 rounded-2xl text-[10px] font-[1000] uppercase tracking-widest shadow-2xl"
+                    >
+                      Maximize Analytics
+                    </motion.span>
                   </div>
                 </>
               );
             })()}
           </div>
 
-          <div className="flex gap-3">
-            <button
+          <div className="flex gap-4">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               onClick={() => navigate(`/vendor/booking/${booking.id || id}/map`)}
-              className="flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-gray-200 flex items-center justify-center gap-2 transition-all active:scale-95 bg-white text-gray-900"
+              className="flex-1 py-5 rounded-[28px] font-[1000] text-[10px] uppercase tracking-widest border border-black/[0.03] flex items-center justify-center gap-3 bg-white text-gray-900 shadow-xl shadow-black/5"
             >
-              <FiMapPin className="w-4 h-4" />
-              View Map
-            </button>
-            <button
+              <FiMapPin className="w-4 h-4 text-teal-600" />
+              Base View
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 const hasCoords = booking.location.lat && booking.location.lng;
-                const dest = hasCoords
-                  ? `${booking.location.lat},${booking.location.lng}`
-                  : encodeURIComponent(booking.location.address);
+                const dest = hasCoords ? `${booking.location.lat},${booking.location.lng}` : encodeURIComponent(booking.location.address);
                 window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
               }}
-              className="flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-[#0D463C]/20 bg-[#0D463C]"
+              className="flex-1 py-5 rounded-[28px] font-[1000] text-[10px] uppercase tracking-widest text-white flex items-center justify-center gap-3 bg-black shadow-2xl shadow-black/20"
             >
-              <FiNavigation className="w-4 h-4" />
+              <FiNavigation className="w-4 h-4 text-teal-400" />
               Navigate
-            </button>
+            </motion.button>
           </div>
         </div>
 
-        {/* Service Description */}
-        {/* Service Description */}
-        {(() => {
-          const genericDesc = 'No description provided';
-          const mainDesc = booking.description === genericDesc ? null : booking.description;
-          const serviceDesc = booking.serviceId?.description;
-          const itemDesc = booking.items?.[0]?.card?.description;
-
-          const displayDesc = mainDesc || serviceDesc || itemDesc;
-
-          if (!displayDesc) return null;
-
-          return (
-            <div
-              className="bg-white rounded-xl p-4 mb-4 shadow-md"
-              style={{
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-              }}
-            >
-              <p className="text-sm text-gray-600 mb-2">Service Description</p>
-              <p className="text-gray-800">{displayDesc}</p>
+        {/* Schedule Intel */}
+        <div className="bg-white/70 backdrop-blur-md rounded-[36px] p-6 mb-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
+          <div className="flex items-center gap-5">
+            <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0 border border-orange-100/50">
+              <FiClock className="w-6 h-6 text-orange-600" />
             </div>
-          );
-        })()}
-
-        {/* Booked Items Details */}
-        {booking.items && booking.items.length > 0 && (
-          <div
-            className="bg-white rounded-xl p-4 mb-4 shadow-md"
-            style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}
-          >
-            <p className="text-sm font-bold text-gray-700 mb-4">Order Summary</p>
-
-            {/* Service Category */}
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
-                style={{ backgroundColor: `${themeColors.button}15`, border: `1px solid ${themeColors.button}25` }}>
-                {booking.categoryIcon ? (
-                  <img src={booking.categoryIcon} alt="" className="w-5 h-5 object-contain" />
-                ) : (
-                  <FiTool className="w-4 h-4" style={{ color: themeColors.button }} />
-                )}
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Service Category</p>
-                <p className="text-sm font-bold text-gray-800">{booking.serviceCategory || booking.serviceType || 'Service'}</p>
-              </div>
-            </div>
-
-            {/* Brand */}
-            {(() => {
-              const brandName = booking.brandName || booking.items?.[0]?.brandName;
-              const brandIcon = booking.brandIcon || booking.items?.[0]?.brandIcon;
-              if (!brandName) return null;
-              return (
-                <div className="flex items-center gap-3 mb-3 pt-3 border-t border-dashed border-gray-100">
-                  <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden">
-                    {brandIcon ? (
-                      <img src={brandIcon} alt={brandName} className="w-6 h-6 object-contain" />
-                    ) : (
-                      <span className="text-base font-black text-slate-400">{brandName.charAt(0)}</span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Brand</p>
-                    <p className="text-sm font-bold text-gray-800">{brandName}</p>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Service Cards */}
-            <div className="pt-3 border-t border-dashed border-gray-100 space-y-2">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Services</p>
-              {booking.items.map((item, index) => (
-                <div key={index} className="flex justify-between items-start bg-gray-50 rounded-xl p-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold px-1.5 py-0.5 rounded border"
-                        style={{ color: themeColors.button, backgroundColor: `${themeColors.button}10`, borderColor: `${themeColors.button}25` }}>
-                        ×{item.quantity}
-                      </span>
-                      <span className="text-sm font-semibold text-gray-900 truncate">{item.card?.title || 'Service Item'}</span>
-                    </div>
-                    {item.card?.subtitle && <p className="text-xs text-gray-400 mt-0.5 ml-8 line-clamp-1">{item.card.subtitle}</p>}
-                    {item.card?.duration && <p className="text-xs text-gray-400 mt-0.5 ml-8">⏱ {item.card.duration}</p>}
-                  </div>
-                  <div className="text-right ml-3 shrink-0">
-                    <p className="text-sm font-bold text-gray-900">₹{((item.card?.price || 0) * (item.quantity || 1)).toLocaleString()}</p>
-                    {item.quantity > 1 && <p className="text-xs text-gray-400">₹{item.card?.price || 0} each</p>}
-                  </div>
-                </div>
-              ))}
-              <div className="flex justify-between items-center pt-2 border-t border-gray-100 mt-1">
-                <p className="text-sm font-semibold text-gray-700">Total Base Price</p>
-                <p className="text-base font-bold" style={{ color: themeColors.button }}>₹{(booking.basePrice || 0).toFixed(2)}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Time Slot */}
-        <div
-          className="bg-white rounded-xl p-4 mb-4 shadow-md"
-          style={{
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <FiClock className="w-5 h-5" style={{ color: themeColors.icon }} />
             <div>
-              <p className="text-sm text-gray-600">Preferred Time</p>
-              <p className="font-semibold text-gray-800">{booking.timeSlot.date}</p>
-              <p className="text-sm text-gray-600">{booking.timeSlot.time}</p>
+              <p className="text-[10px] font-[1000] uppercase tracking-[0.25em] text-gray-400 mb-1.5">Temporal Slot</p>
+              <p className="text-base font-[1000] text-gray-900 tracking-tight">{booking?.timeSlot?.date || 'Date not set'}</p>
+              <p className="text-[11px] font-black text-orange-600/60 uppercase tracking-widest mt-1">{booking?.timeSlot?.time || 'Time not set'}</p>
             </div>
           </div>
         </div>
 
-        {/* Payment Invoice Card - Dark Header Style (Exact Match with Billing) */}
-        <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 mb-6">
-          <div className="bg-gray-900 px-6 py-6 text-white text-center">
-            <p className="text-gray-400 text-xs font-medium uppercase tracking-widest mb-1">TOTAL INVOICE AMOUNT</p>
-            <h2 className="text-4xl font-black">₹{finalTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+        {/* Core Financial Invoice Module */}
+        <div className="bg-white/80 backdrop-blur-xl rounded-[48px] overflow-hidden shadow-[0_40px_80px_-20px_rgba(0,0,0,0.05)] border border-white/60 mb-8">
+          <div className="bg-gray-900 px-8 py-10 text-white text-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-[60px]" />
+            <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.3em] mb-3 opacity-60">Consolidated Gross Value</p>
+            <h2 className="text-5xl font-[1000] tracking-tighter">₹{finalTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
             {isPlanBenefit && (
-              <span className="inline-block mt-2 bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase">
-                Plan Benefit Applied
-              </span>
+              <div className="inline-flex mt-5 bg-teal-500/10 text-teal-400 border border-teal-500/20 px-4 py-1.5 rounded-full text-[9px] font-[1000] uppercase tracking-widest">
+                Internal Membership Applied
+              </div>
             )}
           </div>
-
-          <div className="p-6 space-y-6 text-sm">
-            {/* Services Section */}
+          <div className="p-8 space-y-8">
+            {/* Service Inventory */}
             <div>
-              <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                <span className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><FiTool /></span>
-                Services
+              <h4 className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.25em] flex items-center gap-3 mb-6">
+                <span className="w-8 h-8 rounded-xl bg-gray-50 text-teal-600 flex items-center justify-center border border-black/[0.02] shadow-inner"><FiTool className="w-4 h-4" /></span>
+                Service Provision
               </h4>
-              <div className="space-y-2 pl-2">
-                <div className="flex justify-between text-gray-600">
-                  <span>Original Booking : {booking.serviceType || 'Service'}</span>
+              <div className="space-y-4 pl-1">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="font-[1000] text-gray-900 tracking-tight">{booking.serviceType} (Primary)</span>
                   {isPlanBenefit ? (
-                    <div className="flex items-center gap-2">
-                      <span className="line-through text-gray-400 text-xs">₹{originalBase.toFixed(2)}</span>
-                      <span className="text-emerald-600 font-bold text-[10px] bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">FREE</span>
+                    <div className="flex items-center gap-3">
+                      <span className="line-through text-gray-400 text-xs opacity-50">₹{originalBase.toFixed(2)}</span>
+                      <span className="text-teal-600 font-[1000] text-[9px] bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-100 uppercase tracking-widest">FREE</span>
                     </div>
                   ) : (
-                    <span className="font-medium text-gray-900">₹{originalBase.toFixed(2)}</span>
+                    <span className="font-[1000] text-gray-900">₹{originalBase.toFixed(2)}</span>
                   )}
                 </div>
 
                 {services.map((s, i) => (
-                  <div key={i} className="flex justify-between text-gray-600">
-                    <span>{s.name} x {s.quantity}</span>
-                    <span className="font-mono">₹{((parseFloat(s.price) || 0) * (parseFloat(s.quantity) || 1)).toFixed(2)}</span>
+                  <div key={i} className="flex justify-between items-center text-sm">
+                    <span className="font-black text-gray-500 uppercase tracking-tight text-[11px]">{s.name} × {s.quantity}</span>
+                    <span className="font-[1000] text-gray-900">₹{((parseFloat(s.price) || 0) * (parseFloat(s.quantity) || 1)).toFixed(2)}</span>
                   </div>
                 ))}
 
-                {/* Service GST */}
-                <div className="flex justify-between text-xs text-gray-500 border-t border-dashed border-gray-100 pt-1 mt-1">
-                  <span>Service GST (18%)</span>
-                  <span className="font-mono">₹{(originalGST + extraServiceGST).toFixed(2)}</span>
-                </div>
-
-                {/* Service Subtotal */}
-                <div className="flex justify-between font-bold text-gray-800 pt-1">
-                  <span>Total Service</span>
-                  <span>₹{(originalBase + extraServiceBase + originalGST + extraServiceGST).toFixed(2)}</span>
+                <div className="flex justify-between text-[10px] text-gray-400 font-black uppercase tracking-widest pt-4 border-t border-dashed border-black/[0.05]">
+                  <span>Operational Tax (18%)</span>
+                  <span>₹{(originalGST + extraServiceGST).toFixed(2)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Parts Section */}
+            {/* Asset Logistics */}
             {(parts.length > 0 || customItems.length > 0) && (
-              <div>
-                <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                  <span className="w-6 h-6 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center text-xs"><FiPackage /></span>
-                  Parts & Material
+              <div className="pt-8 border-t border-black/[0.03]">
+                <h4 className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.25em] flex items-center gap-3 mb-6">
+                  <span className="w-8 h-8 rounded-xl bg-gray-50 text-orange-600 flex items-center justify-center border border-black/[0.02] shadow-inner"><FiPackage className="w-4 h-4" /></span>
+                  Component Logistics
                 </h4>
-                <div className="space-y-2 pl-2">
+                <div className="space-y-4 pl-1">
                   {parts.map((p, i) => (
-                    <div key={`p-${i}`} className="flex justify-between text-gray-600">
-                      <span>{p.name} x {p.quantity}</span>
-                      <span className="font-mono">₹{(p.price * p.quantity).toFixed(2)}</span>
+                    <div key={`p-${i}`} className="flex justify-between items-center text-sm">
+                      <span className="font-black text-gray-500 uppercase tracking-tight text-[11px]">{p.name} × {p.quantity}</span>
+                      <span className="font-[1000] text-gray-900">₹{(p.price * p.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                   {customItems.map((c, i) => (
-                    <div key={`c-${i}`} className="flex justify-between text-gray-600">
+                    <div key={`c-${i}`} className="flex justify-between items-center text-sm">
                       <div>
-                        <span>{c.name} x {c.quantity}</span>
-                        {c.hsnCode && <p className="text-[9px] text-gray-400">HSN: {c.hsnCode}</p>}
+                        <span className="font-black text-gray-500 uppercase tracking-tight text-[11px]">{c.name} × {c.quantity}</span>
                       </div>
-                      <span className="font-mono">₹{(c.price * c.quantity).toFixed(2)}</span>
+                      <span className="font-[1000] text-gray-900">₹{(c.price * c.quantity).toFixed(2)}</span>
                     </div>
                   ))}
-
-                  {/* Parts GST */}
-                  <div className="flex justify-between text-xs text-gray-500 border-t border-dashed border-gray-100 pt-1 mt-1">
-                    <span>Parts GST (18%)</span>
-                    <span className="font-mono">₹{partsGST.toFixed(2)}</span>
+                  <div className="flex justify-between text-[10px] text-gray-400 font-black uppercase tracking-widest pt-4 border-t border-dashed border-black/[0.05]">
+                    <span>Asset Tax (18%)</span>
+                    <span>₹{partsGST.toFixed(2)}</span>
                   </div>
-
-                  {/* Parts Subtotal */}
-                  <div className="flex justify-between font-bold text-gray-800 pt-1">
-                    <span>Total Parts</span>
-                    <span>₹{(partsBase + partsGST).toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Visiting Charges */}
-            {(booking.visitingCharges > 0 || bill?.visitingCharges > 0) && (
-              <div>
-                <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
-                  <span className="w-6 h-6 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center text-xs"><FiClock /></span>
-                  Visiting Charges
-                </h4>
-                <div className="flex justify-between pl-2 font-bold text-gray-800">
-                  <span>Visiting Price</span>
-                  <span>₹{(bill?.visitingCharges || booking.visitingCharges || 0).toFixed(2)}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Transport Charges */}
-            {bill?.transportCharges > 0 && (
-              <div className="mt-4">
-                <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
-                  <span className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><FiPackage /></span>
-                  Transport Charges
-                </h4>
-                <div className="flex justify-between pl-2 font-bold text-gray-800">
-                  <span>Transport/Travel</span>
-                  <span>₹{(bill.transportCharges).toFixed(2)}</span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Vendor Earnings Footer - ONLY SHOW WHEN COMPLETED */}
+          {/* Master Net Earnings Analytics */}
           {(booking.status === 'completed' || booking.status === 'work_done' || booking.cashCollected) ? (
-            <div className="bg-emerald-50 px-6 py-4 border-t border-emerald-100">
-              <div className="space-y-2 mb-3 text-sm">
-                <div className="flex justify-between items-center text-emerald-700">
-                  <span>Service Earnings ({bill?.payoutConfig?.serviceSplitPercentage || 70}%)</span>
-                  <span className="font-bold">₹{(bill?.vendorServiceEarning || (booking.vendorEarnings || 0)).toFixed(2)}</span>
+            <div className="bg-teal-600/5 px-8 py-8 border-t border-teal-600/10">
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">Core Provision Split ({bill?.payoutConfig?.serviceSplitPercentage || 70}%)</span>
+                  <span className="font-[1000] text-teal-800 text-sm">₹{(bill?.vendorServiceEarning || (booking.vendorEarnings || 0)).toFixed(2)}</span>
                 </div>
                 {(parts.length > 0 || customItems.length > 0 || bill?.vendorPartsEarning > 0) && (
-                  <div className="flex justify-between items-center text-emerald-700">
-                    <span>Parts Earnings ({bill?.payoutConfig?.partsSplitPercentage || 10}%)</span>
-                    <span className="font-bold">₹{(bill?.vendorPartsEarning || 0).toFixed(2)}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">Asset Logistics Split ({bill?.payoutConfig?.partsSplitPercentage || 10}%)</span>
+                    <span className="font-[1000] text-teal-800 text-sm">₹{(bill?.vendorPartsEarning || 0).toFixed(2)}</span>
                   </div>
                 )}
               </div>
-              <div className="flex justify-between items-center pt-2 border-t border-emerald-200/50">
-                <span className="text-emerald-800 font-bold text-xs uppercase tracking-wider">
-                  {(booking?.paymentStatus === 'SUCCESS' || booking?.paymentStatus === 'paid' || booking?.cashCollected)
-                    ? 'Total Net Earnings'
-                    : 'Estimated Net Earnings'}
-                </span>
-                <span className="text-emerald-700 font-black text-xl">
+              <div className="flex justify-between items-center pt-5 border-t border-teal-600/20">
+                <div className="flex flex-col">
+                  <span className="text-teal-900 font-[1000] text-[10px] uppercase tracking-[0.2em]">
+                    Net Operational Intel
+                  </span>
+                  <span className="text-[8px] font-black text-teal-600 uppercase tracking-widest mt-1">
+                    {(booking?.paymentStatus === 'SUCCESS' || booking?.paymentStatus === 'paid' || booking?.cashCollected) ? 'Settled Value' : 'Projected Value'}
+                  </span>
+                </div>
+                <span className="text-teal-600 font-[1000] text-3xl tracking-tighter">
                   ₹{(bill?.vendorTotalEarning || booking.vendorEarnings || 0).toFixed(2)}
                 </span>
               </div>
-
-              <div className="flex justify-between text-emerald-600/70 text-[10px] mt-2">
-                <span>Platform Commission</span>
-                <span>-₹{(booking.adminCommission || booking.platformCommission || 0).toFixed(2)}</span>
-              </div>
             </div>
           ) : (
-            <div className="bg-gray-50 px-6 py-4 border-t border-gray-100/50 text-center">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center justify-center gap-2">
-                <FiAlertCircle className="w-3 h-3" />
-                Net Earnings will be visible once completed
+            <div className="bg-gray-50 px-8 py-6 border-t border-black/[0.02] text-center">
+              <p className="text-[9px] font-[1000] text-gray-400 uppercase tracking-[0.3em] flex items-center justify-center gap-3">
+                <FiAlertCircle className="w-4 h-4 opacity-50" />
+                Earnings data locked until completion
               </p>
             </div>
           )}
         </div>
 
-        {/* Work Photos (after completion) */}
-        {booking.workPhotos && booking.workPhotos.length > 0 && booking.assignedTo?.name !== 'You (Self)' && (
-          <div className="bg-white rounded-xl p-4 mb-4 shadow-md border-t-4 border-green-500">
-            <p className="text-sm font-semibold text-gray-700 mb-3">Work Evidence (Photos)</p>
-            <div className="grid grid-cols-2 gap-2">
-              {booking.workPhotos.map((photo, index) => (
-                <div key={index} className="aspect-square rounded-lg overflow-hidden bg-gray-100 border relative group">
-                  <img
-                    src={photo.replace('/api/upload', 'http://localhost:5000/upload')}
-                    alt={`Work evidence ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      onClick={() => window.open(photo.replace('/api/upload', 'http://localhost:5000/upload'), '_blank')}
-                      className="bg-white text-gray-900 px-3 py-1 rounded-full text-xs font-bold"
-                    >
-                      View
-                    </button>
+        {/* Deployment Status & Action Hub */}
+        <div className="space-y-6 pb-20">
+          {/* Worker Context Card */}
+          {booking.assignedTo && booking.assignedTo?.name !== 'You (Self)' && (
+            <div className="bg-white/70 backdrop-blur-md rounded-[44px] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
+              <div className="flex justify-between items-center mb-8 pb-6 border-b border-black/[0.03]">
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-[28px] bg-gray-50 flex items-center justify-center border border-black/[0.02] shadow-inner">
+                    <FiUser className="w-7 h-7 text-gray-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-[1000] text-gray-900 text-base tracking-tight">{booking?.assignedTo?.name || 'Assigned Agent'}</h3>
+                    <p className="text-[10px] font-black text-teal-600 uppercase tracking-widest mt-1">Operational Field Agent</p>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Approval/Reject Buttons */}
-            {booking.status === 'work_done' && booking.workerPaymentStatus !== 'PAID' && booking.assignedTo?.name !== 'You (Self)' && (
-              <div className="flex gap-3 mt-4 pt-3 border-t border-gray-100">
-                <button
-                  onClick={() => {
-                    setConfirmDialog({
-                      isOpen: true,
-                      title: 'Reject Work',
-                      message: 'Reject work? This will notify the worker to fix issues.',
-                      type: 'warning',
-                      onConfirm: () => {
-                        toast.error('Work Marked as Rejected');
-                        // Add actual reject logic here if available
-                      }
-                    });
-                  }}
-                  className="flex-1 py-3 bg-white text-red-600 rounded-xl font-bold text-sm active:scale-95 transition-transform border border-red-200 shadow-sm"
-                >
-                  <FiX className="inline w-4 h-4 mr-1" /> Reject Work
-                </button>
-                <button
-                  onClick={handleApproveWork}
-                  className="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold text-sm shadow-md shadow-green-200 active:scale-95 transition-transform"
-                >
-                  <FiCheckCircle className="inline w-4 h-4 mr-1" /> Approve Work
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Worker & Job Status Card (Enhanced) */}
-        {booking.assignedTo && booking.assignedTo?.name !== 'You (Self)' && (
-          <div className="bg-white rounded-2xl p-5 mb-5 shadow-lg border border-gray-100">
-            <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gray-100 overflow-hidden border-2 border-white shadow-sm flex items-center justify-center">
-                  <FiUser className="w-6 h-6 text-gray-400" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-sm">{booking.assignedTo.name}</h3>
-                  <p className="text-xs text-gray-500 font-medium">Service Partner</p>
-                </div>
-              </div>
-
-              {/* Call Button */}
-              {booking.assignedTo?.phone && (
-                <a href={`tel:${booking.assignedTo.phone}`} className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600 hover:bg-green-100 transition-colors">
-                  <FiPhone className="w-5 h-5" />
-                </a>
-              )}
-            </div>
-
-            {/* Status Section - Premium Design */}
-            <div className="rounded-2xl p-6 relative overflow-hidden"
-              style={{
-                background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)',
-                boxShadow: 'inset 0 0 40px rgba(74, 222, 128, 0.05)'
-              }}>
-
-              {/* Decorative background blur */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-
-              <div className="flex justify-between items-center mb-6 relative z-10">
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                  <span className="text-xs font-bold text-green-800 uppercase tracking-widest">Live Status</span>
-                </div>
-                {booking.workerAcceptedAt && (
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/60 border border-green-100/50 backdrop-blur-sm shadow-sm">
-                    <FiClock className="w-3 h-3 text-green-600" />
-                    <span className="text-[10px] text-green-700 font-bold font-mono">
-                      {new Date(booking.workerAcceptedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
+                {booking?.assignedTo?.phone && (
+                  <motion.a 
+                    whileTap={{ scale: 0.9 }}
+                    href={`tel:${booking.assignedTo.phone}`} 
+                    className="w-14 h-14 rounded-[24px] bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/50 shadow-xl shadow-emerald-900/5"
+                  >
+                    <FiPhone className="w-6 h-6" />
+                  </motion.a>
                 )}
               </div>
 
-              {/* Status Display */}
+              {/* Status Visualization */}
               {!booking.workerResponse || booking.workerResponse === 'PENDING' ? (
-                <div className="flex items-center gap-4 text-amber-600 bg-white/80 backdrop-blur-md p-4 rounded-xl border border-amber-100 shadow-sm relative z-10">
-                  <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
-                    <FiClock className="w-5 h-5 animate-pulse" />
+                <div className="flex items-center gap-5 text-amber-600 bg-amber-50/50 backdrop-blur-md p-6 rounded-[32px] border border-amber-100 shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-inner">
+                    <FiClock className="w-7 h-7 animate-pulse" />
                   </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-sm text-gray-900">Awaiting Acceptance</p>
-                    <p className="text-xs text-amber-700/80 font-medium mt-0.5">Worker has not responded yet</p>
+                  <div>
+                    <p className="font-[1000] text-sm text-gray-900 tracking-tight">Signal Pending</p>
+                    <p className="text-[10px] text-amber-700/80 font-black uppercase tracking-widest mt-1">Awaiting Agent Acknowledgement</p>
                   </div>
                 </div>
               ) : booking.workerResponse === 'ACCEPTED' ? (
-                <div className="space-y-6 relative z-10">
-                  {/* Progress Steps Visual - Pro Design */}
+                <div className="space-y-8">
+                  {/* Deployment Pipeline Visual */}
                   <div className="relative px-2">
-                    {/* Track Line */}
-                    <div className="absolute left-6 right-6 top-[15px] h-1.5 bg-gray-100/80 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full transition-all duration-700 ease-out shadow-[0_0_10px_rgba(16,185,129,0.3)]" style={{
-                        width: booking.status === 'completed' || booking.status === 'work_done' ? '100%' :
-                          booking.status === 'in_progress' || booking.status === 'visited' ? '66%' :
-                            booking.status === 'journey_started' ? '33%' : '0%'
-                      }}>
-                        <div className="w-full h-full bg-white/20 animate-[shimmer_2s_infinite]"></div>
-                      </div>
+                    <div className="absolute left-8 right-8 top-[18px] h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ 
+                          width: booking.status === 'completed' || booking.status === 'work_done' ? '100%' :
+                                 booking.status === 'in_progress' || booking.status === 'visited' ? '66%' :
+                                 booking.status === 'journey_started' ? '33%' : '0%' 
+                        }}
+                        className="h-full bg-teal-600 rounded-full shadow-[0_0_20px_rgba(13,148,136,0.3)]"
+                      />
                     </div>
 
-                    <div className="flex justify-between items-start relative">
-                      {/* Accepted Step */}
-                      <div className="flex flex-col items-center gap-2 group cursor-default">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-white shadow-lg shadow-green-200 ring-4 ring-white z-10 transition-transform group-hover:scale-110 duration-300">
-                          <FiCheck className="w-4 h-4 text-white" />
+                    <div className="flex justify-between items-start relative z-10">
+                      {[
+                        { icon: FiCheck, label: 'Accepted', active: true },
+                        { icon: FiNavigation, label: 'Deploy', active: ['journey_started', 'visited', 'in_progress', 'work_done', 'completed'].includes(booking.status) },
+                        { icon: FiTool, label: 'Ops', active: ['visited', 'in_progress', 'work_done', 'completed'].includes(booking.status) },
+                        { icon: FiCheckCircle, label: 'Done', active: ['work_done', 'completed'].includes(booking.status) }
+                      ].map((step, idx) => (
+                        <div key={idx} className="flex flex-col items-center gap-3">
+                          <div className={`w-10 h-10 rounded-[14px] flex items-center justify-center transition-all duration-700 shadow-xl ring-4 ring-white ${step.active ? 'bg-teal-600 text-white' : 'bg-white text-gray-200 border-2 border-dashed border-gray-100'}`}>
+                            <step.icon className="w-5 h-5" />
+                          </div>
+                          <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${step.active ? 'text-teal-900' : 'text-gray-300'}`}>{step.label}</span>
                         </div>
-                        <span className="text-[10px] font-bold text-emerald-800 tracking-wide uppercase bg-white/50 px-2 py-0.5 rounded-full backdrop-blur-sm">Accepted</span>
-                      </div>
-
-                      {/* Started Step */}
-                      <div className="flex flex-col items-center gap-2 group cursor-default">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg ring-4 ring-white z-10 transition-all duration-500 group-hover:scale-110 ${['journey_started', 'visited', 'in_progress', 'work_done', 'completed'].includes(booking.status) ? 'bg-gradient-to-br from-green-400 to-emerald-600 text-white shadow-green-200' : 'bg-white text-gray-300 border-2 border-dashed border-gray-200'}`}>
-                          <FiNavigation className="w-4 h-4" />
-                        </div>
-                        <span className={`text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full backdrop-blur-sm transition-colors ${['journey_started', 'visited', 'in_progress', 'work_done', 'completed'].includes(booking.status) ? 'text-emerald-800 bg-white/50' : 'text-gray-400'}`}>On Way</span>
-                      </div>
-
-                      {/* Working Step */}
-                      <div className="flex flex-col items-center gap-2 group cursor-default">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg ring-4 ring-white z-10 transition-all duration-500 group-hover:scale-110 ${['visited', 'in_progress', 'work_done', 'completed'].includes(booking.status) ? 'bg-gradient-to-br from-green-400 to-emerald-600 text-white shadow-green-200' : 'bg-white text-gray-300 border-2 border-dashed border-gray-200'}`}>
-                          <FiTool className="w-4 h-4" />
-                        </div>
-                        <span className={`text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full backdrop-blur-sm transition-colors ${['visited', 'in_progress', 'work_done', 'completed'].includes(booking.status) ? 'text-emerald-800 bg-white/50' : 'text-gray-400'}`}>Working</span>
-                      </div>
-
-                      {/* Done Step */}
-                      <div className="flex flex-col items-center gap-2 group cursor-default">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg ring-4 ring-white z-10 transition-all duration-500 group-hover:scale-110 ${['work_done', 'completed'].includes(booking.status) ? 'bg-gradient-to-br from-green-400 to-emerald-600 text-white shadow-green-200' : 'bg-white text-gray-300 border-2 border-dashed border-gray-200'}`}>
-                          <FiCheckCircle className="w-4 h-4" />
-                        </div>
-                        <span className={`text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full backdrop-blur-sm transition-colors ${['work_done', 'completed'].includes(booking.status) ? 'text-emerald-800 bg-white/50' : 'text-gray-400'}`}>Done</span>
-                      </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Clear Text Status with Glass Effect */}
-                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/50 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow duration-300">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-inner ${booking.status === 'journey_started' ? 'bg-blue-50 text-blue-600' :
+                  {/* Primary Status Readout */}
+                  <div className="bg-white/60 backdrop-blur-md rounded-[32px] p-6 border border-black/[0.02] flex items-center gap-6 shadow-xl shadow-black/[0.02]">
+                    <div className={`w-16 h-16 rounded-[22px] flex items-center justify-center shadow-inner ${
+                      booking.status === 'journey_started' ? 'bg-blue-50 text-blue-600' :
                       booking.status === 'in_progress' ? 'bg-orange-50 text-orange-600' :
-                        ['work_done', 'completed'].includes(booking.status) ? 'bg-green-50 text-green-600' :
-                          'bg-gray-100 text-gray-500'
-                      }`}>
-                      {booking.status === 'journey_started' ? <FiNavigation className="w-6 h-6 drop-shadow-sm" /> :
-                        booking.status === 'in_progress' ? <FiTool className="w-6 h-6 animate-pulse drop-shadow-sm" /> :
-                          ['work_done', 'completed'].includes(booking.status) ? <FiCheckCircle className="w-6 h-6 drop-shadow-sm" /> :
-                            <FiCheck className="w-6 h-6 text-gray-400" />}
+                      ['work_done', 'completed'].includes(booking.status) ? 'bg-emerald-50 text-emerald-600' :
+                      'bg-gray-100 text-gray-400'
+                    }`}>
+                      <FiActivity className="w-8 h-8 opacity-80" />
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900 text-base tracking-tight mb-0.5">
-                        {booking.status === 'journey_started' ? 'Worker is On the Way' :
-                          booking.status === 'visited' ? 'Worker Reached Location' :
-                            booking.status === 'in_progress' ? 'Work In Progress' :
-                              ['work_done', 'completed'].includes(booking.status) ? 'Work Completed' :
-                                'Worker Accepted Job'}
+                      <p className="font-[1000] text-gray-900 text-lg tracking-tight mb-1">
+                        {booking.status === 'journey_started' ? 'In Transit' :
+                         booking.status === 'visited' ? 'On Site' :
+                         booking.status === 'in_progress' ? 'Ops Active' :
+                         ['work_done', 'completed'].includes(booking.status) ? 'Ops Complete' :
+                         'Agent Ready'}
                       </p>
-                      <p className="text-xs text-gray-500 font-medium">
-                        {booking.status === 'journey_started' ? 'Tracking is active. Monitor live location.' :
-                          booking.status === 'visited' ? 'Waiting for OTP verification to start work.' :
-                            booking.status === 'in_progress' ? 'Service is currently being performed.' :
-                              ['work_done', 'completed'].includes(booking.status) ? 'Service marked as done. Pending final checks.' :
-                                'Worker is preparing to start the journey.'}
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest opacity-70">
+                        {booking.status === 'journey_started' ? 'Live Geospatial Tracking Active' :
+                         booking.status === 'visited' ? 'Awaiting Access Verification' :
+                         booking.status === 'in_progress' ? 'Service Deployment in Progress' :
+                         ['work_done', 'completed'].includes(booking.status) ? 'Awaiting Final Validation' :
+                         'Standing by for Deployment'}
                       </p>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3 text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
-                  <FiXCircle className="w-5 h-5" />
+                <div className="flex items-center gap-5 text-rose-600 bg-rose-50/50 backdrop-blur-md p-6 rounded-[32px] border border-rose-100 shadow-sm">
+                  <FiXCircle className="w-8 h-8 opacity-60" />
                   <div className="flex-1">
-                    <p className="font-bold text-sm">Request Declined</p>
-                    <p className="text-[10px] opacity-80">Worker is unavailable.</p>
+                    <p className="font-[1000] text-sm text-gray-900 tracking-tight">Signal Rejected</p>
+                    <p className="text-[10px] text-rose-700/80 font-black uppercase tracking-widest mt-1">Agent Declined Deployment</p>
                   </div>
-                  <button onClick={handleAssignWorker} className="px-3 py-1 bg-white border border-red-200 rounded shadow-sm text-xs font-bold text-red-600 hover:bg-red-50">
-                    Reassign
-                  </button>
+                  <motion.button 
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleAssignWorker} 
+                    className="px-5 py-2.5 bg-white border border-rose-200 rounded-2xl text-[10px] font-[1000] uppercase tracking-widest text-rose-600 shadow-xl shadow-rose-900/5"
+                  >
+                    Recalibrate
+                  </motion.button>
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* Payment Collection Section */}
-        {canCollectCash(booking) && (
-          <div
-            className="bg-white rounded-2xl mb-4 overflow-hidden shadow-lg border-none relative group"
-            style={{
-              boxShadow: booking.paymentMethod === 'plan_benefit'
-                ? '0 10px 30px -5px rgba(16, 185, 129, 0.2)'
-                : '0 10px 30px -5px rgba(249, 115, 22, 0.2)',
-            }}
-          >
-            {/* Top Accent Gradient */}
-            <div className={`h-2 bg-gradient-to-r ${booking.paymentMethod === 'plan_benefit' ? 'from-emerald-400 to-teal-600' : 'from-orange-400 to-orange-600'}`} />
-
-            <div className="p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${booking.paymentMethod === 'plan_benefit' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-500'}`}>
-                  <FiCreditCard className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 leading-tight">
-                    {booking.paymentMethod === 'plan_benefit' ? 'Prepare Final Bill' : 'Collect Payment'}
-                  </h3>
-                  <p className="text-xs text-gray-500 font-medium tracking-wide uppercase">
-                    {booking.paymentMethod === 'plan_benefit' ? 'Add extra charges if any' : 'Step 1: Finish Settlement'}
-                  </p>
-                </div>
-              </div>
-
-              {booking.paymentMethod === 'plan_benefit' ? (
-                /* Plan Benefit UI */
-                <div className="bg-emerald-50/50 rounded-2xl p-4 mb-6 border border-emerald-100/50">
-                  <div className="flex items-center gap-3 mb-3">
-                    <FiCheckCircle className="w-5 h-5 text-emerald-600" />
-                    <span className="font-bold text-emerald-800">Base Service Covered by Plan</span>
-                  </div>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    The base service fee is covered by customer's membership. You can add extra charges for parts or additional work.
-                  </p>
-                </div>
-              ) : (
-                /* Normal Cash Collection UI */
-                <div className="bg-orange-50/50 rounded-2xl p-4 mb-6 border border-orange-100/50">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Amount to Collect</span>
-                    <span className="text-2xl font-black text-orange-600">
-                      ₹{(booking.finalAmount || parseFloat(booking.price) || 0).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex items-start gap-2 text-[11px] text-orange-700/80 leading-relaxed">
-                    <FiClock className="w-3 h-3 mt-0.5" />
-                    <span>Customer chose {
-                      booking.paymentMethod === 'cash collected' ? 'Cash Collected' : 
-                      booking.paymentMethod === 'Qr online' ? 'QR Online' : 
-                      booking.paymentMethod === 'online' ? 'Online Paid' : 
-                      booking.paymentMethod?.replace('_', ' ') || 'Cash'
-                    } payment. Please verify collection to proceed.</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex flex-col gap-3 w-full">
-                <button
-                  onClick={() => navigate(`/vendor/booking/${booking.id || id}/billing`)}
-                  disabled={loading}
-                  className="w-full py-4 rounded-xl font-bold bg-blue-600 text-white flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"
-                  style={{ background: 'linear-gradient(135deg, #3B82F6, #2563EB)' }}
-                >
-                  <FiDollarSign className="w-5 h-5" />
-                  {booking.paymentMethod === 'plan_benefit' ? 'Prepare/Edit Final Bill' : 'Prepare Bill & Collect Cash'}
-                </button>
-
-                {(booking?.customerConfirmationOTP || booking?.paymentOtp) && (
-                  <button
-                    onClick={() => setIsOtpModalOpen(true)}
-                    disabled={loading}
-                    className="w-full py-4 rounded-xl font-bold bg-green-600 text-white flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"
-                    style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
-                  >
-                    <FiCheckCircle className="w-5 h-5" />
-                    Enter OTP
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Online Payment Done State */}
-        {(booking?.paymentStatus === 'SUCCESS' || booking?.paymentStatus === 'paid') && booking?.status !== 'completed' && (
-          <div className="bg-white rounded-2xl mb-4 overflow-hidden shadow-lg border-none relative group"
-            style={{ boxShadow: '0 10px 30px -5px rgba(16, 185, 129, 0.2)' }}
-          >
-            <div className="h-2 bg-gradient-to-r from-green-400 to-green-600" />
-            <div className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center text-green-500 shadow-inner">
-                  <FiCheckCircle className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 leading-tight">Paid Online</h3>
-                  <p className="text-xs text-green-600 font-bold uppercase tracking-wider">Payment Verified</p>
-                </div>
-              </div>
-              <div className="mt-4 bg-green-50/50 rounded-xl p-3 border border-green-100">
-                <p className="text-xs text-green-800 font-medium">Customer has paid ₹{booking.finalAmount.toLocaleString()} online via Razorpay. No cash collection needed.</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Worker Payment Button */}
-        {canPayWorker(booking) && (
-          <div
-            id="worker-payment-section"
-            className="bg-white rounded-2xl p-5 mb-4 shadow-md border-l-4 border-green-500"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-500">
-                <FiDollarSign className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-gray-800">Worker Payout</h3>
-            </div>
-            <p className="text-sm text-gray-600 mb-4">
-              Service complete. Pay {booking.assignedTo?.name}'s share to close this booking.
-            </p>
-            <button
-              onClick={handlePayWorkerClick}
-              disabled={loading}
-              className="w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md hover:brightness-105"
-              style={{
-                background: 'linear-gradient(135deg, #10B981, #059669)',
-              }}
-            >
-              <FiCheckCircle className="w-5 h-5" />
-              Pay Worker
-            </button>
-          </div>
-        )}
-
-        {/* Final Settlement Button (Improved UI) */}
-        {canDoFinalSettlement(booking) && (
-          <div
-            className="bg-white rounded-2xl mb-4 overflow-hidden shadow-lg border-none relative"
-            style={{
-              boxShadow: '0 10px 30px -5px rgba(139, 92, 246, 0.15)',
-            }}
-          >
-            <div className="h-2 bg-gradient-to-r from-violet-400 to-indigo-600" />
-
-            <div className="p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-500 shadow-inner">
-                  <FiCheckCircle className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Finish Job</h3>
-                  <p className="text-xs text-gray-500 font-medium tracking-wide uppercase">Step 2: Close Booking</p>
-                </div>
-              </div>
-
-              <div className="bg-violet-50/50 rounded-2xl p-4 mb-6 border border-violet-100/50">
-                <div className="flex items-start gap-3">
-                  <div className="mt-1">
-                    <FiCheck className="w-4 h-4 text-violet-600" />
-                  </div>
-                  <div>
-                    <span className="text-sm text-gray-700 font-medium">Payment Verified</span>
-                    <p className="text-xs text-gray-500 mt-0.5">Payment has been successfully recorded. You can now close this booking.</p>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleFinalSettlement}
-                disabled={loading}
-                className="w-full py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 hover:brightness-105"
-                style={{
-                  background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
-                  boxShadow: '0 8px 16px -4px rgba(139, 92, 246, 0.4)',
-                }}
-              >
-                <FiCheckCircle className="w-5 h-5" />
-                Close Booking & Finalize
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons & Assignment Selection */}
-        <div className="mt-8 mb-4">
-          {/* 1. INITIAL SELECTION: When no one is assigned yet */}
-          {(!booking.assignedTo || (booking.workerResponse === 'rejected' && (booking.status === 'confirmed' || booking.status === 'accepted'))) && (
-            <div className="space-y-4">
-              <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-800 mb-2 text-center">How will you handle this job?</h3>
-                <p className="text-sm text-gray-500 text-center mb-6">Choose whether you'll do it yourself or delegate to a worker.</p>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Do it Myself Option */}
-                  <button
-                    onClick={handleAssignToSelf}
-                    className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all active:scale-95 group"
-                    style={{
-                      borderColor: themeColors.button,
-                      backgroundColor: `${themeColors.button}08`,
-                    }}
-                  >
-                    <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center mb-3 shadow-md group-hover:scale-110 transition-transform">
-                      <FiUser className="w-7 h-7" style={{ color: themeColors.button }} />
-                    </div>
-                    <span className="font-bold text-sm" style={{ color: themeColors.button }}>Do it Myself</span>
-                    <span className="text-[10px] text-gray-500 mt-1 text-center">You will perform the service</span>
-                  </button>
-
-                  {/* Assign Worker Option */}
-                  <button
-                    onClick={handleAssignWorker}
-                    className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-gray-200 bg-gray-50 transition-all active:scale-95 group hover:border-blue-400 hover:bg-blue-50"
-                  >
-                    <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center mb-3 shadow-md group-hover:scale-110 transition-transform">
-                      <FiTool className="w-7 h-7 text-blue-500" />
-                    </div>
-                    <span className="font-bold text-sm text-gray-800">Assign Worker</span>
-                    <span className="text-[10px] text-gray-500 mt-1 text-center">Delegate to your team</span>
-                  </button>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* 2. SELF JOB FLOW: Buttons shown ONLY if assigned to self */}
-          {booking.assignedTo?.name === 'You (Self)' && (
-            <div className="space-y-4">
-              <div className="bg-green-50 border border-green-100 rounded-xl p-4 flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                  <FiUser className="w-5 h-5" />
+          {/* Unassigned / Recalibration Hub */}
+          {(!booking.assignedTo || (booking.assignedTo?.name === 'You (Self)' && booking.status === 'assigned')) && (
+            <div className="bg-white/70 backdrop-blur-md rounded-[44px] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-teal-50 rounded-[32px] flex items-center justify-center mx-auto mb-4 border border-teal-100 shadow-inner">
+                  <FiUsers className="w-10 h-10 text-teal-600" />
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-green-800 uppercase tracking-wider">Self Assignment</p>
-                  <p className="text-sm text-green-700">You are handling this job personally.</p>
-                </div>
-                <button 
+                <h3 className="text-xl font-[1000] text-gray-900 tracking-tight">Deployment Required</h3>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Standing by for Resource Allocation</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
                   onClick={handleAssignWorker}
-                  className="ml-auto text-xs font-bold text-green-800 underline"
+                  className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[32px] transition-all group ${
+                    booking.assignedTo?.name === 'You (Self)' 
+                    ? 'bg-white border border-black/[0.05] text-gray-900 shadow-xl shadow-black/[0.02]' 
+                    : 'bg-teal-600 text-white shadow-2xl shadow-teal-900/20'
+                  }`}
                 >
-                  Change
-                </button>
+                  <FiUsers className={`w-6 h-6 group-hover:scale-110 transition-transform ${booking.assignedTo?.name === 'You (Self)' ? 'text-teal-600' : 'text-white'}`} />
+                  <span className="text-[9px] font-black uppercase tracking-widest">Assign Worker</span>
+                </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={booking.assignedTo?.name === 'You (Self)' ? handleStartJourney : handleAssignToSelf}
+                  className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[32px] transition-all group ${
+                    booking.assignedTo?.name === 'You (Self)'
+                    ? 'bg-teal-600 text-white shadow-2xl shadow-teal-900/20'
+                    : 'bg-white border border-black/[0.05] text-gray-900 shadow-xl shadow-black/[0.02]'
+                  }`}
+                >
+                  {booking.assignedTo?.name === 'You (Self)' ? (
+                    <>
+                      <FiNavigation className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                      <span className="text-[9px] font-black uppercase tracking-widest">Begin Deployment</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiUser className="w-6 h-6 text-teal-600 group-hover:scale-110 transition-transform" />
+                      <span className="text-[9px] font-black uppercase tracking-widest">Do It Myself</span>
+                    </>
+                  )}
+                </motion.button>
               </div>
             </div>
           )}
 
-          {/* 1. INITIAL STATE: Assign Worker or Self */}
-          {!booking.assignedTo && booking.status === 'confirmed' && (
-            <div className="space-y-4">
-              <button
-                onClick={handleAssignWorker}
-                className="w-full py-5 rounded-[24px] font-black text-sm uppercase tracking-widest text-white bg-black shadow-xl shadow-gray-200 flex items-center justify-center gap-3 active:scale-95 transition-all"
+          {/* Master Operational Buttons */}
+          <div className="space-y-4 pt-10 px-1">
+            {/* Payment & Settlement Triggers */}
+            {canCollectCash(booking) && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate(`/vendor/booking/${booking.id || id}/billing`)}
+                className="w-full py-6 rounded-[32px] font-[1000] text-[11px] uppercase tracking-[0.25em] text-white bg-teal-600 shadow-2xl shadow-teal-900/30 flex items-center justify-center gap-4 border border-white/20"
               >
-                <FiUser className="w-5 h-5" />
-                Assign Worker
-              </button>
-              <button
-                onClick={handleAssignToSelf}
-                className="w-full py-5 rounded-[24px] font-black text-sm uppercase tracking-widest text-black bg-gray-50 border border-gray-100 flex items-center justify-center gap-3 active:scale-95 transition-all"
+                <FiDollarSign className="w-5 h-5" />
+                {booking.paymentMethod === 'plan_benefit' ? 'Finalize Operational Bill' : 'Initiate Settlement'}
+              </motion.button>
+            )}
+
+            {canDoFinalSettlement(booking) && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleFinalSettlement}
+                className="w-full py-6 rounded-[32px] font-[1000] text-[11px] uppercase tracking-[0.25em] text-white bg-black shadow-2xl shadow-black/20 flex items-center justify-center gap-4"
               >
-                <FiTool className="w-5 h-5" />
-                Do it Myself
-              </button>
-            </div>
-          )}
+                <FiCheckCircle className="w-5 h-5 text-teal-400" />
+                Finalize & Archive Job
+              </motion.button>
+            )}
 
-          {/* 2. SELF JOB FLOW: Active actions when assigned to self */}
-          {booking.assignedTo && booking.assignedTo.name === 'You (Self)' && (
-            <div className="space-y-4">
-              {booking.status === 'assigned' && (
-                <button
-                  onClick={handleStartJourney}
-                  className="w-full py-5 rounded-[24px] font-black text-sm uppercase tracking-widest text-white bg-black shadow-xl shadow-gray-200 flex items-center justify-center gap-3 active:scale-95 transition-all"
-                >
-                  <FiNavigation className="w-5 h-5" />
-                  Start Journey
-                </button>
-              )}
 
-              {booking.status === 'journey_started' && (
-                <button
-                  onClick={async () => {
-                    try {
-                      setIsVisitModalOpen(true);
-                      await vendorReached(id);
-                    } catch (err) {
-                      console.error('Failed to notify reached:', err);
-                    }
-                  }}
-                  className="w-full py-5 rounded-[24px] font-black text-sm uppercase tracking-widest text-white bg-black shadow-xl shadow-gray-200 flex items-center justify-center gap-3 active:scale-95 transition-all"
-                >
-                  <FiMapPin className="w-5 h-5" />
-                  I have Arrived
-                </button>
-              )}
 
-              {(booking.status === 'visited' || booking.status === 'in_progress') && (
-                <button
-                  onClick={() => setIsWorkDoneModalOpen(true)}
-                  className="w-full py-5 rounded-[24px] font-black text-sm uppercase tracking-widest text-white bg-black shadow-xl shadow-gray-200 flex items-center justify-center gap-3 active:scale-95 transition-all"
-                >
-                  <FiCheckCircle className="w-5 h-5" />
-                  Complete Work
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* 3. WORKER JOB FLOW: Status indicator when assigned to worker */}
-          {booking.assignedTo && booking.assignedTo.name !== 'You (Self)' && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 border border-gray-100 rounded-[32px] p-6 shadow-sm">
-                <div className="flex items-center gap-4 mb-5">
-                  <div className="w-14 h-14 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-black shadow-sm">
-                    <FiTool className="w-7 h-7" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Assigned Worker</p>
-                    <h4 className="text-lg font-black text-gray-900">{booking.assignedTo.name}</h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className={`w-2 h-2 rounded-full animate-pulse ${booking.status === 'completed' ? 'bg-black' : 'bg-gray-400'}`} />
-                      <span className="text-[10px] font-black text-black uppercase tracking-widest">{booking.status.replace('_', ' ')}</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={handleAssignWorker}
-                    className="w-10 h-10 rounded-xl bg-white border border-gray-100 text-black flex items-center justify-center shadow-sm active:scale-90 transition-all"
-                  >
-                    <FiEdit className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {booking.status === 'work_done' && (
-                  <button
-                    onClick={handleApproveWork}
-                    className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white bg-black shadow-lg shadow-gray-200 flex items-center justify-center gap-2 active:scale-95 transition-all"
-                  >
-                    <FiCheckCircle className="w-5 h-5" />
-                    Approve Work
-                  </button>
-                )}
-
-                {booking.status === 'completed' && canPayWorker(booking) && (
-                  <button
-                    onClick={handlePayWorkerClick}
-                    className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white bg-black shadow-lg shadow-gray-200 flex items-center justify-center gap-2 active:scale-95 transition-all"
-                  >
-                    <FiDollarSign className="w-5 h-5" />
-                    Release Payment
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Common Timeline Button */}
-          <button
-            onClick={handleViewTimeline}
-            className="w-full py-4 mt-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-gray-400 bg-white border border-gray-100 flex items-center justify-center gap-2 transition-all active:scale-95"
-          >
-            <FiClock className="w-4 h-4" />
-            View Full Timeline
-          </button>
+            {/* Evidence Submission */}
+            {booking.assignedTo?.name === 'You (Self)' && (booking.status === 'visited' || booking.status === 'in_progress') && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsWorkDoneModalOpen(true)}
+                className="w-full py-6 rounded-[32px] font-[1000] text-[11px] uppercase tracking-[0.25em] text-white bg-black shadow-2xl shadow-black/20 flex items-center justify-center gap-4"
+              >
+                <FiCheckCircle className="w-5 h-5 text-teal-400" />
+                Submit Evidence & Close
+              </motion.button>
+            )}
+          </div>
         </div>
       </main>
 
+      {/* Persistence Layers (Modals) */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        type={confirmDialog.type}
+      />
 
-      {/* Cash Collection / OTP Modal */}
-      <CashCollectionModal
-        isOpen={isCashModalOpen}
-        onClose={() => setIsCashModalOpen(false)}
+      <WorkerPaymentModal
+        isOpen={isPayWorkerModalOpen}
+        onClose={() => setIsPayWorkerModalOpen(false)}
+        onSubmit={handlePayWorkerSubmit}
         booking={booking}
-        onConfirm={handleCashCollectionConfirm}
-        onInitiateOTP={async (amt, items) => {
-          return await vendorWalletService.initiateCashCollection(id, amt, items);
-        }}
-        loading={loading}
+        loading={paySubmitting}
+      />
+
+      <VisitVerificationModal
+        isOpen={isVisitModalOpen}
+        onClose={() => setIsVisitModalOpen(false)}
+        onVerify={handleVerifyVisit}
+        loading={actionLoading}
+        bookingId={id}
+      />
+
+      <WorkCompletionModal
+        isOpen={isWorkDoneModalOpen}
+        onClose={() => setIsWorkDoneModalOpen(false)}
+        onComplete={handleCompleteWork}
+        job={booking}
+        loading={actionLoading}
       />
 
       <OtpVerificationModal
         isOpen={isOtpModalOpen}
         onClose={() => setIsOtpModalOpen(false)}
-        onVerify={(otp) => {
-          const amount = booking.finalAmount || 0;
-          const extras = booking.workDoneDetails?.items || [];
-          handleCashCollectionConfirm(amount, extras, otp);
-        }}
-        loading={loading}
+        onVerify={handleCashCollectionConfirm}
+        booking={booking}
       />
-
-      {/* Pay Worker Modal */}
-      <WorkerPaymentModal
-        isOpen={isPayWorkerModalOpen}
-        onClose={() => setIsPayWorkerModalOpen(false)}
-        workerName={booking.assignedTo?.name}
-        amountDue={booking.vendorEarnings * 0.9} // Estimation or based on your rule (90% to worker)
-        onConfirm={handlePayWorkerSubmit}
-        loading={paySubmitting}
-      />
-
-      {/* Visit OTP Modal */}
-      <VisitVerificationModal
-        isOpen={isVisitModalOpen}
-        onClose={() => setIsVisitModalOpen(false)}
-        bookingId={id}
-        onSuccess={() => window.location.reload()}
-      />
-
-      {/* Unified Worker Completion Modal - REUSABLE COMPONENT */}
-      <WorkCompletionModal
-        isOpen={isWorkDoneModalOpen}
-        onClose={() => setIsWorkDoneModalOpen(false)}
-        job={booking}
-        onComplete={async (photos) => {
-          try {
-            setActionLoading(true);
-            // Use vendor-specific service call (completeSelfJob)
-            await completeSelfJob(id, { workPhotos: photos });
-            toast.success('Work marked done');
-            setIsWorkDoneModalOpen(false);
-            window.location.reload();
-          } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to complete job');
-          } finally {
-            setActionLoading(false);
-          }
-        }}
-        loading={actionLoading}
-      />
-
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog(prev => { return { ...prev, isOpen: false }; })}
-        onConfirm={confirmDialog.onConfirm}
-        title={confirmDialog.title}
-        message={confirmDialog.message}
-        type={confirmDialog.type}
-      />
-
-
 
       <BottomNav />
     </div>

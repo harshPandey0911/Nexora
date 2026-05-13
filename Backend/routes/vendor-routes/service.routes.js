@@ -10,7 +10,6 @@ const {
     setServicePricing,
     addVendorCategory,
     addVendorService,
-    getMyCustomContent,
     removeVendorService
 } = require('../../controllers/vendorControllers/vendorServiceController');
 
@@ -34,7 +33,6 @@ router.delete('/services/:categoryId', authenticate, isVendor, removeVendorServi
 // Custom Vendor Content
 router.post('/add-category', authenticate, isVendor, addVendorCategory);
 router.post('/add-service', authenticate, isVendor, addVendorService);
-router.get('/my-custom-content', authenticate, isVendor, getMyCustomContent);
 
 module.exports = router;
 
