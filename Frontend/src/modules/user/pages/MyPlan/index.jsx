@@ -98,10 +98,10 @@ const MyPlan = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
+    <div className="min-h-screen bg-transparent pb-12">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-30">
-        <div className="px-4 py-4 flex items-center gap-3 max-w-7xl mx-auto">
+      <header className="bg-transparent shadow-sm sticky top-0 z-30">
+        <div className="px-4 py-4 flex items-center gap-3 max-w-[1400px] mx-auto">
           <button
             onClick={() => navigate(-1)}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -112,7 +112,7 @@ const MyPlan = () => {
         </div>
       </header>
 
-      <main className="px-4 py-12 max-w-7xl mx-auto">
+      <main className="px-4 py-12 max-w-[1400px] mx-auto">
         <div className="mb-12 bg-white/40 backdrop-blur-sm p-8 rounded-[2.5rem] border border-white shadow-sm">
           <h2 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">Pick Your Membership</h2>
           <p className="text-slate-500 font-bold text-lg max-w-2xl leading-relaxed">

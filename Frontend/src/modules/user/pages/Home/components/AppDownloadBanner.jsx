@@ -11,8 +11,8 @@ const AppDownloadBanner = ({ appData }) => {
   const imageUrl = appData?.imageUrl || '/app-preview.png';
 
   return (
-    <div className="px-5 max-w-screen-xl mx-auto w-full mt-16 mb-24">
-      <div className="bg-gray-50 rounded-[40px] p-8 lg:p-16 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12 border border-gray-100">
+    <div className="px-5 max-w-[1400px] mx-auto w-full mt-16 mb-24">
+      <div className="bg-white rounded-[40px] p-8 lg:p-16 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12 border border-black/[0.03] shadow-[0_32px_80px_-20px_rgba(0,0,0,0.08)]">
         
         {/* Content */}
         <div className="relative z-10 flex-1 max-w-xl">
@@ -68,8 +68,6 @@ const AppDownloadBanner = ({ appData }) => {
           </div>
         </div>
 
-        {/* Decorative element */}
-        <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-blue-100/30 rounded-full blur-3xl -z-0" />
       </div>
     </div>
   );

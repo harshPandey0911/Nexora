@@ -38,56 +38,51 @@ const ServiceQuickLinks = ({ categories = [], onCategoryClick }) => {
   if (!categories || categories.length === 0) return null;
 
   return (
-    <section className="w-full px-5 relative z-20 mt-8 mb-8">
-      <div className="flex items-center justify-between mb-6 px-1">
-        <h2 className="text-[20px] font-black text-gray-900 tracking-tight">
+    <section className="max-w-[1400px] mx-auto px-5 relative z-20 mt-12 mb-16">
+      <div className="flex items-center justify-between mb-8 px-1">
+        <h2 className="text-2xl font-[1000] text-[#0F1B73] tracking-tight">
           Our Services
         </h2>
-        {categories.length > 8 && (
-          <button
-            onClick={() => onCategoryClick?.(categories[0])}
-            className="text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors uppercase tracking-widest"
-          >
-            More
-          </button>
-        )}
+        <button
+          onClick={() => onCategoryClick?.(categories[0])}
+          className="text-sm font-black text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1 group"
+        >
+          See All <HiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </button>
       </div>
 
-      <div className="overflow-x-auto pb-4 scrollbar-hide -mx-5 px-5">
-        <div className="flex items-stretch gap-4 min-w-max">
-          {(categories || []).map((category, index) => {
-            return (
-              <motion.div
-                key={category.id || index}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => onCategoryClick?.(category)}
-                className="flex flex-col items-center bg-white rounded-[20px] sm:rounded-[24px] p-3 sm:p-5 w-[100px] sm:w-[140px] shadow-[0_10px_30px_rgba(0,0,0,0.04)] border border-gray-50 cursor-pointer hover:shadow-[0_15px_35px_rgba(37,99,235,0.08)] transition-all duration-300"
-              >
-                <div className="w-12 h-12 sm:w-16 sm:h-16 mb-2 sm:mb-4 flex items-center justify-center bg-gray-50 rounded-xl sm:rounded-2xl p-2 sm:p-3">
-                  {category.icon ? (
-                    <img 
-                      src={category.icon} 
-                      alt={category.title} 
-                      className="w-full h-full object-contain"
-                    />
-                  ) : (
-                    <div className="text-2xl sm:text-3xl text-blue-600">
-                      {getCategoryIcon(category)}
-                    </div>
-                  )}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 sm:gap-8">
+        {(categories || []).slice(0, 12).map((category, index) => (
+          <motion.div
+            key={category.id || index}
+            whileHover={{ y: -10, shadow: '0 25px 50px rgba(0,0,0,0.1)' }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onCategoryClick?.(category)}
+            className="flex flex-col items-center bg-white rounded-[32px] p-6 sm:p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-gray-100 cursor-pointer transition-all duration-500 hover:border-blue-200 group"
+          >
+            <div className="w-20 h-20 sm:w-24 sm:h-24 mb-6 sm:mb-8 flex items-center justify-center bg-gray-50/50 rounded-[28px] p-5 group-hover:bg-gray-100/50 transition-colors duration-500">
+              {category.icon ? (
+                <img 
+                  src={category.icon} 
+                  alt={category.title} 
+                  className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-500"
+                />
+              ) : (
+                <div className="text-4xl sm:text-5xl text-blue-600 transform group-hover:scale-110 transition-transform duration-500">
+                  {getCategoryIcon(category)}
                 </div>
-                <div className="flex flex-col items-center text-center gap-0.5 sm:gap-1">
-                  <span className="text-[11px] sm:text-[13px] font-[1000] text-gray-900 leading-tight truncate w-full px-1">
-                    {category.title}
-                  </span>
-                  <span className="hidden sm:block text-[10px] font-medium text-gray-400 leading-tight line-clamp-2">
-                    {category.description || 'Service at your doorstep'}
-                  </span>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+              )}
+            </div>
+            <div className="flex flex-col items-center text-center gap-2 w-full">
+              <span className="text-[15px] sm:text-[17px] font-[1000] text-gray-900 leading-tight">
+                {category.title}
+              </span>
+              <span className="text-[11px] sm:text-[12px] font-bold text-gray-400 leading-tight opacity-80">
+                {category.description || 'Service at your doorstep'}
+              </span>
+            </div>
+          </motion.div>
+        ))}
       </div>
     </section>
   );

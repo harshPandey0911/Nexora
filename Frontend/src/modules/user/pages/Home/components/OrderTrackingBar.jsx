@@ -4,7 +4,7 @@ import { FiPackage, FiSearch, FiMapPin } from 'react-icons/fi';
 
 const OrderTrackingBar = () => {
   return (
-    <div className="relative z-30 -mt-10 px-5 max-w-screen-xl mx-auto w-full">
+    <div className="relative z-30 -mt-10 px-5 max-w-[1400px] mx-auto w-full">
       <div className="bg-white rounded-[32px] p-4 lg:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.06)] border border-gray-100 flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-8">
         
         {/* Track Your Order */}

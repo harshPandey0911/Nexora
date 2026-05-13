@@ -17,12 +17,12 @@ const HeroBanner = ({ banners = [], onSearchClick, heroData }) => {
   const heroImage = heroData?.imageUrl || '/hero-illustration.png';
 
   return (
-    <div className="relative w-full overflow-hidden bg-[#F0F9FF]">
-      {/* Decorative Circles */}
-      <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-3xl -z-0" />
-      <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] bg-teal-50/50 rounded-full blur-3xl -z-0" />
+    <div className="relative w-full overflow-hidden bg-transparent">
+      {/* Decorative Elements - Subtle */}
+      <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-gray-50/50 rounded-full blur-3xl -z-0" />
+      <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] bg-gray-50/50 rounded-full blur-3xl -z-0" />
 
-      <div className="relative z-10 max-w-screen-xl mx-auto px-6 lg:px-12 pt-10 pb-4 lg:pt-16 lg:pb-12">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-12 pt-10 pb-4 lg:pt-16 lg:pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-center">
           
           {/* Left Content */}
@@ -35,8 +35,9 @@ const HeroBanner = ({ banners = [], onSearchClick, heroData }) => {
             <div className="space-y-1 lg:space-y-4">
               <h1 
                 className="text-2xl lg:text-7xl font-[1000] text-gray-900 leading-[1.1] tracking-tight" 
-                dangerouslySetInnerHTML={{ __html: title }}
-              />
+              >
+                Everything You Need, <span className="text-[#0F1B73]">Delivered to You.</span>
+              </h1>
               <p className="text-[11px] lg:text-lg text-gray-500 font-medium max-w-md mx-auto lg:mx-0 leading-relaxed">
                 {subtitle}
               </p>
@@ -47,7 +48,8 @@ const HeroBanner = ({ banners = [], onSearchClick, heroData }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onSearchClick}
-                className="w-full sm:w-auto px-10 py-3 lg:py-4 bg-white text-gray-900 border border-gray-100 rounded-[22px] font-black shadow-xl shadow-blue-500/5 flex items-center justify-center gap-2"
+                className="w-fit sm:w-auto px-8 py-2.5 lg:px-10 lg:py-4 text-white border-none rounded-[22px] font-black shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 text-sm lg:text-base"
+                style={{ background: 'linear-gradient(90deg,rgba(15, 27, 115, 1) 0%, rgba(97, 91, 212, 1) 90%)' }}
               >
                 {secondaryBtnText}
               </motion.button>

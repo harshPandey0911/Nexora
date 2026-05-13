@@ -491,17 +491,17 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen pb-20 relative bg-white">
+    <div className="min-h-screen pb-20 relative bg-transparent">
       {/* Refined Brand Mesh Gradient Background */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(at 0% 0%, ${getColorWithOpacity('teal', 0.15)} 0%, transparent 70%),
-              radial-gradient(at 100% 0%, ${getColorWithOpacity('teal', 0.10)} 0%, transparent 70%),
-              radial-gradient(at 100% 100%, ${getColorWithOpacity('teal', 0.05)} 0%, transparent 75%),
-              radial-gradient(at 0% 100%, ${getColorWithOpacity('teal', 0.08)} 0%, transparent 70%),
-              #F0F9FF
+              radial-gradient(at 0% 0%, ${getColorWithOpacity('teal', 0.08)} 0%, transparent 70%),
+              radial-gradient(at 100% 0%, ${getColorWithOpacity('teal', 0.05)} 0%, transparent 70%),
+              radial-gradient(at 100% 100%, ${getColorWithOpacity('teal', 0.03)} 0%, transparent 75%),
+              radial-gradient(at 0% 100%, ${getColorWithOpacity('teal', 0.04)} 0%, transparent 70%),
+              #FFFFFF
             `
           }}
         />
@@ -598,7 +598,7 @@ const Home = () => {
           </motion.section>
         )}
 
-        <main className="pt-6 space-y-8 pb-24 max-w-screen-xl mx-auto w-full">
+        <main className="pt-6 space-y-8 pb-24 max-w-[1400px] mx-auto w-full">
               {/* All Categories Section (Optional/Secondary) */}
               {/* Categories Section removed as redundant with QuickLinks */}
 

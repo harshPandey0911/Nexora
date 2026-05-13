@@ -7,8 +7,8 @@ const ContactUs = ({ data }) => {
   const { title, subtitle, email, phone, address, workingHours } = data;
 
   return (
-    <section id="contact-us" className="py-16 px-6 bg-white">
-      <div className="max-w-7xl mx-auto">
+    <section id="contact-us" className="py-16 px-6 bg-transparent">
+      <div className="max-w-[1400px] mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
             <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">{title || 'Contact Us'}</h2>

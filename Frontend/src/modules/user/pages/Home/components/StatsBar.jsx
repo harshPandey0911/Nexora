@@ -24,7 +24,7 @@ const StatsBar = ({ statsData }) => {
     : defaultStats;
 
   return (
-    <div className="px-5 max-w-screen-xl mx-auto w-full mt-12 mb-12">
+    <div className="px-5 max-w-[1400px] mx-auto w-full mt-12 mb-12">
       <div className="bg-blue-600 rounded-[32px] p-8 lg:p-12 shadow-2xl shadow-blue-200 flex flex-wrap lg:flex-nowrap justify-between gap-8">
         {stats.map((stat, index) => (
           <div key={index} className="flex flex-col items-center lg:items-start text-center lg:text-left gap-4 flex-1">

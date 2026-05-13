@@ -6,8 +6,8 @@ const AboutUs = ({ data }) => {
   const { title, content, imageUrl, features } = data;
 
   return (
-    <section id="about-us" className="py-16 px-6 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+    <section id="about-us" className="py-16 px-6 bg-transparent overflow-hidden">
+      <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           whileInView={{ opacity: 1, x: 0 }}
