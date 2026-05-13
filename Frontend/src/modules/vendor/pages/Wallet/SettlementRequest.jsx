@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { FiArrowLeft, FiSend, FiUpload, FiCheck, FiCreditCard, FiSmartphone, FiDollarSign, FiX } from 'react-icons/fi';
 import { vendorTheme as themeColors } from '../../../../theme';
 import Header from '../../components/layout/Header';
@@ -242,129 +243,186 @@ const SettlementRequest = () => {
   }
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: themeColors.backgroundGradient }}>
-      <Header
-        title="Pay to Admin"
-        showBack={true}
-        onBack={() => navigate('/vendor/wallet')}
-      />
-
-      <main className="px-4 py-6">
-        {/* Amount Due Banner */}
-        <div
-          className="rounded-2xl p-5 mb-6"
+    <div className="min-h-screen pb-28 relative" style={{ background: '#FFFFFF' }}>
+      {/* Premium Background Pattern */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0"
           style={{
-            background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
-            boxShadow: '0 8px 24px rgba(220, 38, 38, 0.3)'
+            background: `
+              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.1) 0%, transparent 70%),
+              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
+              #F8FAFC
+            `
+          }}
+        />
+      </div>
+
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-5 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-4">
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-xl bg-white shadow-sm border border-black/[0.02] flex items-center justify-center"
+          >
+            <FiArrowLeft className="w-5 h-5 text-gray-900" />
+          </motion.button>
+          <h1 className="text-xl font-[1000] text-gray-900 tracking-tight">Admin Settlement</h1>
+        </div>
+        <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-black/[0.02] flex items-center justify-center">
+          <FiSend className="w-5 h-5 text-teal-600" />
+        </div>
+      </header>
+
+      <main className="px-5 pt-8 relative z-10 max-w-lg mx-auto">
+        {/* Amount Due Banner (High Impact) */}
+        <div
+          className="rounded-[40px] p-8 mb-8 relative overflow-hidden group shadow-[0_20px_50px_rgba(220,38,38,0.15)]"
+          style={{
+            background: 'linear-gradient(135deg, #E11D48 0%, #BE123C 100%)',
           }}
         >
-          <p className="text-white/80 text-sm mb-1">Total Amount Due</p>
-          <p className="text-3xl font-bold text-white">₹{wallet.amountDue?.toLocaleString() || 0}</p>
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000" />
+          
+          <div className="relative z-10 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-[1000] text-rose-100/60 uppercase tracking-[0.2em] mb-1">Outstanding Liability</p>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl font-[1000] text-rose-200">₹</span>
+                <p className="text-4xl font-[1000] text-white tracking-tighter leading-none">
+                  {wallet.amountDue?.toLocaleString() || 0}
+                </p>
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/50">
+              <FiDollarSign className="w-7 h-7" />
+            </div>
+          </div>
+          
+          <div className="relative z-10 mt-6 pt-5 border-t border-white/5 flex items-center gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-rose-300 animate-pulse" />
+            <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Action Required for Account Health</p>
+          </div>
         </div>
 
-        {/* Settlement Form */}
-        <div className="bg-white rounded-2xl p-5 shadow-lg space-y-5">
+        {/* Settlement Form (Premium Theme) */}
+        <div className="bg-white/70 backdrop-blur-md rounded-[36px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 space-y-8">
           {/* Amount */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Settlement Amount *
+          <div className="space-y-3">
+            <label className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] ml-1">
+              Payment Amount
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₹</span>
+              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-[1000] text-lg">₹</span>
               <input
                 type="number"
                 value={formData.amount}
                 onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:border-blue-400 focus:outline-none"
-                placeholder="Enter amount"
+                className="w-full pl-10 pr-6 py-4.5 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-lg font-[1000] text-gray-900 transition-all placeholder:text-gray-200"
+                placeholder="0.00"
                 max={wallet.amountDue}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">Max: ₹{wallet.amountDue?.toLocaleString()}</p>
+            <div className="flex justify-between items-center px-1">
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Max Payable: ₹{wallet.amountDue?.toLocaleString()}</p>
+              <motion.button 
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setFormData(prev => ({ ...prev, amount: wallet.amountDue.toString() }))}
+                className="text-[9px] font-[1000] text-teal-600 uppercase tracking-widest"
+              >
+                Clear All
+              </motion.button>
+            </div>
           </div>
 
           {/* Payment Method */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Payment Method *
+          <div className="space-y-4">
+            <label className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] ml-1">
+              Transfer Mode
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               {[
-                { id: 'upi', label: 'UPI', icon: FiSmartphone },
-                { id: 'bank_transfer', label: 'Bank Transfer', icon: FiCreditCard },
+                { id: 'upi', label: 'UPI / GPay', icon: FiSmartphone },
+                { id: 'bank_transfer', label: 'Wire Transfer', icon: FiCreditCard },
               ].map(method => (
-                <button
+                <motion.button
                   key={method.id}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setFormData(prev => ({ ...prev, paymentMethod: method.id }))}
-                  className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${formData.paymentMethod === method.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 bg-gray-50'
+                  className={`p-5 rounded-[24px] border transition-all flex flex-col items-center gap-3 ${formData.paymentMethod === method.id
+                    ? 'border-teal-500 bg-teal-50 shadow-lg shadow-teal-900/5'
+                    : 'border-gray-100 bg-gray-50/50'
                     }`}
                 >
-                  <method.icon className={`w-6 h-6 ${formData.paymentMethod === method.id ? 'text-blue-600' : 'text-gray-500'}`} />
-                  <span className={`text-sm font-semibold ${formData.paymentMethod === method.id ? 'text-blue-700' : 'text-gray-600'}`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${formData.paymentMethod === method.id ? 'bg-teal-600 text-white' : 'bg-white text-gray-400'}`}>
+                    <method.icon className="w-5 h-5" />
+                  </div>
+                  <span className={`text-[10px] font-[1000] uppercase tracking-widest ${formData.paymentMethod === method.id ? 'text-teal-700' : 'text-gray-400'}`}>
                     {method.label}
                   </span>
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
 
           {/* Payment Reference */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              UPI / Transaction Reference *
+          <div className="space-y-3">
+            <label className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] ml-1">
+              Transaction ID
             </label>
             <input
               type="text"
               value={formData.paymentReference}
               onChange={(e) => setFormData(prev => ({ ...prev, paymentReference: e.target.value }))}
-              className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:border-blue-400 focus:outline-none"
-              placeholder="Enter UPI Transaction ID or Bank Ref No."
+              className="w-full px-5 py-4.5 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-xs font-[1000] text-gray-900 uppercase tracking-widest transition-all placeholder:text-gray-200"
+              placeholder="ENTER REF OR TXN ID"
             />
           </div>
 
           {/* Payment Proof */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Payment Screenshot *
+          <div className="space-y-3">
+            <label className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] ml-1">
+              Transaction Proof
             </label>
             {proofPreview ? (
-              <div className="relative">
+              <div className="relative group">
                 <img
                   src={proofPreview}
                   alt="Payment Proof"
-                  className="w-full h-56 object-contain bg-gray-50 rounded-xl border-2 border-gray-200"
+                  className="w-full h-64 object-cover bg-gray-50 rounded-[28px] border border-gray-100 shadow-inner"
                 />
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => {
                     setProofPreview(null);
                     setFormData(prev => ({ ...prev, paymentProof: '' }));
                   }}
-                  className="absolute top-2 right-2 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center backdrop-blur-sm"
+                  className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
                 >
                   <FiX className="w-5 h-5" />
-                </button>
+                </motion.button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {flutterBridge.isFlutter && (
-                  <button
+                  <motion.button
                     type="button"
+                    whileTap={{ scale: 0.98 }}
                     onClick={handleNativeCamera}
-                    className="w-full py-4 bg-gray-900 text-white rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all font-bold shadow-lg shadow-gray-200"
+                    className="w-full py-5 bg-gray-900 text-white rounded-[24px] flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-[1000] text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-black/10"
                   >
                     <FiCamera className="w-5 h-5" />
-                    Take a Photo
-                  </button>
+                    Snap Receipt
+                  </motion.button>
                 )}
 
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors bg-white">
-                  <FiUpload className="w-8 h-8 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-700 font-semibold">
-                    {flutterBridge.isFlutter ? 'Pick from Gallery' : 'Upload Screenshot / Proof'}
+                <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-100 rounded-[32px] cursor-pointer hover:bg-gray-50/50 hover:border-teal-200 transition-all bg-gray-50/20">
+                  <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4 text-teal-600 border border-black/[0.02]">
+                    <FiUpload className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-[1000] text-gray-900 uppercase tracking-[0.15em]">
+                    {flutterBridge.isFlutter ? 'Library Access' : 'Attach Screenshot'}
                   </span>
-                  <span className="text-[10px] text-gray-400 mt-1 uppercase tracking-tight font-bold">Max 20MB Original</span>
+                  <span className="text-[8px] text-gray-400 mt-2 uppercase tracking-widest font-black opacity-50">HEIC, PNG, JPG (MAX 20MB)</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -377,47 +435,45 @@ const SettlementRequest = () => {
           </div>
 
           {/* Notes */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Notes (Optional)
+          <div className="space-y-3">
+            <label className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] ml-1">
+              Internal Notes
             </label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="w-full px-4 py-3 bg-gray-50 rounded-xl border-2 border-gray-100 focus:border-blue-400 focus:outline-none resize-none"
+              className="w-full px-5 py-4 bg-gray-50/50 rounded-[24px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-xs font-[1000] text-gray-900 transition-all placeholder:text-gray-200 resize-none"
               rows={3}
-              placeholder="Any additional notes..."
+              placeholder="Any comments for the auditor..."
             />
           </div>
         </div>
 
-        {/* Submit Button */}
-        <button
+        {/* Submit Execution */}
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={handleSubmit}
           disabled={submitting || !formData.amount || !formData.paymentReference || !formData.paymentProof}
-          className="w-full mt-6 py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
-          style={{
-            background: themeColors.button,
-            boxShadow: `0 4px 12px ${themeColors.button}40`,
-          }}
+          className="w-full mt-10 py-6 rounded-[32px] font-[1000] text-white text-[12px] uppercase tracking-[0.35em] flex items-center justify-center gap-4 transition-all active:scale-95 disabled:opacity-20 bg-teal-600 shadow-2xl shadow-teal-900/20 group relative overflow-hidden"
         >
           {submitting ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Submitting...
-            </>
+            <div className="w-6 h-6 border-3 border-white/20 border-t-white rounded-full animate-spin" />
           ) : (
             <>
-              <FiSend className="w-5 h-5" />
-              Submit Settlement Request
+              Submit Audit Logs
+              <FiSend className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
             </>
           )}
-        </button>
+        </motion.button>
 
-        {/* Info */}
-        <p className="text-center text-xs text-gray-500 mt-4">
-          Admin will verify your payment and update your balance within 24 hours.
-        </p>
+        {/* Audit Disclaimer */}
+        <div className="mt-12 mb-12 flex flex-col items-center gap-3 px-8 opacity-40">
+          <FiCheck className="w-4 h-4 text-gray-400" />
+          <p className="text-center text-[8px] text-gray-400 font-black uppercase tracking-[0.2em] leading-relaxed">
+            Payment verification is performed by our financial audit team.<br />
+            Balance updates are finalized within 24 operational hours.
+          </p>
+        </div>
       </main>
 
       <BottomNav />

@@ -1,17 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
-
-/* Hide number input spinners globally */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type=number] {
-  -moz-appearance: textfield;
-}
-
-
 @import "tailwindcss";
 
 @theme {
@@ -29,23 +15,23 @@ input[type=number] {
   --brand-orange: #BB5F36;
   --brand-orange-rgb: 187, 95, 54;
   --brand-gradient: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-yellow) 50%, var(--brand-orange) 100%);
-  
+
   /* Default Theme (User) */
   --bg-primary: #FFFFFF;
   --bg-secondary: #F0FDFA;
   --bg-gradient: linear-gradient(180deg, #F0FDFA 0%, #F5FAFF 15%, #FFFFFF 30%);
-  
+
   --primary: var(--brand-teal);
   --primary-light: rgba(52, 121, 137, 0.1);
   --primary-dark: #2d6977;
-  
+
   --secondary: var(--brand-yellow);
   --accent: var(--brand-orange);
-  
+
   --text-main: #1F2937;
   --text-muted: #6B7280;
   --text-light: #9CA3AF;
-  
+
   --border-color: rgba(52, 121, 137, 0.15);
   --card-shadow: 0 8px 16px -2px rgba(52, 121, 137, 0.15), 0 4px 8px -1px rgba(52, 121, 137, 0.1);
 }
@@ -289,6 +275,16 @@ input[type=number] {
   box-sizing: border-box;
 }
 
+/* Hide scrollbar globally but maintain scroll functionality */
+::-webkit-scrollbar {
+  display: none !important;
+}
+
+* {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -296,27 +292,25 @@ body {
   background-color: #ffffff !important;
   background: linear-gradient(to bottom, rgba(52, 121, 137, 0.03) 0%, rgba(187, 95, 54, 0.02) 10%, #ffffff 20%) !important;
   background-attachment: fixed;
+  overflow-x: hidden;
+  /* Prevent horizontal scroll */
+  -webkit-overflow-scrolling: touch;
+  /* Smooth scroll for iOS */
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-  letter-spacing: -0.02em;
-  /* Hide scrollbar globally */
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-body::-webkit-scrollbar {
-  display: none;
 }
 
 #root {
   background-color: #ffffff !important;
   background: linear-gradient(to bottom, rgba(52, 121, 137, 0.03) 0%, rgba(187, 95, 54, 0.02) 10%, #ffffff 20%) !important;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* Hide scrollbar for horizontal scroll */

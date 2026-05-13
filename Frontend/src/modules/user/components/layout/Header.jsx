@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HiLocationMarker, HiOutlineSearch, HiOutlineShoppingCart, HiOutlineUser } from 'react-icons/hi';
+import { HiLocationMarker, HiOutlineShoppingCart, HiOutlineUser } from 'react-icons/hi';
 import { gsap } from 'gsap';
 import LocationSelector from '../common/LocationSelector';
 import { animateLogo } from '../../../../utils/gsapAnimations';
@@ -62,7 +62,7 @@ const Header = ({ location: address, onLocationClick, navLinks: dynamicNavLinks,
 
       <div className="max-w-screen-2xl mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          
+
           {/* Left: Logo & Brand Name */}
           <Link to="/user" className="flex items-center gap-3 shrink-0 group">
             <div ref={logoRef} className="relative">
@@ -82,7 +82,7 @@ const Header = ({ location: address, onLocationClick, navLinks: dynamicNavLinks,
           {/* Center: Navigation Links */}
           <nav className="hidden lg:flex items-center gap-10">
             {navLinks.map((link) => (
-              <Link 
+              <Link
                 key={link.path}
                 to={link.path}
                 className="relative py-2 text-[15px] font-bold transition-colors duration-200"
@@ -90,7 +90,7 @@ const Header = ({ location: address, onLocationClick, navLinks: dynamicNavLinks,
               >
                 {link.name}
                 {isActive(link.path) && (
-                  <motion.div 
+                  <motion.div
                     layoutId="nav-underline"
                     className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
                     style={{ backgroundColor: themeColors.primary }}
@@ -103,7 +103,7 @@ const Header = ({ location: address, onLocationClick, navLinks: dynamicNavLinks,
           {/* Right: Actions (Search, Cart, Account, Location) */}
           <div className="flex items-center gap-1 sm:gap-5">
             {/* Location (Subtle integration) */}
-            <div 
+            <div
               className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors border border-black/[0.03]"
               onClick={onLocationClick}
             >
@@ -115,10 +115,12 @@ const Header = ({ location: address, onLocationClick, navLinks: dynamicNavLinks,
 
             {/* Icons Group */}
             <div className="flex items-center gap-0.5 sm:gap-3">
+
+
               <Link to="/user/cart" className="relative p-2 text-gray-500 hover:bg-gray-50 rounded-full transition-colors">
                 <HiOutlineShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                 {cartCount > 0 && (
-                  <span 
+                  <span
                     className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] sm:min-w-[18px] sm:h-[18px] flex items-center justify-center text-[8px] sm:text-[10px] font-black text-white rounded-full shadow-sm ring-2 ring-white"
                     style={{ backgroundColor: themeColors.primary }}
                   >

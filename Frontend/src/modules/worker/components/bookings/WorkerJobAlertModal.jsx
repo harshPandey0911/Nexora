@@ -100,7 +100,7 @@ const WorkerJobAlertModal = ({ isOpen, jobId, onClose, onJobAccepted }) => {
           className="bg-white w-full max-w-[320px] rounded-[2rem] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] relative"
         >
           {/* Compact Header */}
-          <div className="relative h-24 bg-gradient-to-br from-blue-900 to-indigo-900 flex flex-col items-center justify-center pt-1">
+          <div className="relative h-24 bg-gradient-to-br from-[#0D9488] to-[#0F766E] flex flex-col items-center justify-center pt-1">
             <div className="absolute inset-0 opacity-10 pointer-events-none">
               <motion.div
                 animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
@@ -138,33 +138,33 @@ const WorkerJobAlertModal = ({ isOpen, jobId, onClose, onJobAccepted }) => {
                       <circle cx="40" cy="40" r={radius} fill="none" stroke="#F3F4F6" strokeWidth="5" />
                       <motion.circle
                         cx="40" cy="40" r={radius} fill="none"
-                        stroke={timeLeft <= 10 ? '#EF4444' : '#1E3A8A'} strokeWidth="6"
+                        stroke={timeLeft <= 10 ? '#EF4444' : '#0D9488'} strokeWidth="6"
                         strokeDasharray={circumference} strokeDashoffset={dashoffset}
                         strokeLinecap="round" className="transition-all duration-1000 ease-linear"
                       />
                     </svg>
                     <div className="text-center">
-                      <span className={`text-xl font-black block leading-none ${timeLeft <= 10 ? 'text-red-500' : 'text-blue-900'}`}>{timeLeft}</span>
+                      <span className={`text-xl font-black block leading-none ${timeLeft <= 10 ? 'text-red-500' : 'text-[#0D9488]'}`}>{timeLeft}</span>
                       <span className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Sec left</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Distance/Location info */}
-                <div className="flex items-center justify-center mb-4 bg-blue-50/50 py-2 rounded-xl border border-blue-100/50">
+                <div className="flex items-center justify-center mb-4 bg-teal-50/50 py-2 rounded-xl border border-teal-100/50">
                   <div className="text-center">
                     <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.1em] mb-0.5 block">Travel Distance</span>
-                    <div className="text-xl font-black text-blue-900 tracking-tight flex items-center gap-1 justify-center">
+                    <div className="text-xl font-black text-teal-900 tracking-tight flex items-center gap-1 justify-center">
                       <FiMapPin className="w-3.5 h-3.5" />
                       {job.distance ? (typeof job.distance === 'number' ? `${job.distance.toFixed(1)} km` : job.distance) : 'Near You'}
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-[1.25rem] p-3 border border-blue-100 shadow-[0_8px_25px_-5px_rgba(30,58,138,0.1)] relative overflow-hidden mb-4">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-blue-900" />
+                <div className="bg-white rounded-[1.25rem] p-3 border border-teal-100 shadow-[0_8px_25px_-5px_rgba(13,148,136,0.1)] relative overflow-hidden mb-4">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-[#0D9488]" />
                   <div className="pl-2">
-                    <p className="text-[9px] font-black text-blue-600/80 uppercase tracking-[0.15em] mb-0.5">Service Requested</p>
+                    <p className="text-[9px] font-black text-teal-600/80 uppercase tracking-[0.15em] mb-0.5">Service Requested</p>
                     <h4 className="text-[15px] font-black text-gray-900 leading-snug">
                       {job.serviceType || job.serviceId?.title || 'Service Request'}
                     </h4>
@@ -178,7 +178,7 @@ const WorkerJobAlertModal = ({ isOpen, jobId, onClose, onJobAccepted }) => {
                 <div className="flex flex-col gap-2">
                   <button
                     onClick={handleAccept}
-                    className="w-full py-3.5 rounded-xl bg-blue-900 hover:bg-blue-800 text-white font-black text-base shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 group"
+                    className="w-full py-3.5 rounded-xl bg-[#0D9488] hover:bg-[#0F766E] text-white font-black text-base shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 group"
                   >
                     Accept Job
                     <FiArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

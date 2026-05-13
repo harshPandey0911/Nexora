@@ -44,10 +44,11 @@ const authenticate = async (req, res, next) => {
     switch (decoded.role) {
       case USER_ROLES.USER:
         user = await User.findById(decoded.userId).select('-password').lean();
-        // SINGLE DEVICE LOGOUT Logic
+        /* 
         if (user && user.loginSessionId && decoded.loginSessionId && user.loginSessionId !== decoded.loginSessionId) {
           return res.status(401).json({ success: false, message: 'Account logged in on another device. Please login again.' });
         }
+        */
         break;
       case USER_ROLES.VENDOR:
         user = await Vendor.findById(decoded.userId).select('-password').lean();
@@ -58,20 +59,22 @@ const authenticate = async (req, res, next) => {
           });
         }
 
-        // SINGLE DEVICE LOGOUT Logic: Check if token's session ID matches DB
+        /*
         if (user && user.loginSessionId && decoded.loginSessionId && user.loginSessionId !== decoded.loginSessionId) {
           return res.status(401).json({
             success: false,
             message: 'Account logged in on another device. Please login again.'
           });
         }
+        */
         break;
       case USER_ROLES.WORKER:
         user = await Worker.findById(decoded.userId).select('-password').lean();
-        // SINGLE DEVICE LOGOUT Logic
+        /* 
         if (user && user.loginSessionId && decoded.loginSessionId && user.loginSessionId !== decoded.loginSessionId) {
           return res.status(401).json({ success: false, message: 'Account logged in on another device. Please login again.' });
         }
+        */
         break;
       case USER_ROLES.ADMIN:
       case 'super_admin':

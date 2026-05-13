@@ -12,6 +12,7 @@
 // Homestr LOGO Core Brand Colors
 const brand = {
   teal: 'var(--brand-teal)',
+  premiumTeal: '#0D9488',
   yellow: 'var(--brand-yellow)',
   orange: 'var(--brand-orange)',
   gradient: 'var(--brand-gradient)',
@@ -38,9 +39,9 @@ const vendorTheme = {
   gradient: brand.gradient,
   headerGradient: '#000000',
   accentGradient: 'linear-gradient(135deg, #1A3C43 0%, #102A30 100%)',
-  button: '#000000',
-  primary: '#000000',
-  icon: '#000000',
+  button: '#0D9488',
+  primary: '#0D9488',
+  icon: '#0D9488',
   brand: brand
 };
 
@@ -48,10 +49,10 @@ const vendorTheme = {
 const workerTheme = {
   backgroundGradient: 'var(--bg-gradient)',
   gradient: brand.gradient,
-  headerGradient: brand.teal,
-  button: brand.teal,
-  primary: brand.teal,
-  icon: brand.teal,
+  headerGradient: brand.premiumTeal,
+  button: brand.premiumTeal,
+  primary: brand.premiumTeal,
+  icon: brand.premiumTeal,
   brand: brand
 };
 

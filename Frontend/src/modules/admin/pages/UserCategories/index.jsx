@@ -43,8 +43,8 @@ const UserCategories = () => {
             end
             className={({ isActive }) => `
               flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-black transition-all duration-300 whitespace-nowrap
-              ${isActive 
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-200 translate-y-[-1px]" 
+              ${isActive
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-200 translate-y-[-1px]"
                 : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
               }
             `}
@@ -55,9 +55,9 @@ const UserCategories = () => {
         ))}
       </div>
 
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }} 
-        animate={{ opacity: 1, y: 0 }} 
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
         className="space-y-4"
       >
         <Outlet context={contextValue} />

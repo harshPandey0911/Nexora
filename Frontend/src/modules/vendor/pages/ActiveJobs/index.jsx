@@ -3,14 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { FiBriefcase, FiMapPin, FiClock, FiUser, FiSearch } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { vendorTheme as themeColors } from '../../../../theme';
-import BottomNav from '../../components/layout/BottomNav';
 import { getBookings, assignWorker as assignWorkerApi } from '../../services/bookingService';
 import { ConfirmDialog } from '../../components/common';
 
 const ActiveJobs = memo(() => {
   const navigate = useNavigate();
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [jobs, setJobs] = useState(() => {
+    const cached = localStorage.getItem('vendorJobsList');
+    return cached ? JSON.parse(cached) : [];
+  });
+  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('in_progress'); // Default to showing active jobs
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmDialog, setConfirmDialog] = useState({
@@ -37,31 +39,25 @@ const ActiveJobs = memo(() => {
     };
   }, []);
 
-  // Memoize loadJobs to prevent recreation
-  const loadJobs = useCallback(async (currentFilter, currentSearch, silent = false) => {
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  const loadJobs = useCallback(async (currentFilter, currentSearch) => {
     try {
-      if (!silent) setLoading(true);
+      if (isInitialLoad) setLoading(true);
       const response = await getBookings({
-        status: currentFilter === 'all' ? undefined : currentFilter,
+        status: currentFilter,
         q: currentSearch,
         limit: 50
       });
-      
-      const jobsData = response.data || response || [];
-      // Map API response to Component State structure
-      const mappedJobs = (Array.isArray(jobsData) ? jobsData : []).map(job => ({
+      const jobsData = response.data || [];
+      const mappedJobs = jobsData.map(job => ({
         id: job._id || job.id,
-        serviceType: job.serviceName || job.serviceType || 'Service',
+        serviceType: job.serviceName || 'Service',
         user: {
-          name: job.userId?.name || job.customerName || 'Customer'
+          name: job.userId?.name || 'Customer'
         },
         location: {
-          address: (() => {
-            const a = job.address;
-            if (!a) return 'Address not available';
-            if (typeof a === 'string') return a;
-            return `${a.addressLine1 || ''} ${a.city || ''} ${a.addressLine2 || ''}`.trim();
-          })()
+          address: job.address?.addressLine1 || 'Address not available'
         },
         price: (job.finalAmount ? job.finalAmount * 0.9 : 0).toFixed(2),
         status: job.status,
@@ -72,27 +68,30 @@ const ActiveJobs = memo(() => {
         }
       }));
       setJobs(mappedJobs);
+      localStorage.setItem('vendorJobsList', JSON.stringify(mappedJobs));
+      setIsInitialLoad(false);
     } catch (error) {
       console.error('Error loading jobs:', error);
-      if (!silent) toast.error('Failed to load jobs');
+      toast.error('Failed to load jobs');
     } finally {
-      if (!silent) setLoading(false);
+      setLoading(false);
     }
-  }, []);
+  }, [isInitialLoad]);
 
-  // Use a debounced search to avoid spamming the API
   useEffect(() => {
     const timer = setTimeout(() => {
       loadJobs(filter, searchQuery);
-    }, 300);
+    }, filter === 'all' && searchQuery === '' ? 0 : 500);
 
     return () => clearTimeout(timer);
   }, [filter, searchQuery, loadJobs]);
 
   useEffect(() => {
-    const handleUpdate = () => loadJobs(filter, searchQuery, true);
+    const handleUpdate = () => loadJobs(filter, searchQuery);
     window.addEventListener('vendorJobsUpdated', handleUpdate);
-    return () => window.removeEventListener('vendorJobsUpdated', handleUpdate);
+    return () => {
+      window.removeEventListener('vendorJobsUpdated', handleUpdate);
+    };
   }, [loadJobs, filter, searchQuery]);
 
   // filteredJobs is now just the jobs from the server
@@ -142,31 +141,44 @@ const ActiveJobs = memo(() => {
   }, []);
 
   return (
-    <div className="min-h-screen pb-32" style={{ background: '#FFFFFF' }}>
-      <header className="px-6 py-5 flex items-center justify-between bg-transparent">
-        <h1 className="text-xl font-black text-gray-900">Active Jobs</h1>
-        <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center border border-gray-100">
-          <FiBriefcase className="w-5 h-5 text-black" />
+    <div className="min-h-screen pb-28 relative" style={{ background: '#FFFFFF' }}>
+      {/* Premium Background Pattern */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0"
+          style={{
+            background: `
+              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.1) 0%, transparent 70%),
+              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
+              #F8FAFC
+            `
+          }}
+        />
+      </div>
+
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-5 flex items-center justify-between relative z-10">
+        <h1 className="text-xl font-[1000] text-gray-900 tracking-tight">Active Jobs</h1>
+        <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-black/[0.02] flex items-center justify-center">
+          <FiBriefcase className="w-5 h-5 text-gray-900" />
         </div>
       </header>
 
-      <main className="px-5">
-        {/* Search Bar (Black Theme) */}
-        <div className="mb-6">
-          <div className="relative">
-            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+      <main className="px-5 pt-6 relative z-10">
+        {/* Search Bar (Premium Theme) */}
+        <div className="mb-8">
+          <div className="relative group">
+            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-teal-600 transition-colors" />
             <input
               type="text"
               placeholder="Search by customer name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white rounded-[24px] py-4 pl-12 pr-4 text-sm font-bold text-gray-900 shadow-sm border border-gray-100 focus:border-[#0D463C] outline-none transition-all"
+              className="w-full bg-white rounded-[28px] py-4.5 pl-14 pr-6 text-[13px] font-black text-gray-900 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-100/50 focus:border-teal-500/30 outline-none transition-all placeholder:text-gray-300"
             />
           </div>
         </div>
 
-        {/* Filter Buttons (Black Theme) */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        {/* Filter Buttons (Premium Theme) */}
+        <div className="flex gap-2.5 mb-8 overflow-x-auto pb-2 scrollbar-hide">
           {[
             { id: 'all', label: 'All' },
             { id: 'assigned', label: 'Assigned' },
@@ -176,11 +188,10 @@ const ActiveJobs = memo(() => {
             <button
               key={filterOption.id}
               onClick={() => setFilter(filterOption.id)}
-              className={`px-6 py-2.5 rounded-full font-black text-xs whitespace-nowrap transition-all duration-300 ${
-                filter === filterOption.id
-                  ? 'bg-[#0D463C] text-white shadow-lg shadow-[#0D463C]/20'
-                  : 'bg-white text-gray-400 border border-gray-100'
-              }`}
+              className={`px-7 py-3 rounded-full font-[1000] text-[10px] uppercase tracking-widest whitespace-nowrap transition-all duration-500 ${filter === filterOption.id
+                ? 'bg-[#0D9488] text-white shadow-xl shadow-teal-900/20 scale-105'
+                : 'bg-white text-gray-400 border border-black/[0.03] shadow-sm hover:bg-gray-50'
+                }`}
             >
               {filterOption.label}
             </button>
@@ -189,98 +200,115 @@ const ActiveJobs = memo(() => {
 
         {/* Jobs List */}
         {loading ? (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-[32px] p-6 border border-gray-100 shadow-sm animate-pulse">
+              <div key={i} className="bg-white/60 backdrop-blur-md rounded-[32px] p-6 border border-white shadow-sm animate-pulse">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-14 h-14 bg-gray-50 rounded-2xl" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32 bg-gray-50 rounded" />
-                    <div className="h-3 w-20 bg-gray-50 rounded" />
+                  <div className="w-16 h-16 bg-gray-100 rounded-2xl" />
+                  <div className="flex-1 space-y-3">
+                    <div className="h-4 w-32 bg-gray-100 rounded-full" />
+                    <div className="h-3 w-20 bg-gray-100 rounded-full" />
                   </div>
                 </div>
-                <div className="h-2 w-full bg-gray-50 rounded" />
+                <div className="h-2 w-full bg-gray-100 rounded-full" />
               </div>
             ))}
           </div>
         ) : filteredJobs.length === 0 ? (
-          <div className="bg-white rounded-[32px] p-12 text-center shadow-sm border border-gray-100">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FiBriefcase className="w-10 h-10 text-gray-200" />
+          <div className="bg-white/40 backdrop-blur-md rounded-[40px] p-16 text-center border border-white/60">
+            <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
+              📭
             </div>
-            <h3 className="text-lg font-black text-gray-900 mb-2">No jobs found</h3>
-            <p className="text-sm font-bold text-gray-400">
-              {searchQuery ? 'Try another search term' : 'You don\'t have any jobs here yet'}
+            <h3 className="text-xl font-[1000] text-gray-900 mb-2">No jobs found</h3>
+            <p className="text-xs font-bold text-gray-400">
+              {searchQuery ? 'Try another search term' : 'Your list is empty for now'}
             </p>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-6 pb-10">
             {filteredJobs.map((job) => {
-              const status = job.status?.toUpperCase();
-              const isCancelled = status === 'CANCELLED';
+              const isCompleted = job.status?.toLowerCase() === 'completed';
 
               return (
                 <div
                   key={job.id}
                   onClick={() => navigate(`/vendor/booking/${job.id}`)}
-                  className="bg-white rounded-[32px] p-5 shadow-sm border border-gray-100 cursor-pointer active:scale-98 transition-all duration-200 relative group"
+                  className="bg-white/70 backdrop-blur-md rounded-[36px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 cursor-pointer active:scale-[0.98] transition-all duration-300 relative group hover:shadow-xl hover:shadow-teal-500/5"
                 >
-                  <div className="flex items-start gap-4 mb-5">
-                    {/* Suitcase Icon Container */}
-                    <div className="w-16 h-16 rounded-[24px] bg-gray-50 flex items-center justify-center shrink-0 border border-black/[0.03]">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M7 8V6C7 4.89543 7.89543 4 9 4H15C16.1046 4 17 4.89543 17 6V8M3 10C3 8.89543 3.89543 8 5 8H19C20.1046 8 21 8.89543 21 10V18C21 19.1046 20.1046 20 19 20H5C3.89543 20 3 19.1046 3 18V10Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M3 12H21" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                  <div className="flex items-center gap-4 mb-5">
+                    {/* Icon Box */}
+                    <div className="w-16 h-16 rounded-[24px] bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100/50 group-hover:bg-teal-50 transition-colors">
+                      <FiBriefcase className="w-7 h-7 text-gray-900 group-hover:text-teal-600 transition-colors" />
                     </div>
 
-                    {/* Job Details */}
-                    <div className="flex-1 min-w-0 pt-1">
+                    {/* Job Header */}
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1.5">
                         <h4 className="text-[15px] font-[1000] text-gray-900 truncate">
                           {job.user?.name || 'Customer'}
                         </h4>
-                        <button className="text-gray-400 p-1">
-                          <svg width="16" height="4" viewBox="0 0 16 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="2" cy="2" r="2" fill="currentColor"/>
-                            <circle cx="8" cy="2" r="2" fill="currentColor"/>
-                            <circle cx="14" cy="2" r="2" fill="currentColor"/>
-                          </svg>
-                        </button>
+                        <span className="text-[13px] font-[1000] text-teal-600">
+                          {isCompleted ? `₹${job.price}` : '---'}
+                        </span>
                       </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <p className="text-[11px] font-bold text-gray-400 truncate">
+                      <div className="flex items-center gap-2.5">
+                        <p className="text-[11px] font-black text-gray-500/80">
                           {job.serviceType}
                         </p>
-                        <span className="text-[9px] font-black px-2 py-0.5 rounded bg-[#0D463C] text-white uppercase tracking-widest leading-relaxed whitespace-nowrap">
+                        <span className="text-[8px] font-black px-2 py-1 rounded-lg bg-teal-50 text-teal-600 uppercase tracking-[0.1em]">
                           {job.status.replace('_', ' ')}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Info Row (Location & Time) */}
-                  <div className="space-y-2 mb-5 px-1">
-                    <div className="flex items-start gap-2 text-[11px] font-bold text-gray-400">
-                      <FiMapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                      <span className="break-words leading-relaxed">{job.location?.address}</span>
+                  {/* Info Grid (Premium Style) */}
+                  <div className="flex items-center gap-6 mb-6 px-1">
+                    <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-tight">
+                      <FiMapPin className="w-4 h-4 text-teal-500/50" />
+                      <span className="truncate max-w-[120px]">{job.location?.address}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] font-bold text-gray-400">
-                      <FiClock className="w-3.5 h-3.5 shrink-0" />
+                    <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-tight">
+                      <FiClock className="w-4 h-4 text-teal-500/50" />
                       <span>{job.timeSlot?.time}</span>
                     </div>
                   </div>
 
-                  {/* Assignment Pill */}
-                  <div className="bg-[#F8F9FA] rounded-[18px] py-3 px-4 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
-                      <FiUser className="w-4 h-4 text-gray-400" />
+                  {/* Assigned Info */}
+                  {job.assignedTo && (
+                    <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/50 rounded-[20px] mb-2 border border-gray-100/50">
+                      <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                        <FiUser className="w-4 h-4 text-teal-600" />
+                      </div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                        Assigned: <span className="text-gray-900">{job.assignedTo.name}</span>
+                      </p>
                     </div>
-                    <p className="text-[11px] font-bold text-gray-400">
-                      Assigned: <span className="text-gray-900 font-black">{job.assignedTo?.name || 'Unassigned'}</span>
-                    </p>
-                  </div>
+                  )}
+
+                  {/* Actions */}
+                  {['ACCEPTED', 'CONFIRMED'].includes(job.status?.toUpperCase()) && !job.assignedTo && (
+                    <div className="flex gap-3 mt-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAssignToSelf(job.id);
+                        }}
+                        className="flex-1 py-3.5 rounded-2xl bg-white border border-black/[0.05] text-gray-900 text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-colors shadow-sm"
+                      >
+                        Do It Myself
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/vendor/booking/${job.id}/assign-worker`);
+                        }}
+                        className="flex-1 py-3.5 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-black/10 active:scale-95 transition-all"
+                      >
+                        Assign Worker
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -296,8 +324,6 @@ const ActiveJobs = memo(() => {
         message={confirmDialog.message}
         type={confirmDialog.type}
       />
-
-      <BottomNav />
     </div>
   );
 });

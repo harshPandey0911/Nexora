@@ -26,24 +26,24 @@ const getMyServices = async (req, res) => {
     const assignedCategoryNames = Array.from(new Set([...(vendor.service || []), ...(vendor.categories || [])]));
     console.log('[getMyServices] assignedCategoryNames:', assignedCategoryNames);
 
-    // 2. Fetch Category details:
-    // - Categories assigned by name in the vendor profile
-    // - Categories created specifically by this vendor (using vendorId)
-    const query = {
-      $or: [
-        { vendorId: vendorId }
-      ],
-      status: 'active'
-    };
-
-    if (assignedCategoryNames.length > 0) {
-      query.$or.push({ 
-        title: { $in: assignedCategoryNames.map(name => new RegExp(`^${name}$`, 'i')) } 
+    if (assignedCategoryNames.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: []
       });
     }
 
-    const categories = await Category.find(query).select('title imageUrl homeIconUrl description slug vendorId');
-    
+    // 2. Fetch Category details:
+    // - Categories assigned by name in the vendor profile
+    // - Categories created specifically by this vendor (using vendorId)
+    const categories = await Category.find({
+      $or: [
+        { title: { $in: assignedCategoryNames.map(name => new RegExp(`^${name}$`, 'i')) } },
+        { vendorId: vendorId }
+      ],
+      status: 'active'
+    }).select('title imageUrl homeIconUrl description slug vendorId');
+
     console.log(`[getMyServices] Found ${categories.length} total categories (assigned + custom) for vendor ${vendorId}`);
 
     // 3. For each category, calculate performance stats
@@ -72,7 +72,7 @@ const getMyServices = async (req, res) => {
       ]);
 
       const catStats = stats[0] || { totalJobs: 0, completedJobs: 0, totalRating: 0, ratingCount: 0 };
-      
+
       return {
         id: cat._id,
         title: cat.title,
@@ -84,8 +84,8 @@ const getMyServices = async (req, res) => {
         stats: {
           totalJobs: catStats.totalJobs,
           completedJobs: catStats.completedJobs,
-          rating: catStats.ratingCount > 0 
-            ? parseFloat((catStats.totalRating / catStats.ratingCount).toFixed(1)) 
+          rating: catStats.ratingCount > 0
+            ? parseFloat((catStats.totalRating / catStats.ratingCount).toFixed(1))
             : 0.0
         }
       };
@@ -109,8 +109,8 @@ const getMyServices = async (req, res) => {
  * Get vendor's services (Old/Generic implementation)
  */
 const getVendorServices = async (req, res) => {
-    // Keep for backward compatibility or other uses
-    res.status(200).json({ success: true, data: [] });
+  // Keep for backward compatibility or other uses
+  res.status(200).json({ success: true, data: [] });
 };
 
 /**
@@ -237,7 +237,7 @@ const removeVendorService = async (req, res) => {
 
     // 3. Always remove from the vendor's assigned list (handles both platform and custom)
     const categoryTitle = category.title;
-    
+
     // Remove from 'service' array
     if (vendor.service && vendor.service.length > 0) {
       vendor.service = vendor.service.filter(s => s.toLowerCase() !== categoryTitle.toLowerCase());
@@ -261,29 +261,6 @@ const removeVendorService = async (req, res) => {
   }
 };
 
-/**
- * Get all custom categories and services created by the vendor
- */
-const getMyCustomContent = async (req, res) => {
-  try {
-    const vendorId = req.user.id;
-
-    const categories = await Category.find({ vendorId });
-    const services = await Service.find({ vendorId }).populate('categoryId', 'title');
-
-    res.status(200).json({
-      success: true,
-      data: {
-        categories,
-        services
-      }
-    });
-  } catch (error) {
-    console.error('Get My Custom Content error:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
 module.exports = {
   getMyServices,
   getVendorServices,
@@ -291,6 +268,5 @@ module.exports = {
   setServicePricing,
   addVendorCategory,
   addVendorService,
-  getMyCustomContent,
   removeVendorService
 };

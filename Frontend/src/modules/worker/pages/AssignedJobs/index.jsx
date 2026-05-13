@@ -63,12 +63,13 @@ const AssignedJobs = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      'pending': '#F59E0B',
-      'confirmed': '#3B82F6',
-      'in_progress': '#F59E0B',
-      'completed': '#10B981',
-      'cancelled': '#EF4444',
-      'rejected': '#EF4444',
+      'pending': '#D97706', // Amber
+      'confirmed': '#0D9488', // Premium Teal
+      'assigned': '#0D9488',
+      'in_progress': '#0284C7', // Sky Blue
+      'completed': '#059669', // Emerald Green
+      'cancelled': '#DC2626', // Red
+      'rejected': '#991B1B', // Dark Red
     };
     return colors[status] || '#6B7280';
   };

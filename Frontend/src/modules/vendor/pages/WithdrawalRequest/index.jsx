@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { FiDollarSign, FiArrowRight, FiCreditCard, FiAlertCircle, FiCheckCircle, FiEdit2, FiClock, FiPlusCircle, FiActivity } from 'react-icons/fi';
 import { vendorTheme as themeColors } from '../../../../theme';
 import Header from '../../components/layout/Header';
-import BottomNav from '../../components/layout/BottomNav';
 import { requestWithdrawal, getWalletBalance, getWithdrawalHistory } from '../../services/walletService';
 import { vendorDashboardService } from '../../services/dashboardService';
 import { toast } from 'react-hot-toast';
@@ -62,12 +62,12 @@ const WithdrawalRequest = () => {
       ]);
       setWallet({ available: walletRes.earnings || 0 });
       setHistory(historyRes || []);
-      
+
       if (statsRes.success) {
         const stats = statsRes.data.stats;
         const level = stats.level || 3;
         const levelKey = `level${level}`;
-        
+
         // Use dynamic rates from backend
         const commRate = stats.commissionRates?.[levelKey] || stats.commissionRate || 15;
         const pfRate = stats.platformFeeRates?.[levelKey] || 2;
@@ -171,225 +171,260 @@ const WithdrawalRequest = () => {
   const tdsAmount = Math.round(grossAmount * (tdsRate / 100));
   const netAmount = grossAmount - commissionAmount - platformFeeAmount - tdsAmount;
 
-  return (  return (
-    <div className="min-h-screen pb-24 bg-white relative">
+  if (!wallet.available && !history.length) {
+    return <LogoLoader />;
+  }
+
+  return (
+    <div className="min-h-screen pb-28 bg-white relative" style={{ background: '#FFFFFF' }}>
       {/* Premium Background Pattern */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.05) 0%, transparent 70%),
-              radial-gradient(at 100% 0%, rgba(13, 70, 60, 0.03) 0%, transparent 70%),
-              #FFFFFF
+              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.1) 0%, transparent 70%),
+              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
+              #F8FAFC
             `
           }}
         />
       </div>
 
-      <Header title="Redeem Earnings" showBack={true} />
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-5 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-4">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-xl bg-white shadow-sm border border-black/[0.02] flex items-center justify-center"
+          >
+            <FiArrowRight className="w-5 h-5 text-gray-900 rotate-180" />
+          </motion.button>
+          <h1 className="text-xl font-[1000] text-gray-900 tracking-tight">Redeem Assets</h1>
+        </div>
+        <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-black/[0.02] flex items-center justify-center">
+          <FiActivity className="w-5 h-5 text-teal-600" />
+        </div>
+      </header>
 
-      <main className="px-5 py-6 relative z-10 max-w-lg mx-auto">
+      <main className="px-5 pt-8 relative z-10 max-w-lg mx-auto">
         {/* Compact Premium Balance Card */}
-        <div 
-          className="rounded-[32px] p-6 shadow-2xl shadow-[#0D463C]/20 mb-8 relative overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #0D463C 0%, #062F28 100%)' }}
+        <div
+          className="rounded-[40px] p-8 shadow-[0_20px_50px_rgba(13,148,136,0.15)] mb-8 relative overflow-hidden group"
+          style={{ background: 'linear-gradient(135deg, #0D9488 0%, #0F766E 100%)' }}
         >
-          <div className="absolute top-0 right-0 w-48 h-48 bg-teal-400/10 rounded-full -mr-20 -mt-20 blur-3xl" />
-          
+          <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000" />
+
           <div className="relative z-10 flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-[10px] font-black text-teal-300/50 uppercase tracking-[0.2em] mb-1">Redeemable Balance</p>
-              <h2 className="text-4xl font-[1000] text-white tracking-tighter">₹{wallet.available.toLocaleString()}</h2>
+              <p className="text-[10px] font-[1000] text-teal-50/60 uppercase tracking-[0.2em] mb-1">Redeemable Liquidity</p>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl font-[1000] text-teal-200">₹</span>
+                <h2 className="text-4xl font-[1000] text-white tracking-tighter leading-none">{wallet.available.toLocaleString()}</h2>
+              </div>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/50">
-              <FiDollarSign className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-[22px] bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/50">
+              <FiDollarSign className="w-7 h-7" />
             </div>
           </div>
-          
+
           <div className="relative z-10 mt-6 pt-5 border-t border-white/5 flex items-center gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-            <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Verified & Ready for Transfer</p>
+            <div className="w-1.5 h-1.5 rounded-full bg-teal-300 animate-pulse" />
+            <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Assets Verified & Transferrable</p>
           </div>
         </div>
 
-        {/* Amount Input */}
-        <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 mb-6 group transition-all">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Withdrawal Amount</h3>
-            <button
+        {/* Amount Input Section */}
+        <div className="bg-white/70 backdrop-blur-md rounded-[36px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 mb-6 group transition-all">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em]">Settlement Value</h3>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               onClick={handleMaxAmount}
-              className="text-[9px] font-black text-teal-600 px-3 py-1.5 rounded-full bg-teal-50 active:scale-95 transition-all uppercase tracking-widest"
+              className="text-[9px] font-[1000] text-teal-600 px-4 py-2 rounded-full bg-teal-50 active:scale-95 transition-all uppercase tracking-widest border border-teal-100/50"
             >
-              Use Max
-            </button>
+              Maximum
+            </motion.button>
           </div>
 
-          <div className="relative mb-6">
-            <div className="absolute top-1/2 left-0 -translate-y-1/2 text-gray-200 font-black text-3xl">₹</div>
+          <div className="relative mb-8">
+            <div className="absolute top-1/2 left-0 -translate-y-1/2 text-gray-200 font-[1000] text-4xl opacity-50">₹</div>
             <input
               type="text"
               value={amount}
               onChange={(e) => handleAmountChange(e.target.value)}
               placeholder="0"
-              className={`w-full pl-8 pr-2 py-4 bg-white border-b-2 border-dashed ${
-                error ? 'border-red-200 text-red-500' : 'border-gray-100 focus:border-[#0D463C]'
-              } text-4xl font-[1000] text-right focus:outline-none transition-all text-gray-900 placeholder:text-gray-100`}
+              className={`w-full pl-10 pr-2 py-4 bg-transparent border-b-2 border-dashed ${error ? 'border-rose-200 text-rose-500' : 'border-gray-100 focus:border-teal-500'
+                } text-5xl font-[1000] text-right focus:outline-none transition-all text-gray-900 placeholder:text-gray-100 tracking-tighter`}
             />
           </div>
 
           {error && (
-            <p className="text-red-500 text-[10px] font-black uppercase tracking-widest text-center mb-6 flex justify-center items-center gap-2">
-              <FiAlertCircle className="w-4 h-4" /> {error}
-            </p>
+            <div className="bg-rose-50 rounded-2xl p-4 flex items-center gap-3 mb-8">
+              <FiAlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
+              <p className="text-rose-600 text-[10px] font-[1000] uppercase tracking-widest leading-relaxed">
+                {error}
+              </p>
+            </div>
           )}
 
           {amount && !error && (
-            <div className="bg-gray-50/50 rounded-[24px] p-5 space-y-3">
-              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
-                <span>Commission ({commissionRate}%)</span>
-                <span className="text-gray-900">- ₹{commissionAmount.toLocaleString()}</span>
+            <div className="bg-gray-50/50 rounded-[28px] p-6 space-y-4 border border-black/[0.02]">
+              <div className="flex justify-between items-center text-[10px] font-[1000] uppercase tracking-widest text-gray-400">
+                <span>Network Fee ({commissionRate + platformFeeRate}%)</span>
+                <span className="text-gray-900">₹{(commissionAmount + platformFeeAmount).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
-                <span>Platform Fee ({platformFeeRate}%)</span>
-                <span className="text-gray-900">- ₹{platformFeeAmount.toLocaleString()}</span>
+              <div className="flex justify-between items-center text-[10px] font-[1000] uppercase tracking-widest text-gray-400">
+                <span>Statutory TDS (1%)</span>
+                <span className="text-gray-900">₹{tdsAmount.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
-                <span>Mandatory TDS (1%)</span>
-                <span className="text-gray-900">- ₹{tdsAmount.toLocaleString()}</span>
-              </div>
-              <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
-                <span className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Net Payout</span>
-                <span className="text-2xl font-[1000] text-[#0D463C] tracking-tighter">₹{netAmount.toLocaleString()}</span>
+              <div className="pt-4 border-t border-black/[0.05] flex justify-between items-center">
+                <span className="text-[11px] font-[1000] text-gray-900 uppercase tracking-widest">Net Credit</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-sm font-black text-teal-600">₹</span>
+                  <span className="text-3xl font-[1000] text-teal-600 tracking-tighter">{netAmount.toLocaleString()}</span>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Bank Details */}
-        <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
-                <FiCreditCard className="w-5 h-5" />
+        {/* Bank Details Container */}
+        <div className="bg-white/70 backdrop-blur-md rounded-[36px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 mb-10">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-[20px] bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+                <FiCreditCard className="w-6 h-6" />
               </div>
-              <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Payout Account</h3>
+              <div>
+                <h3 className="text-[11px] font-[1000] text-gray-900 uppercase tracking-widest">Destination</h3>
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Verified Payout Path</p>
+              </div>
             </div>
             {isBankSaved && !showBankForm && (
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setShowBankForm(true)}
-                className="text-[10px] font-black text-teal-600 uppercase tracking-widest flex items-center gap-1"
+                className="text-[10px] font-[1000] text-teal-600 uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-teal-50 transition-all"
               >
-                <FiEdit2 /> Change
-              </button>
+                <FiEdit2 /> Update
+              </motion.button>
             )}
           </div>
 
           {!isBankSaved || showBankForm ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Account Holder</label>
+            <div className="space-y-5">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest ml-1">Account Holder</label>
                   <input
                     type="text"
                     name="accountHolderName"
                     value={bankAccount.accountHolderName}
                     onChange={handleBankInputChange}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-100 focus:border-[#0D463C] focus:bg-white outline-none text-xs font-black text-gray-900 uppercase tracking-widest transition-all"
-                    placeholder="FULL NAME"
+                    className="w-full px-5 py-4 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-xs font-[1000] text-gray-900 uppercase tracking-widest transition-all"
+                    placeholder="ENTER FULL NAME"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Bank Name</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest ml-1">Bank Name</label>
                     <input
                       type="text"
                       name="bankName"
                       value={bankAccount.bankName}
                       onChange={handleBankInputChange}
-                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-100 focus:border-[#0D463C] focus:bg-white outline-none text-xs font-black text-gray-900 uppercase tracking-widest transition-all"
-                      placeholder="BANK NAME"
+                      className="w-full px-5 py-4 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-xs font-[1000] text-gray-900 uppercase tracking-widest transition-all"
+                      placeholder="HDFC, SBI, ETC."
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">IFSC</label>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest ml-1">IFSC Code</label>
                     <input
                       type="text"
                       name="ifscCode"
                       value={bankAccount.ifscCode}
                       onChange={handleBankInputChange}
-                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-100 focus:border-[#0D463C] focus:bg-white outline-none text-xs font-black text-gray-900 uppercase tracking-widest transition-all"
-                      placeholder="IFSC0000XXX"
+                      className="w-full px-5 py-4 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-xs font-[1000] text-gray-900 uppercase tracking-widest transition-all"
+                      placeholder="IFSC000XXXX"
                       maxLength={11}
                     />
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Account Number</label>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest ml-1">Account Number</label>
                   <input
                     type="tel"
                     name="accountNumber"
                     value={bankAccount.accountNumber}
                     onChange={handleBankInputChange}
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-100 focus:border-[#0D463C] focus:bg-white outline-none text-base font-[1000] text-gray-900 tracking-[0.1em] transition-all"
-                    placeholder="ACCOUNT NUMBER"
+                    className="w-full px-5 py-4 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-lg font-[1000] text-gray-900 tracking-[0.2em] transition-all"
+                    placeholder="0000 0000 0000"
                     inputMode="numeric"
                   />
                 </div>
               </div>
-              <button
+              <motion.button
+                whileTap={{ scale: 0.98 }}
                 onClick={saveBankDetails}
-                className="w-full py-4 bg-[#0D463C] text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-teal-900/10 active:scale-95 transition-all"
+                className="w-full py-5 bg-gray-900 text-white rounded-[24px] font-[1000] text-[11px] uppercase tracking-[0.25em] shadow-xl shadow-black/10 active:scale-95 transition-all"
               >
-                Save Payout Account
-              </button>
+                Authenticate Account
+              </motion.button>
             </div>
           ) : (
-            <div 
-              className="bg-gray-50/50 rounded-[24px] p-5 border border-gray-100 flex flex-col gap-4"
+            <div
+              className="bg-gray-50/50 rounded-[32px] p-6 border border-gray-100 flex flex-col gap-6 group cursor-pointer hover:border-teal-500/20 transition-all"
               onClick={() => setShowBankForm(true)}
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest mb-1">Bank Account</p>
-                  <p className="font-black text-gray-900 text-xs uppercase tracking-widest">{bankAccount.bankName}</p>
+                  <p className="text-[9px] text-gray-400 font-[1000] uppercase tracking-widest mb-1.5 opacity-60">Primary Payout Institution</p>
+                  <p className="font-[1000] text-gray-900 text-sm uppercase tracking-[0.1em]">{bankAccount.bankName}</p>
                 </div>
-                <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
-                  <FiCheckCircle className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600 border border-teal-100/50">
+                  <FiCheckCircle className="w-5 h-5" />
                 </div>
               </div>
               <div>
-                <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest mb-1">Account Number</p>
-                <p className="font-black text-gray-900 text-lg tracking-[0.2em]">
-                  {bankAccount.accountNumber?.replace(/(.{4})/g, '$1 ').trim()}
-                </p>
+                <p className="text-[9px] text-gray-400 font-[1000] uppercase tracking-widest mb-2 opacity-60">Current Linked Account</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-200" />)}
+                  </div>
+                  <p className="font-[1000] text-gray-900 text-xl tracking-[0.25em]">
+                    {bankAccount.accountNumber?.slice(-4)}
+                  </p>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Submit Action */}
-        <button
+        {/* Final Execution Button */}
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={handleSubmit}
           disabled={!amount || !!error || !isBankSaved || loading}
-          className="w-full py-5 rounded-full font-black text-white text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-20 bg-[#0D463C] shadow-2xl shadow-teal-900/20 group"
+          className="w-full py-6 rounded-[30px] font-[1000] text-white text-[12px] uppercase tracking-[0.35em] flex items-center justify-center gap-4 transition-all active:scale-95 disabled:opacity-20 bg-teal-600 shadow-2xl shadow-teal-900/20 group relative overflow-hidden"
         >
           {loading ? (
-            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            <div className="w-6 h-6 border-3 border-white/20 border-t-white rounded-full animate-spin" />
           ) : (
             <>
-              Confirm & Redeem
-              <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+              Initialize Transfer
+              <FiArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
             </>
           )}
-        </button>
+        </motion.button>
 
-        <p className="text-center text-[9px] text-gray-400 mt-10 font-black uppercase tracking-[0.1em] leading-relaxed opacity-40 px-6">
-          Payouts processed within 24-48 business hours.<br />
-          Transaction ID will be generated once verified.
-        </p>
+        <div className="mt-12 flex flex-col items-center gap-2 px-8">
+          <FiClock className="w-4 h-4 text-gray-300" />
+          <p className="text-center text-[9px] text-gray-400 font-black uppercase tracking-[0.15em] leading-relaxed opacity-50">
+            Secure processing timeline: 24-48 business hours.<br />
+            Digital receipt will be issued post-verification.
+          </p>
+        </div>
       </main>
-
-      <BottomNav />
     </div>
   );
 };

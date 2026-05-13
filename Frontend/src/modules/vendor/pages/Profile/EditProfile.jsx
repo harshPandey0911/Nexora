@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiSave, FiUser, FiBriefcase, FiPhone, FiMail, FiMapPin, FiChevronDown, FiCamera, FiUpload } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiSave, FiUser, FiBriefcase, FiPhone, FiMail, FiMapPin, FiChevronDown, FiCamera, FiUpload, FiEdit2 } from 'react-icons/fi';
 import { vendorTheme as themeColors } from '../../../../theme';
 import Header from '../../components/layout/Header';
 import BottomNav from '../../components/layout/BottomNav';
@@ -394,17 +395,44 @@ const EditProfile = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: themeColors.backgroundGradient }}>
-      <Header title="Edit Profile" />
+    <div className="min-h-screen pb-28 relative" style={{ background: '#FFFFFF' }}>
+      {/* Premium Background Pattern */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0"
+          style={{
+            background: `
+              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.1) 0%, transparent 70%),
+              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
+              #F8FAFC
+            `
+          }}
+        />
+      </div>
 
-      <main className="px-4 py-6">
-        <div className="space-y-6">
-          {/* Profile Photo - Integrated */}
-          <div className="flex flex-col items-center justify-center mb-6">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-5 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-4">
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-xl bg-white shadow-sm border border-black/[0.02] flex items-center justify-center"
+          >
+            <FiUser className="w-5 h-5 text-gray-900 rotate-180" />
+          </motion.button>
+          <h1 className="text-xl font-[1000] text-gray-900 tracking-tight">Modify Identity</h1>
+        </div>
+        <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-black/[0.02] flex items-center justify-center">
+          <FiEdit2 className="w-5 h-5 text-teal-600" />
+        </div>
+      </header>
+
+      <main className="px-5 pt-8 relative z-10 max-w-lg mx-auto">
+        <div className="space-y-8">
+          {/* Profile Photo - Master Uplink */}
+          <div className="flex flex-col items-center justify-center mb-10">
             <div className="relative group">
-              <div
-                className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-xl cursor-pointer"
-                style={{ background: '#f0f0f0' }}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="w-32 h-32 rounded-[44px] overflow-hidden border-4 border-white shadow-2xl cursor-pointer relative"
                 onClick={() => handleImageClick('photo')}
               >
                 {photoPreview || formData.profilePhoto ? (
@@ -414,18 +442,21 @@ const EditProfile = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                  <div className="w-full h-full flex items-center justify-center bg-teal-50 text-teal-200">
                     <FiUser className="w-12 h-12" />
                   </div>
                 )}
-              </div>
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <FiUpload className="w-6 h-6 text-white" />
+                </div>
+              </motion.div>
 
-              <div
+              <motion.div
+                whileTap={{ scale: 0.9 }}
                 onClick={() => handleImageClick('photo')}
-                className="absolute bottom-1 right-1 p-2 rounded-full cursor-pointer shadow-lg transition-transform active:scale-95 hover:scale-105"
-                style={{ background: themeColors.button }}
+                className="absolute -bottom-2 -right-2 p-3 rounded-2xl cursor-pointer shadow-xl transition-all bg-teal-600 text-white border-4 border-white"
               >
-                <FiCamera className="w-5 h-5 text-white" />
+                <FiCamera className="w-5 h-5" />
                 <input
                   id="photo-upload"
                   type="file"
@@ -433,323 +464,290 @@ const EditProfile = () => {
                   className="hidden"
                   onChange={handlePhotoChange}
                 />
-              </div>
+              </motion.div>
             </div>
-            <p className="text-gray-500 text-xs mt-3 font-medium">Tap icon to change photo</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-5 opacity-60">Identity Visualization</p>
           </div>
 
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <div
-                className="p-2 rounded-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${themeColors.icon}25 0%, ${themeColors.icon}15 100%)`,
-                }}
-              >
-                <FiUser className="w-4 h-4" style={{ color: themeColors.icon }} />
+          <div className="space-y-6">
+            {/* Name Input */}
+            <div className="group">
+              <label className="block text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] mb-2 px-1">
+                Full Name <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-black/[0.02] group-focus-within:bg-teal-50 group-focus-within:text-teal-600 transition-colors">
+                  <FiUser className="w-5 h-5" />
+                </div>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="Enter legal name"
+                  className={`w-full pl-16 pr-4 py-4 bg-white/70 backdrop-blur-md rounded-3xl border transition-all focus:outline-none focus:ring-4 focus:ring-teal-500/5 ${
+                    errors.name ? 'border-rose-200 text-rose-900' : 'border-white/60 focus:border-teal-500/30'
+                  } font-[1000] text-gray-900 text-sm tracking-tight`}
+                />
               </div>
-              <span>Name <span className="text-red-500">*</span></span>
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Enter your name"
-              className={`w-full px-4 py-3 bg-white rounded-xl border focus:outline-none focus:ring-2 ${errors.name ? 'border-red-500' : 'border-gray-200'
-                }`}
-              style={{ focusRingColor: themeColors.button }}
-            />
-            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-          </div>
-
-          {/* Business Name */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <div
-                className="p-2 rounded-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${themeColors.icon}25 0%, ${themeColors.icon}15 100%)`,
-                }}
-              >
-                <FiBriefcase className="w-4 h-4" style={{ color: themeColors.icon }} />
-              </div>
-              <span>Business Name</span>
-            </label>
-            <input
-              type="text"
-              value={formData.businessName}
-              onChange={(e) => handleInputChange('businessName', e.target.value)}
-              placeholder="Enter business name"
-              className={`w-full px-4 py-3 bg-white rounded-xl border focus:outline-none focus:ring-2 ${errors.businessName ? 'border-red-500' : 'border-gray-200'
-                }`}
-              style={{ focusRingColor: themeColors.button }}
-            />
-            {errors.businessName && <p className="text-red-500 text-sm mt-1">{errors.businessName}</p>}
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <div
-                className="p-2 rounded-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${themeColors.icon}25 0%, ${themeColors.icon}15 100%)`,
-                }}
-              >
-                <FiPhone className="w-4 h-4" style={{ color: themeColors.icon }} />
-              </div>
-              <span>Phone Number <span className="text-red-500">*</span></span>
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="Enter phone number"
-              className={`w-full px-4 py-3 bg-white rounded-xl border focus:outline-none focus:ring-2 ${errors.phone ? 'border-red-500' : 'border-gray-200'
-                }`}
-              style={{ focusRingColor: themeColors.button }}
-            />
-            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <div
-                className="p-2 rounded-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${themeColors.icon}25 0%, ${themeColors.icon}15 100%)`,
-                }}
-              >
-                <FiMail className="w-4 h-4" style={{ color: themeColors.icon }} />
-              </div>
-              <span>Email</span>
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="Enter email address"
-              className={`w-full px-4 py-3 bg-white rounded-xl border focus:outline-none focus:ring-2 ${errors.email ? 'border-red-500' : 'border-gray-200'
-                }`}
-              style={{ focusRingColor: themeColors.button }}
-            />
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-          </div>
-
-          {/* Address */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <div
-                className="p-2 rounded-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${themeColors.icon}25 0%, ${themeColors.icon}15 100%)`,
-                }}
-              >
-                <FiMapPin className="w-4 h-4" style={{ color: themeColors.icon }} />
-              </div>
-              <span>Address <span className="text-red-500">*</span></span>
-            </label>
-
-            <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 mb-2">
-              <p className="text-sm font-medium text-gray-700">
-                {formData.address?.fullAddress ||
-                  (typeof formData.address === 'string' ? formData.address : '') ||
-                  `${formData.address?.addressLine1 || ''} ${formData.address?.city || ''}`
-                }
-              </p>
-              {!formData.address || (typeof formData.address === 'object' && !formData.address.fullAddress && !formData.address.addressLine1) ? (
-                <p className="text-xs text-gray-400 italic mt-1">No address set</p>
-              ) : null}
+              {errors.name && <p className="text-rose-500 text-[9px] font-black uppercase tracking-widest mt-2 px-1">{errors.name}</p>}
             </div>
 
-            <button
-              onClick={() => setIsAddressModalOpen(true)}
-              className="w-full py-3 bg-blue-50 text-blue-600 rounded-xl font-bold text-sm border border-blue-100 hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
-            >
-              <FiMapPin className="w-4 h-4" />
-              Build/Change Location on Map
-            </button>
-
-            {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-          </div>
-
-          {/* Service Category (Multi-Select) */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-              <div
-                className="p-2 rounded-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${themeColors.icon}25 0%, ${themeColors.icon}15 100%)`,
-                }}
-              >
-                <FiBriefcase className="w-4 h-4" style={{ color: themeColors.icon }} />
+            {/* Business Name Input */}
+            <div className="group">
+              <label className="block text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] mb-2 px-1">
+                Business Entity
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center border border-teal-100/50 text-teal-600">
+                  <FiBriefcase className="w-4 h-4" />
+                </div>
+                <input
+                  type="text"
+                  value={formData.businessName}
+                  onChange={(e) => handleInputChange('businessName', e.target.value)}
+                  placeholder="Enter business name"
+                  className={`w-full pl-16 pr-4 py-4 bg-white/70 backdrop-blur-md rounded-3xl border border-white/60 focus:border-teal-500/30 transition-all focus:outline-none focus:ring-4 focus:ring-teal-500/5 font-[1000] text-gray-900 text-sm tracking-tight`}
+                />
               </div>
-              <span>Service Categories <span className="text-red-500">*</span></span>
-            </label>
-            <div className="relative">
+            </div>
+
+            {/* Phone Input */}
+            <div className="group">
+              <label className="block text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] mb-2 px-1">
+                Encryption Link (Mobile) <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center border border-teal-100/50 text-teal-600">
+                  <FiPhone className="w-4 h-4" />
+                </div>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="Enter contact number"
+                  className={`w-full pl-16 pr-4 py-4 bg-white/70 backdrop-blur-md rounded-3xl border transition-all focus:outline-none focus:ring-4 focus:ring-teal-500/5 ${
+                    errors.phone ? 'border-rose-200 text-rose-900' : 'border-white/60 focus:border-teal-500/30'
+                  } font-[1000] text-gray-900 text-sm tracking-tight`}
+                />
+              </div>
+              {errors.phone && <p className="text-rose-500 text-[9px] font-black uppercase tracking-widest mt-2 px-1">{errors.phone}</p>}
+            </div>
+
+            {/* Email Input */}
+            <div className="group">
+              <label className="block text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] mb-2 px-1">
+                Network Access (Email)
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center border border-teal-100/50 text-teal-600">
+                  <FiMail className="w-4 h-4" />
+                </div>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="Enter email address"
+                  className={`w-full pl-16 pr-4 py-4 bg-white/70 backdrop-blur-md rounded-3xl border border-white/60 focus:border-teal-500/30 transition-all focus:outline-none focus:ring-4 focus:ring-teal-500/5 font-[1000] text-gray-900 text-sm tracking-tight`}
+                />
+              </div>
+            </div>
+
+            {/* Address Master Section */}
+            <div className="space-y-4">
+              <label className="block text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] px-1">
+                Geospatial Base <span className="text-rose-500">*</span>
+              </label>
+
+              <div className="bg-white/70 backdrop-blur-md rounded-[32px] p-6 border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center shrink-0 border border-teal-100/50 text-teal-600">
+                    <FiMapPin className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1 min-w-0 pt-1">
+                    <p className="text-[13px] font-[1000] text-gray-900 leading-relaxed tracking-tight">
+                      {formData.address?.fullAddress ||
+                        (typeof formData.address === 'string' ? formData.address : '') ||
+                        `${formData.address?.addressLine1 || ''} ${formData.address?.city || ''}` || 'Coordinates Not Set'
+                      }
+                    </p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1 opacity-60">Verified Service Base</p>
+                  </div>
+                </div>
+
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setIsAddressModalOpen(true)}
+                  className="w-full py-4 bg-teal-600 text-white rounded-[24px] font-[1000] text-[10px] uppercase tracking-widest shadow-xl shadow-teal-900/10 flex items-center justify-center gap-3"
+                >
+                  <FiMapPin className="w-4 h-4" />
+                  Recalibrate Location
+                </motion.button>
+              </div>
+
+              {errors.address && <p className="text-rose-500 text-[9px] font-black uppercase tracking-widest px-1">{errors.address}</p>}
+            </div>
+
+            {/* Category Ecosystem (Multi-Select) */}
+            <div className="group relative">
+              <label className="block text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] mb-2 px-1">
+                Service Specializations <span className="text-rose-500">*</span>
+              </label>
               <button
                 type="button"
                 onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                className="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-100"
+                className="w-full px-6 py-5 bg-white/70 backdrop-blur-md rounded-[32px] border border-white/60 flex items-center justify-between focus:outline-none focus:ring-4 focus:ring-teal-500/5 shadow-[0_8px_30px_rgb(0,0,0,0.02)]"
               >
                 <div className="flex flex-wrap gap-2 overflow-hidden">
                   {formData.serviceCategories.length > 0 ? (
                     formData.serviceCategories.map((cat, idx) => (
-                      <span key={idx} className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded-md">
+                      <span key={idx} className="text-[10px] font-[1000] bg-teal-600 text-white px-3 py-1.5 rounded-xl uppercase tracking-widest">
                         {cat}
                       </span>
                     ))
                   ) : (
-                    <span className="text-gray-400">Select Categories</span>
+                    <span className="text-[11px] font-[1000] text-gray-400 uppercase tracking-widest opacity-60">Provision Capabilities</span>
                   )}
                 </div>
-                <FiChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} />
+                <FiChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-500 ${isCategoryOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isCategoryOpen && (
                 <>
-                  <div
-                    className="fixed inset-0 z-10 bg-transparent"
-                    onClick={() => setIsCategoryOpen(false)}
-                  />
-                  <div className="absolute z-20 w-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 max-h-60 overflow-y-auto">
-                    {categories.length > 0 ? (
-                      categories.map((cat, index) => {
-                        const isSelected = formData.serviceCategories.includes(cat.title);
-                        return (
-                          <button
-                            key={cat._id || index}
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent closing dropdown immediately
-                              handleCategoryChange(cat.title);
-                            }}
-                            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium text-gray-700 border-b border-gray-50 last:border-0 flex items-center justify-between"
-                          >
-                            {cat.title}
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
-                              {isSelected && <span className="text-white text-xs">✓</span>}
-                            </div>
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div className="px-4 py-3 text-gray-400 text-sm">No categories found</div>
-                    )}
-                  </div>
+                  <div className="fixed inset-0 z-10" onClick={() => setIsCategoryOpen(false)} />
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute z-20 w-full mt-4 bg-white/90 backdrop-blur-xl rounded-[32px] shadow-2xl border border-black/[0.03] max-h-72 overflow-y-auto p-3 scrollbar-hide"
+                  >
+                    {categories.map((cat, index) => {
+                      const isSelected = formData.serviceCategories.includes(cat.title);
+                      return (
+                        <button
+                          key={cat._id || index}
+                          type="button"
+                          onClick={() => handleCategoryChange(cat.title)}
+                          className={`w-full text-left px-5 py-4 rounded-2xl mb-1 transition-all flex items-center justify-between group/cat ${
+                            isSelected ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/10' : 'hover:bg-gray-50 text-gray-700'
+                          }`}
+                        >
+                          <span className="text-xs font-[1000] uppercase tracking-widest">{cat.title}</span>
+                          <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                            isSelected ? 'bg-white border-white text-teal-600' : 'border-gray-200 group-hover/cat:border-teal-500'
+                          }`}>
+                            {isSelected && <span className="text-[10px]">✓</span>}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </motion.div>
                 </>
               )}
+              {errors.serviceCategories && <p className="text-rose-500 text-[9px] font-black uppercase tracking-widest mt-2 px-1">{errors.serviceCategories}</p>}
             </div>
-            {errors.serviceCategories && <p className="text-red-500 text-sm mt-1">{errors.serviceCategories}</p>}
+
+            {/* Range Controller */}
+            <div className="group">
+              <label className="block text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] mb-2 px-1">
+                Operational Radius (Km) <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-black/[0.02]">
+                  <FiActivity className="w-5 h-5 text-gray-400" />
+                </div>
+                <input
+                  type="number"
+                  value={formData.serviceRange}
+                  onChange={(e) => handleInputChange('serviceRange', e.target.value)}
+                  placeholder="Distance radius"
+                  className="w-full pl-16 pr-4 py-4 bg-white/70 backdrop-blur-md rounded-3xl border border-white/60 focus:border-teal-500/30 transition-all focus:outline-none focus:ring-4 focus:ring-teal-500/5 font-[1000] text-gray-900 text-sm tracking-tight"
+                />
+              </div>
+              <p className="text-[8px] font-black text-gray-300 uppercase tracking-[0.15em] mt-3 px-1 leading-relaxed">
+                Maximum deployment distance from your primary service hub
+              </p>
+            </div>
+
+            {/* Document Hub - Aadhar */}
+            <div className="space-y-4">
+              <label className="block text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] px-1">
+                Identity Authentication <span className="text-rose-500">*</span>
+              </label>
+
+              <div
+                className={`relative rounded-[36px] p-8 text-center transition-all border-2 border-dashed bg-white/40 backdrop-blur-md cursor-pointer group ${
+                  aadharFile || formData.aadharDocument ? 'border-teal-500/30 bg-teal-50/10' : 'border-gray-200 hover:border-teal-500/30'
+                }`}
+                onClick={() => handleImageClick('aadhar')}
+              >
+                <input
+                  id="aadhar-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAadharChange}
+                />
+                <div className="flex flex-col items-center">
+                  {aadharFile || formData.aadharDocument ? (
+                    <div className="w-full">
+                      <div className="w-full h-40 rounded-[28px] overflow-hidden border-2 border-white shadow-xl mb-4 relative">
+                        <img
+                          src={aadharFile ? URL.createObjectURL(aadharFile) : formData.aadharDocument}
+                          alt="Aadhar Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-teal-900/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <FiUpload className="w-8 h-8 text-white" />
+                        </div>
+                      </div>
+                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-xl text-[10px] font-[1000] uppercase tracking-widest shadow-lg shadow-teal-900/10">
+                        <FiCheck className="w-4 h-4" />
+                        Authenticated
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4 border border-black/[0.02]">
+                        <FiUpload className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <span className="text-[11px] font-[1000] text-gray-900 uppercase tracking-widest block mb-1">Upload Identity Proof</span>
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest opacity-60">Aadhar Front View (Max 5MB)</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              {errors.aadharDocument && <p className="text-rose-500 text-[9px] font-black uppercase tracking-widest px-1">{errors.aadharDocument}</p>}
+            </div>
+
           </div>
 
-          {/* Service Range */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <div
-                className="p-2 rounded-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${themeColors.icon}25 0%, ${themeColors.icon}15 100%)`,
-                }}
-              >
-                <FiMapPin className="w-4 h-4" style={{ color: themeColors.icon }} />
-              </div>
-              <span>Service Range (Km) <span className="text-red-500">*</span></span>
-            </label>
-            <input
-              type="number"
-              value={formData.serviceRange}
-              onChange={(e) => handleInputChange('serviceRange', e.target.value)}
-              placeholder="e.g. 10"
-              min="1"
-              className="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2"
-              style={{ focusRingColor: themeColors.button }}
-            />
-            <p className="text-[10px] text-gray-400 mt-1">Distance from your location where you can provide services</p>
-          </div>
-
-          {/* Aadhar Document Upload */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-              <div
-                className="p-2 rounded-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${themeColors.icon}25 0%, ${themeColors.icon}15 100%)`,
-                }}
-              >
-                <FiUpload className="w-4 h-4" style={{ color: themeColors.icon }} />
-              </div>
-              <span>Identity Proof (Aadhar) <span className="text-red-500">*</span></span>
-            </label>
-
-            <div
-              className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center transition-colors hover:border-blue-300 bg-gray-50 cursor-pointer"
-              onClick={() => handleImageClick('aadhar')}
+          {/* Master Actions */}
+          <div className="flex gap-4 pb-10">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate(-1)}
+              className="flex-1 py-5 rounded-[32px] font-[1000] text-[10px] uppercase tracking-[0.2em] text-gray-500 bg-white border border-white/60 shadow-lg shadow-black/5"
             >
-              <input
-                id="aadhar-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAadharChange}
-              />
-              <div className="cursor-pointer flex flex-col items-center">
-                {aadharFile ? (
-                  <div className="flex items-center gap-2 text-green-600 font-medium">
-                    <FiUpload className="w-5 h-5" />
-                    <span className="truncate max-w-[200px]">{aadharFile.name}</span>
-                  </div>
-                ) : formData.aadharDocument ? (
-                  <div className="flex flex-col items-center gap-2 w-full">
-                    <div className="w-full h-32 rounded-lg overflow-hidden border border-gray-200 mb-2 relative group-hover:opacity-75 transition-opacity">
-                      <img
-                        src={formData.aadharDocument}
-                        alt="Aadhar Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-green-600 font-medium text-sm">Document Uploaded</p>
-                      <span className="text-xs text-blue-500 underline mt-1">Click to replace</span>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <FiUpload className="w-8 h-8 text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-500 font-medium">Click to upload Aadhar Card</span>
-                    <span className="text-xs text-gray-400 mt-1">First Page Only (Max 5MB)</span>
-                  </>
-                )}
-              </div>
-            </div>
-            {errors.aadharDocument && <p className="text-red-500 text-sm mt-1">{errors.aadharDocument}</p>}
+              Cancel
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSubmit}
+              className="flex-[1.5] py-5 rounded-[32px] font-[1000] text-[10px] uppercase tracking-[0.2em] text-white bg-teal-600 shadow-2xl shadow-teal-900/20 flex items-center justify-center gap-3 disabled:opacity-50"
+              disabled={uploading}
+            >
+              {uploading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <FiSave className="w-4 h-4" />
+                  Commit Changes
+                </>
+              )}
+            </motion.button>
           </div>
-
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-8 flex gap-3">
-          <button
-            onClick={() => navigate('/vendor/profile')}
-            className="flex-1 py-4 rounded-xl font-semibold text-gray-700 bg-white border-2 border-gray-200 transition-all active:scale-95"
-            style={{
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="flex-1 py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all active:scale-95"
-            style={{
-              background: themeColors.button,
-              boxShadow: `0 4px 12px ${themeColors.button}40`,
-            }}
-          >
-            {uploading ? 'Saving...' : 'Save Changes'}
-          </button>
         </div>
       </main>
 

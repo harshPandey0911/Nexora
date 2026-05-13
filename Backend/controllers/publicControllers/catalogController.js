@@ -27,7 +27,7 @@ const getPublicCategories = async (req, res) => {
     if (cityId) {
       query.$or = [
         { vendorId: null, cityIds: cityId },
-        { vendorId: { $ne: null } } 
+        { vendorId: { $ne: null } }
       ];
     }
 
@@ -41,9 +41,9 @@ const getPublicCategories = async (req, res) => {
       // 1. If it's a platform category (no vendorId)
       if (!cat.vendorId) {
         // Check if any online vendor is available in city for this category
-        const vendors = await findNearbyVendors(null, 10, { 
-          service: cat.title, 
-          city: cityName 
+        const vendors = await findNearbyVendors(null, 10, {
+          service: cat.title,
+          city: cityName
         });
         return vendors.length > 0 ? cat : null;
       }
@@ -104,7 +104,7 @@ const getPublicCategories = async (req, res) => {
 const getPublicBrands = async (req, res) => {
   try {
     const { categoryId, categorySlug, search, cityId } = req.query;
-    
+
     // Grouping support: If categoryId or categorySlug is provided, find all related categories by title
     let categoryIds = [];
     if (categoryId) {
@@ -140,17 +140,17 @@ const getPublicBrands = async (req, res) => {
 
     // 2. ALSO check for vendor-specific services/products in these categories
     if (categoryIds.length > 0) {
-      const vendorServices = await Service.find({ 
-        categoryId: { $in: categoryIds }, 
-        status: 'active' 
+      const vendorServices = await Service.find({
+        categoryId: { $in: categoryIds },
+        status: 'active'
       })
-      .populate({
-        path: 'vendorId',
-        select: 'name businessName profilePhoto isOnline',
-        match: { isOnline: true, availability: 'AVAILABLE' }
-      })
-      .lean();
-      
+        .populate({
+          path: 'vendorId',
+          select: 'name businessName profilePhoto isOnline',
+          match: { isOnline: true, availability: 'AVAILABLE' }
+        })
+        .lean();
+
       const onlineVendorServices = vendorServices.filter(svc => svc.vendorId);
 
       if (onlineVendorServices.length > 0) {
@@ -177,7 +177,7 @@ const getPublicBrands = async (req, res) => {
             }
           }
         });
-        
+
         // Combine static brands with dynamic vendor brands
         const dynamicBrands = Array.from(vendorMap.values());
         brands = [...brands, ...dynamicBrands];
@@ -340,9 +340,9 @@ const getPublicServices = async (req, res) => {
       } else {
         query.categoryId = categoryId;
       }
-      
+
       // If fetching by category and brandId is a vendor ID
-      if (brandId && brandId.toString().length > 10) { 
+      if (brandId && brandId.toString().length > 10) {
         query.vendorId = brandId;
         delete query.brandId;
       }
@@ -505,7 +505,7 @@ const getPublicHomeData = async (req, res) => {
     const userLocation = (lat && lng) ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null;
 
     const City = require('../../models/City');
-    
+
     // Fetch categories, home content and city details in parallel
     const [allCategories, homeContent, cityDoc] = await Promise.all([
       Category.find({ status: 'active', showOnHome: true })
@@ -533,9 +533,9 @@ const getPublicHomeData = async (req, res) => {
         // Check if any online vendor is available (nearby or in city) for this category
         // findNearbyVendors handles both: distance search if userLocation is present, 
         // or city-wide online check if userLocation is null but cityName/cityId is provided.
-        const vendors = await findNearbyVendors(userLocation, 10, { 
-          service: cat.title, 
-          city: cityName 
+        const vendors = await findNearbyVendors(userLocation, 10, {
+          service: cat.title,
+          city: cityName
         });
 
         return vendors.length > 0 ? cat : null;
@@ -548,16 +548,16 @@ const getPublicHomeData = async (req, res) => {
 
         if (userLocation) {
           const { calculateDistance } = require('../../services/locationService');
-          const vLoc = ownerVendor.geoLocation?.coordinates 
+          const vLoc = ownerVendor.geoLocation?.coordinates
             ? { lat: ownerVendor.geoLocation.coordinates[1], lng: ownerVendor.geoLocation.coordinates[0] }
             : { lat: ownerVendor.address?.lat, lng: ownerVendor.address?.lng };
-          
+
           if (vLoc.lat && vLoc.lng) {
             const distance = calculateDistance(userLocation, vLoc);
             return distance <= 10 ? cat : null;
           }
         }
-        
+
         // Fallback: If no user location provided, show if vendor is online and in the city (if city filter applied)
         if (cityName && ownerVendor.address?.city) {
           const isMatch = new RegExp(cityName, 'i').test(ownerVendor.address.city);
@@ -680,71 +680,11 @@ const getPublicHomeData = async (req, res) => {
   }
 };
 
-/**
- * Search categories and brands
- * GET /api/public/search?q=query
- */
-const searchCatalog = async (req, res) => {
-  try {
-    const { q, cityId } = req.query;
-    if (!q || q.length < 2) return res.status(200).json({ success: true, results: [] });
-
-    const escapedSearch = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(escapedSearch, 'i');
-
-    // Fetch categories and brands matching the search query
-    const [categories, brands] = await Promise.all([
-      Category.find({ 
-        title: regex, 
-        status: 'active' 
-      })
-      .select('title slug homeIconUrl description vendorId')
-      .limit(10)
-      .lean(),
-      
-      Brand.find({ 
-        title: regex, 
-        status: 'active' 
-      })
-      .select('title slug iconUrl logo imageUrl categoryIds')
-      .limit(10)
-      .lean()
-    ]);
-
-    // Format results for frontend
-    const results = [
-      ...categories.map(c => ({ 
-        id: c._id.toString(), 
-        title: c.title, 
-        slug: c.slug, 
-        type: 'category', 
-        icon: c.homeIconUrl, 
-        description: c.description,
-        isVendor: !!c.vendorId
-      })),
-      ...brands.map(b => ({ 
-        id: b._id.toString(), 
-        title: b.title, 
-        slug: b.slug, 
-        type: 'brand', 
-        icon: b.iconUrl || b.logo || b.imageUrl,
-        categoryId: b.categoryIds && b.categoryIds.length > 0 ? b.categoryIds[0].toString() : null
-      }))
-    ];
-
-    res.status(200).json({ success: true, results });
-  } catch (error) {
-    console.error('Search catalog error:', error);
-    res.status(500).json({ success: false, message: 'Search failed' });
-  }
-};
-
 module.exports = {
   getPublicCategories,
   getPublicBrands,
   getPublicBrandBySlug,
   getPublicServices,
   getPublicHomeContent,
-  getPublicHomeData,
-  searchCatalog
+  getPublicHomeData
 };
