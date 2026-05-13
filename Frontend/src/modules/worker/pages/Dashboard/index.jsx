@@ -230,46 +230,28 @@ const Dashboard = memo(() => {
 
       <main className="relative z-10 pt-4">
         {/* Premium Performance Card */}
-        <div className="px-5 pb-8">
+        <div className="px-5 pb-6">
           <div 
-            className="rounded-[32px] p-8 shadow-[0_32px_64px_-16px_rgba(13,148,136,0.2)] relative overflow-hidden"
+            className="rounded-[28px] p-5 shadow-[0_20px_40px_-12px_rgba(13,148,136,0.15)] relative overflow-hidden"
             style={{ background: 'linear-gradient(135deg, #0D9488 0%, #064E3B 100%)' }}
           >
-            <div className="absolute top-0 right-0 w-48 h-48 bg-teal-400/20 rounded-full blur-[80px] -mr-20 -mt-20" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-teal-400/20 rounded-full blur-[60px] -mr-12 -mt-12" />
             
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 rounded-full bg-teal-300 animate-pulse" />
-                  <p className="text-[10px] font-black text-teal-200/60 uppercase tracking-[0.2em]">Active Status</p>
-                </div>
-                <h3 className="text-white text-2xl font-[1000] leading-tight mb-4">
-                  Welcome back,<br />{workerProfile.name.split(' ')[0]}!
-                </h3>
-                <motion.button 
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/worker/jobs')}
-                  className="bg-white text-teal-900 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider shadow-xl shadow-teal-900/20"
-                >
-                  My Schedule
-                </motion.button>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-300 animate-pulse" />
+                <p className="text-[9px] font-black text-teal-200/60 uppercase tracking-[0.2em]">Active Status</p>
               </div>
-
-              <div className="relative w-28 h-28 flex items-center justify-center">
-                <svg className="w-full h-full -rotate-90">
-                  <circle cx="56" cy="56" r="46" stroke="rgba(255,255,255,0.1)" strokeWidth="10" fill="transparent" />
-                  <circle
-                    cx="56" cy="56" r="46" stroke="#FFFFFF" strokeWidth="10"
-                    strokeDasharray={2 * Math.PI * 46}
-                    strokeDashoffset={2 * Math.PI * 46 * (1 - stats.performanceScore / 100)}
-                    strokeLinecap="round" fill="transparent"
-                    className="transition-all duration-1000 ease-out"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-white text-2xl font-[1000]">{stats.performanceScore}%</span>
-                </div>
-              </div>
+              <h3 className="text-white text-xl font-[1000] leading-tight mb-4">
+                Welcome back, {workerProfile.name.split(' ')[0]}!
+              </h3>
+              <motion.button 
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/worker/jobs')}
+                className="bg-white text-teal-900 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-xl shadow-teal-900/10"
+              >
+                My Schedule
+              </motion.button>
             </div>
           </div>
         </div>
@@ -296,15 +278,23 @@ const Dashboard = memo(() => {
             </div>
           </div>
 
-          {/* Service Categories */}
+          {/* Service Categories - Compact Full Width List */}
           {workerProfile.categories?.length > 0 && (
             <div>
               <h2 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.15em] mb-3 px-1 opacity-50">Service Expertise</h2>
-              <div className="grid grid-cols-3 gap-2.5">
-                {workerProfile.categories.slice(0, 3).map((cat) => (
-                  <div key={cat} className="bg-white rounded-[20px] p-3 flex flex-col items-center justify-center border border-gray-100 shadow-sm">
-                    <FiSettings className="w-4 h-4 text-teal-600 mb-1.5" />
-                    <span className="text-[9px] font-[1000] text-gray-700 truncate w-full text-center uppercase tracking-tight">{cat}</span>
+              <div className="space-y-2">
+                {workerProfile.categories.slice(0, 4).map((cat) => (
+                  <div key={cat} className="bg-white rounded-[20px] p-3 flex items-center justify-between border border-gray-100 shadow-sm active:scale-95 transition-all">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
+                        <FiSettings className="w-5 h-5 text-teal-600" />
+                      </div>
+                      <div>
+                        <span className="text-[12px] font-[1000] text-gray-900 uppercase tracking-tight block leading-tight">{cat}</span>
+                        <span className="text-[8px] font-black text-teal-600 uppercase tracking-widest">Verified Pro</span>
+                      </div>
+                    </div>
+                    <FiChevronRight className="w-4 h-4 text-gray-300" />
                   </div>
                 ))}
               </div>

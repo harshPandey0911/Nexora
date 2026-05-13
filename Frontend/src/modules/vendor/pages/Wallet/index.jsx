@@ -169,37 +169,49 @@ const Wallet = () => {
       </header>
 
       <main className="px-5">
-        {/* Single Total Balance Section */}
+        {/* Premium Compact Balance Section */}
         <div 
-          className="rounded-[40px] p-10 shadow-2xl shadow-[#0D463C]/10 mb-8 relative overflow-hidden text-center"
-          style={{ background: '#0D463C' }}
+          className="rounded-[32px] p-5 shadow-2xl shadow-[#0D463C]/20 mb-6 relative overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #0D463C 0%, #062F28 100%)' }}
         >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full -ml-32 -mb-32 blur-3xl" />
+          {/* Subtle Glassmorphism Background Pattern */}
+          <div className="absolute top-0 right-0 w-40 h-40 bg-teal-400/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-8 -mb-8 blur-2xl" />
           
-          <div className="relative z-10">
-            <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.4em] mb-6">Current Wallet Balance</p>
-            <h2 className="text-6xl font-black text-white tracking-tighter mb-10">₹{(wallet.dues || 0).toLocaleString()}</h2>
-            
-            <div className="bg-white/10 backdrop-blur-md rounded-[32px] p-8 border border-white/10 max-w-sm mx-auto">
-              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-4">Payout Amount</p>
-              <div className="relative mb-6">
-                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-white/30">₹</span>
-                <input 
-                  type="number"
-                  placeholder="0"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-12 pr-6 text-center text-2xl font-black text-white placeholder:text-white/20 outline-none focus:bg-white/10 transition-all"
-                  value={payoutAmount}
-                  onChange={(e) => setPayoutAmount(e.target.value)}
-                />
+          <div className="relative z-10 space-y-5">
+            <div className="flex items-center justify-between px-1">
+              <div>
+                <p className="text-[10px] font-black text-teal-300/50 uppercase tracking-[0.25em] mb-1">Available Balance</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-[1000] text-white">₹{(wallet.dues || 0).toLocaleString()}</span>
+                  <span className="text-[10px] font-black text-teal-400 uppercase tracking-widest">Total</span>
+                </div>
               </div>
-              <button 
-                onClick={handlePayout}
-                disabled={isProcessing}
-                className="w-full py-5 bg-white text-[#0D463C] rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all disabled:opacity-50"
-              >
-                {isProcessing ? 'Processing...' : 'Request Payout'}
-              </button>
+              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/40">
+                <FiDollarSign className="w-5 h-5" />
+              </div>
+            </div>
+            
+            <div className="bg-white/5 backdrop-blur-xl rounded-[24px] p-4 border border-white/10 shadow-inner">
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-teal-400/50">₹</div>
+                  <input 
+                    type="number"
+                    placeholder="Enter Amount"
+                    className="w-full bg-white/10 border border-white/5 rounded-xl py-3 pl-8 pr-3 text-sm font-black text-white placeholder:text-white/20 outline-none focus:bg-white/15 focus:border-white/20 transition-all"
+                    value={payoutAmount}
+                    onChange={(e) => setPayoutAmount(e.target.value)}
+                  />
+                </div>
+                <button 
+                  onClick={handlePayout}
+                  disabled={isProcessing}
+                  className="px-6 py-3 bg-white text-[#0D463C] rounded-xl font-[1000] text-[11px] uppercase tracking-wider shadow-lg active:scale-95 transition-all disabled:opacity-50 whitespace-nowrap"
+                >
+                  {isProcessing ? 'Wait...' : 'Payout'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
