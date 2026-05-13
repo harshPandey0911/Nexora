@@ -545,7 +545,7 @@ const Home = () => {
 
 
         {/* Top-level Info Sections (Requested at Top) */}
-        <div className="space-y-8 mt-6">
+        <div className="space-y-4 lg:space-y-6 mt-4 lg:mt-6">
           {homeContent?.isHowItWorksVisible !== false && homeContent?.howItWorks?.items?.length > 0 && (
             <Suspense fallback={<div className="h-40 bg-gray-50 animate-pulse rounded-xl mx-4" />}>
               <div id="how-it-works">
@@ -598,7 +598,7 @@ const Home = () => {
           </motion.section>
         )}
 
-        <main className="pt-6 space-y-8 pb-24 max-w-[1400px] mx-auto w-full">
+        <main className="pt-4 lg:pt-6 space-y-4 lg:space-y-6 pb-20 lg:pb-24 max-w-[1400px] mx-auto w-full">
               {/* All Categories Section (Optional/Secondary) */}
               {/* Categories Section removed as redundant with QuickLinks */}
 

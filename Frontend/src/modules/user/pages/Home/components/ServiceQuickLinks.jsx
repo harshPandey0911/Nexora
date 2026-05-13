@@ -58,9 +58,9 @@ const ServiceQuickLinks = ({ categories = [], onCategoryClick }) => {
             whileHover={{ y: -10, shadow: '0 25px 50px rgba(0,0,0,0.1)' }}
             whileTap={{ scale: 0.95 }}
             onClick={() => onCategoryClick?.(category)}
-            className="flex flex-col items-center bg-white rounded-[32px] p-6 sm:p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-gray-100 cursor-pointer transition-all duration-500 hover:border-blue-200 group"
+            className="flex flex-col items-center bg-white rounded-[32px] p-4 sm:p-5 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-gray-100 cursor-pointer transition-all duration-500 hover:border-blue-200 group"
           >
-            <div className="w-20 h-20 sm:w-24 sm:h-24 mb-6 sm:mb-8 flex items-center justify-center bg-gray-50/50 rounded-[28px] p-5 group-hover:bg-gray-100/50 transition-colors duration-500">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mb-4 sm:mb-5 flex items-center justify-center bg-gray-50/50 rounded-[28px] p-4 group-hover:bg-gray-100/50 transition-colors duration-500">
               {category.icon ? (
                 <img 
                   src={category.icon} 

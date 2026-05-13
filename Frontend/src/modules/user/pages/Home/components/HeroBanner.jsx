@@ -22,7 +22,7 @@ const HeroBanner = ({ banners = [], onSearchClick, heroData }) => {
       <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-gray-50/50 rounded-full blur-3xl -z-0" />
       <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] bg-gray-50/50 rounded-full blur-3xl -z-0" />
 
-      <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-12 pt-10 pb-4 lg:pt-16 lg:pb-12">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-12 pt-6 lg:pt-10 pb-4 lg:pb-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-center">
           
           {/* Left Content */}
