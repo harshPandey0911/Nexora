@@ -312,7 +312,8 @@ const Home = () => {
               icon: toAssetUrl(cat.icon),
               hasSaleBadge: cat.hasSaleBadge,
               badge: cat.badge,
-              description: cat.description
+              description: cat.description,
+              offeringType: cat.offeringType || 'SERVICE'
             }));
             setCategories(mappedCategories);
           }
@@ -342,6 +343,15 @@ const Home = () => {
     fetchData();
     fetchBanners();
   }, [currentCity, coords]);
+
+  // Split categories for display
+  const { serviceCategories, productCategories } = React.useMemo(() => {
+    return {
+      serviceCategories: categories.filter(c => c.offeringType === 'SERVICE'),
+      productCategories: categories.filter(c => c.offeringType === 'PRODUCT')
+    };
+  }, [categories]);
+
   // Open category modal from navigation state (e.g. from Cart 'Add Services')
   useEffect(() => {
     if (!loading && categories.length > 0 && (location.state?.openCategoryId || location.state?.openCategoryName)) {
@@ -366,8 +376,12 @@ const Home = () => {
   };
 
   const handleCategoryClick = (category) => {
-    setSelectedCategory(category);
-    setIsCategoryModalOpen(true);
+    if (category.offeringType === 'PRODUCT') {
+      navigate(`/user/products?categoryId=${category.id || category._id}&type=PRODUCT`);
+    } else {
+      setSelectedCategory(category);
+      setIsCategoryModalOpen(true);
+    }
   };
 
   const handlePromoClick = (promo) => {
@@ -537,9 +551,14 @@ const Home = () => {
         {!isSearchOpen && (
           <HeroBanner 
             banners={offerBanners} 
-            onSearchClick={() => setIsSearchOpen(true)} 
+            onSearchClick={() => navigate('/user/services')} 
             heroData={homeContent?.heroSection}
           />
+        )}
+
+        {/* Offer Banner Slider - shown after hero, only when banners exist */}
+        {!isSearchOpen && offerBanners.length > 0 && (
+          <OfferBannerSlider banners={offerBanners} />
         )}
 
 
@@ -563,14 +582,31 @@ const Home = () => {
           )}
         </div>
 
-        {/* Dynamic Service Quick Links - New Premium Design */}
+        {/* Services & Products Sections */}
         {homeContent?.isCategoriesVisible !== false && (
-          <motion.section variants={itemVariants} id="services">
-            <ServiceQuickLinks 
-              categories={categories} 
-              onCategoryClick={handleCategoryClick} 
-            />
-          </motion.section>
+          <div className="space-y-0 lg:space-y-4">
+            {/* Services Section */}
+            {serviceCategories.length > 0 && (
+              <motion.section variants={itemVariants} id="services">
+                <ServiceQuickLinks 
+                  title="Our Services"
+                  categories={serviceCategories} 
+                  onCategoryClick={handleCategoryClick} 
+                />
+              </motion.section>
+            )}
+
+            {/* Products Section */}
+            {productCategories.length > 0 && (
+              <motion.section variants={itemVariants} id="products">
+                <ServiceQuickLinks 
+                  title="Our Products"
+                  categories={productCategories} 
+                  onCategoryClick={handleCategoryClick} 
+                />
+              </motion.section>
+            )}
+          </div>
         )}
 
 

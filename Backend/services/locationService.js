@@ -75,11 +75,10 @@ const _buildVendorQuery = (filters = {}) => {
     approvalStatus: VENDOR_STATUS.APPROVED,
     isActive: true,
     isOnline: true,
-    availability: 'AVAILABLE', // Only fetch available vendors for bookings
     ...queryFilters
   };
 
-  if (filters.city) {
+  if (filters.city && filters.city.trim() !== '') {
     baseQuery['address.city'] = { $regex: new RegExp(filters.city, 'i') };
   }
 

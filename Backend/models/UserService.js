@@ -58,6 +58,25 @@ const userServiceSchema = new mongoose.Schema({
   description: {
     type: String,
     trim: true
+  },
+  detailedDescription: {
+    type: String,
+    trim: true
+  },
+  features: [{
+    type: String
+  }],
+  benefits: [{
+    type: String
+  }],
+  images: [{
+    type: String
+  }],
+  offeringType: {
+    type: String,
+    enum: ['SERVICE', 'PRODUCT'],
+    default: 'SERVICE',
+    index: true
   }
 }, {
   timestamps: true

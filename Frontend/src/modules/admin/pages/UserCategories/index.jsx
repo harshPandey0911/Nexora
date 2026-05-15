@@ -14,10 +14,10 @@ const UserCategories = () => {
   }, []);
 
   const tabLinks = [
-    { name: "Manage Home UI", path: "home", icon: FiHome },
-    { name: "Categories", path: "categories", icon: FiGrid },
-    { name: "Services", path: "sections", icon: FiList },
-    { name: "Brands", path: "brands", icon: FiAward },
+    { name: "Manage Home UI", path: "/admin/user-categories/home", icon: FiHome },
+    { name: "Categories", path: "/admin/user-categories/categories", icon: FiGrid },
+    { name: "Services", path: "/admin/user-categories/sections", icon: FiList },
+    { name: "Brands", path: "/admin/user-categories/brands", icon: FiAward },
   ];
 
   const location = useLocation();

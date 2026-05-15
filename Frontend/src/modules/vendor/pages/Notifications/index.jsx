@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiBell, FiCheck, FiX, FiTrash2 } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { vendorTheme as themeColors } from '../../../../theme';
-import BottomNav from '../../components/layout/BottomNav';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   getNotifications,
   markAsRead,
@@ -19,22 +19,7 @@ const Notifications = () => {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [filter, setFilter] = useState('all'); // all, alerts, jobs, payments
 
-  useLayoutEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const root = document.getElementById('root');
-    const bgStyle = themeColors.backgroundGradient;
-
-    if (html) html.style.background = bgStyle;
-    if (body) body.style.background = bgStyle;
-    if (root) root.style.background = bgStyle;
-
-    return () => {
-      if (html) html.style.background = '';
-      if (body) body.style.background = '';
-      if (root) root.style.background = '';
-    };
-  }, []);
+  // Removed legacy layout effect background injection
 
   const fetchNotifications = async () => {
     try {
@@ -155,174 +140,186 @@ const Notifications = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: '#FFFFFF' }}>
-      <header className="px-6 py-5 flex items-center justify-between bg-transparent">
-        <h1 className="text-xl font-black text-gray-900">Notifications</h1>
-        <div className="flex items-center gap-3">
+    <div className="space-y-6 pb-12">
+      {/* Header - Admin Style */}
+      <div className="bg-white p-5 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between text-gray-900 border border-gray-100 gap-6">
+        <div>
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight leading-none">
+            Alert Hub
+          </h2>
+          <p className="text-gray-500 text-[11px] font-medium mt-2">
+            Consolidated intelligence and operational status updates
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
           {notifications.some(n => !n.read) && (
-            <button 
+            <motion.button 
+              whileTap={{ scale: 0.9 }}
               onClick={handleMarkAllRead}
-              className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center border border-gray-100 text-black active:scale-95"
+              className="px-4 py-2 rounded-xl bg-gray-50 border border-gray-100 text-[9px] font-bold uppercase tracking-widest text-gray-600 hover:bg-gray-100 transition-all"
               title="Mark all as read"
             >
-              <FiCheck className="w-5 h-5" />
-            </button>
+              Clear All
+            </motion.button>
           )}
-          <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center border border-gray-100">
-            <FiBell className="w-5 h-5 text-black" />
+          <div className="w-12 h-12 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center shadow-inner">
+            <FiBell className="w-6 h-6 text-blue-600" />
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="px-5">
-        {/* Filter Tabs (Black Theme) */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+      {/* Control Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-1 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto scrollbar-hide">
           {[
-            { id: 'all', label: 'All' },
-            { id: 'jobs', label: 'Jobs' },
-            { id: 'payments', label: 'Payments' },
-            { id: 'alerts', label: 'System' },
+            { id: 'all', label: 'All Alerts' },
+            { id: 'jobs', label: 'Deployments' },
+            { id: 'payments', label: 'Financials' },
+            { id: 'alerts', label: 'Operational' },
           ].map((option) => (
             <button
               key={option.id}
               onClick={() => setFilter(option.id)}
-              className={`px-6 py-2.5 rounded-full font-black text-xs whitespace-nowrap transition-all duration-300 ${
-                filter === option.id
-                  ? 'bg-black text-white shadow-lg shadow-gray-200'
-                  : 'bg-white text-gray-400 border border-gray-100'
-              }`}
+              className={`
+                px-6 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap
+                ${filter === option.id
+                  ? 'bg-[#2874F0] text-white shadow-lg shadow-blue-200' 
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                }
+              `}
             >
               {option.label}
             </button>
           ))}
         </div>
 
-        {/* Action Buttons */}
         {notifications.length > 0 && (
-          <div className="flex justify-end gap-4 mb-4">
-            <button
-              className="text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors"
-            >
-              Mark All as Read
-            </button>
+          <div className="flex items-center gap-4">
             <button
               onClick={handleClearAll}
-              className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors flex items-center gap-1"
+              className="px-4 py-2 text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl uppercase tracking-widest hover:bg-rose-100 transition-all flex items-center gap-2"
             >
-              <FiTrash2 className="w-3 h-3" />
-              Clear All
+              <FiTrash2 className="w-4 h-4" />
+              Wipe Ledger
             </button>
           </div>
         )}
+      </div>
 
-        {/* Notifications List */}
+      {/* Notifications List */}
+      <div className="space-y-4">
         {filteredNotifications.length === 0 ? (
-          <div className="bg-white rounded-[32px] p-12 text-center border border-gray-100">
-            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FiBell className="w-8 h-8 text-gray-200" />
+          <div className="bg-white rounded-[48px] p-24 text-center border border-gray-100 shadow-sm">
+            <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-gray-100">
+              <FiBell className="w-10 h-10 text-gray-300" />
             </div>
-            <p className="text-gray-900 font-black mb-1">No notifications</p>
-            <p className="text-sm text-gray-400 font-bold">You're all caught up!</p>
+            <h3 className="text-xl font-bold text-gray-800 mb-2 uppercase tracking-tight">Sync Complete</h3>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">No pending alerts in the current matrix.</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4 pb-12">
             {filteredNotifications.map((notif) => (
               <div
                 key={notif.id}
-                className={`bg-white rounded-[28px] p-4 shadow-sm border transition-all relative group ${
-                  !notif.read ? 'border-black bg-gray-50/30' : 'border-gray-100'
+                className={`bg-white rounded-[28px] p-6 border transition-all relative group hover:shadow-md ${
+                  !notif.read ? 'border-blue-200 bg-blue-50/10 shadow-sm' : 'border-gray-100'
                 }`}
               >
-                <div className="flex items-start gap-3">
+                {!notif.read && (
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-600 rounded-l-[28px]" />
+                )}
+                
+                <div className="flex items-start gap-5">
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0"
-                    style={{ backgroundColor: `${getNotificationColor(notif.type)}15` }}
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 shadow-sm"
+                    style={{ backgroundColor: `${getNotificationColor(notif.type)}10` }}
                   >
                     {getNotificationIcon(notif.type)}
                   </div>
-                  <div className="flex-1 pr-6">
+                  <div className="flex-1 pr-12 min-w-0">
                     <div className="flex items-start justify-between mb-1">
-                      <div>
-                        <p className={`font-black text-gray-900 ${!notif.read ? '' : 'opacity-70'}`}>{notif.title}</p>
-                        <p className="text-sm text-gray-500 mt-1 font-bold leading-snug">{notif.message}</p>
-                      </div>
+                      <h4 className={`font-bold text-gray-800 text-lg tracking-tight truncate ${!notif.read ? 'text-blue-700' : 'opacity-70'}`}>
+                        {notif.title}
+                      </h4>
                     </div>
-                    <p className="text-[10px] font-black text-gray-300 mt-2 uppercase tracking-widest">{notif.time || (notif.createdAt && new Date(notif.createdAt).toLocaleString())}</p>
-
-                    {/* Action button based on type/related entity */}
-                    {(notif.action || notif.relatedType === 'booking' || notif.type === 'payout_requested') && (
-                      <button
-                        onClick={() => {
-                          if (notif.relatedType === 'booking' && notif.relatedId) {
-                            navigate(`/vendor/booking/${notif.relatedId}`);
-                          } else if (notif.action === 'view_booking' && notif.bookingId) {
-                            navigate(`/vendor/booking/${notif.bookingId}`);
-                          } else if (notif.action === 'view_wallet') {
-                            navigate('/vendor/wallet');
-                          }
-                        }}
-                        className="mt-3 text-xs font-black text-black flex items-center gap-1 uppercase tracking-widest"
-                      >
-                        View Details
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                      </button>
-                    )}
+                    <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                      {notif.message}
+                    </p>
+                    <div className="flex items-center gap-4 mt-4">
+                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        {notif.time || (notif.createdAt && new Date(notif.createdAt).toLocaleString())}
+                      </p>
+                      
+                      {(notif.action || notif.relatedType === 'booking' || notif.type === 'payout_requested') && (
+                        <button
+                          onClick={() => {
+                            if (notif.relatedType === 'booking' && notif.relatedId) {
+                              navigate(`/vendor/booking/${notif.relatedId}`);
+                            } else if (notif.action === 'view_booking' && notif.bookingId) {
+                              navigate(`/vendor/booking/${notif.bookingId}`);
+                            } else if (notif.action === 'view_wallet') {
+                              navigate('/vendor/wallet');
+                            }
+                          }}
+                          className="text-[10px] font-black text-blue-600 flex items-center gap-1.5 uppercase tracking-widest hover:underline"
+                        >
+                          Execute Review
+                          <FiCheck className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Actions: Mark Read & Delete - Positioned absolute top-right */}
-                <div className="absolute top-3 right-3 flex gap-2">
+                {/* Actions */}
+                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   {!notif.read && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleMarkAsRead(notif.id);
                       }}
-                      className="p-1.5 rounded-full bg-gray-50 hover:bg-gray-100 text-green-600 transition-colors shadow-sm"
-                      title="Mark as read"
+                      className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all border border-blue-100"
                     >
-                      <FiCheck className="w-3.5 h-3.5" />
+                      <FiCheck className="w-4 h-4" />
                     </button>
                   )}
                   <button
                     onClick={(e) => handleDelete(e, notif.id)}
-                    className="p-1.5 rounded-full bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors shadow-sm"
-                    title="Delete"
+                    className="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-all border border-gray-100"
                   >
-                    <FiX className="w-3.5 h-3.5" />
+                    <FiX className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </main>
-
-      <BottomNav />
+      </div>
 
       {/* Confirmation Modal */}
       {showClearConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl animate-scale-in">
-            <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
-                <FiTrash2 className="w-6 h-6 text-red-500" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900">Clear All Notifications?</h3>
-              <p className="text-sm text-gray-500 mt-2">This action cannot be undone.</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-[32px] p-10 shadow-2xl border border-gray-100 text-center">
+            <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-rose-100">
+              <FiTrash2 className="w-10 h-10 text-rose-500" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <h3 className="text-2xl font-bold text-gray-900 mb-3 uppercase tracking-tight">Purge Records?</h3>
+            <p className="text-sm text-gray-500 font-medium mb-10 leading-relaxed px-4">
+              Permanent de-authorization of all operational alerts. This sequence cannot be aborted.
+            </p>
+            <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => setShowClearConfirm(false)}
-                className="py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+                className="py-4 rounded-2xl bg-gray-50 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-100 transition-all"
               >
-                Cancel
+                Abort
               </button>
               <button
                 onClick={confirmClearAll}
-                className="py-3 rounded-xl font-bold text-white bg-red-500 shadow-lg shadow-red-500/30 active:scale-95 transition-all"
+                className="py-4 rounded-2xl bg-rose-600 text-[10px] font-bold uppercase tracking-widest text-white shadow-xl shadow-rose-100 active:scale-95 transition-all"
               >
-                Yes, Clear All
+                Execute
               </button>
             </div>
           </div>

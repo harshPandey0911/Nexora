@@ -60,6 +60,12 @@ const serviceSchema = new mongoose.Schema({
   description: {
     type: String,
     trim: true
+  },
+  offeringType: {
+    type: String,
+    enum: ['SERVICE', 'PRODUCT'],
+    default: 'SERVICE',
+    index: true
   }
 }, {
   timestamps: true

@@ -244,12 +244,16 @@ export const homeContentService = {
  */
 export const publicCatalogService = {
   // Get all active categories (cached for 5 minutes)
-  getCategories: async (cityId) => {
-    const cacheKey = `public:categories:${cityId || 'default'}`;
+  getCategories: async (cityId, offeringType = null) => {
+    const cacheKey = `public:categories:${cityId || 'default'}:${offeringType || 'all'}`;
     const cached = apiCache.get(cacheKey);
     if (cached) return cached;
 
-    const query = cityId ? `?cityId=${cityId}` : '';
+    const queryParams = new URLSearchParams();
+    if (cityId) queryParams.append('cityId', cityId);
+    if (offeringType) queryParams.append('offeringType', offeringType);
+
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
     const response = await api.get(`/public/categories${query}`);
     if (response.data.success) {
       apiCache.set(cacheKey, response.data, 300); // 5 minutes
@@ -283,6 +287,9 @@ export const publicCatalogService = {
     if (params.brandId) queryParams.append('brandId', params.brandId);
     if (params.brandSlug) queryParams.append('brandSlug', params.brandSlug);
     if (params.categoryId) queryParams.append('categoryId', params.categoryId);
+    if (params.cityId) queryParams.append('cityId', params.cityId);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.offeringType) queryParams.append('offeringType', params.offeringType);
 
     const cacheKey = `public:services:${queryParams.toString()}`;
     const cached = apiCache.get(cacheKey);
@@ -342,9 +349,17 @@ export const publicCatalogService = {
     const query = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
     const response = await api.get(`/public/home-data${query}`);
     
+    /*
     if (response.data.success && useCache) {
       apiCache.set(cacheKey, response.data, 120); // 2 minutes
     }
+    */
+    return response.data;
+  },
+
+  // Get service details by ID
+  getServiceDetails: async (id) => {
+    const response = await api.get(`/public/services/${id}`);
     return response.data;
   },
 

@@ -29,7 +29,6 @@ const iconMap = {
   Dashboard: FiHome,
   Users: FiUsers,
   Vendors: FiBriefcase,
-  Workers: FiUser,
   Bookings: FiShoppingBag,
   "Manage User App": FiGrid,
   "Vendor Services": FiGrid,
@@ -63,12 +62,6 @@ const getChildRoute = (parentRoute, childName) => {
       "Vendor Analytics": "/admin/vendors/analytics",
       "Vendor Payments": "/admin/vendors/payments",
     },
-    "/admin/workers": {
-      "All Workers": "/admin/workers/all",
-      "Worker Jobs": "/admin/workers/jobs",
-      "Worker Analytics": "/admin/workers/analytics",
-      "Worker Payments": "/admin/workers/payments",
-    },
     "/admin/bookings": {
       "All Bookings": "/admin/bookings",
       "Booking Tracking": "/admin/bookings/tracking",
@@ -83,7 +76,6 @@ const getChildRoute = (parentRoute, childName) => {
     "/admin/payments": {
       "Payment Overview": "/admin/payments/overview",
       "User Payments": "/admin/payments/users",
-      "Worker Payments": "/admin/payments/workers",
       "Vendor Payments": "/admin/payments/vendors",
       "Admin Revenue": "/admin/payments/revenue",
       "Payment Reports": "/admin/payments/reports",
@@ -100,7 +92,6 @@ const getChildRoute = (parentRoute, childName) => {
     },
     "/admin/settings": {
       "General Settings": "/admin/settings/general",
-      "Worker Assignment": "/admin/settings/worker-assignment",
       "Service Configuration": "/admin/settings/service-config",
       "System Settings": "/admin/settings/system",
     },

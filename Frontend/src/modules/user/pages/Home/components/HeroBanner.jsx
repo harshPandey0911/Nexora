@@ -1,20 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { HiOutlineSearch, HiArrowRight } from 'react-icons/hi';
 import { FiCheckCircle, FiClock, FiTruck, FiBox } from 'react-icons/fi';
-import { themeColors, getColorWithOpacity } from '../../../../../theme';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination, EffectFade } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/pagination';
-import 'swiper/css/effect-fade';
 
 const HeroBanner = ({ banners = [], onSearchClick, heroData }) => {
   const title = heroData?.title || 'Everything You Need, Delivered to You.';
   const subtitle = heroData?.subtitle || 'One super app for all your daily needs. Fast, reliable & secure delivery at your doorstep.';
-  const primaryBtnText = heroData?.primaryBtnText || 'Get Started';
   const secondaryBtnText = heroData?.secondaryBtnText || 'Explore Services';
-  const heroImage = heroData?.imageUrl || '/hero-illustration.png';
+  const heroImage = heroData?.imageUrl || null;
 
   return (
     <div className="relative w-full overflow-hidden bg-transparent">
@@ -23,21 +15,20 @@ const HeroBanner = ({ banners = [], onSearchClick, heroData }) => {
       <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] bg-gray-50/50 rounded-full blur-3xl -z-0" />
 
       <div className="relative z-10 max-w-[1400px] mx-auto px-6 lg:px-12 pt-6 lg:pt-10 pb-4 lg:pb-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-center">
+        <div className={`grid grid-cols-1 ${heroImage ? 'lg:grid-cols-2' : ''} gap-6 lg:gap-12 items-center`}>
           
           {/* Left Content */}
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex flex-col gap-2 lg:gap-6 text-center lg:text-left items-center lg:items-start"
+            className={`flex flex-col gap-2 lg:gap-6 text-center ${heroImage ? 'lg:text-left items-center lg:items-start' : 'items-center'}`}
           >
             <div className="space-y-1 lg:space-y-4">
               <h1 
                 className="text-2xl lg:text-7xl font-[1000] text-gray-900 leading-[1.1] tracking-tight" 
-              >
-                Everything You Need, <span className="text-[#0F1B73]">Delivered to You.</span>
-              </h1>
+                dangerouslySetInnerHTML={{ __html: title.replace(/,\s*(Delivered to You\.?)/, ', <span class="text-[#0F1B73]">$1</span>') }}
+              />
               <p className="text-[11px] lg:text-lg text-gray-500 font-medium max-w-md mx-auto lg:mx-0 leading-relaxed">
                 {subtitle}
               </p>
@@ -77,48 +68,37 @@ const HeroBanner = ({ banners = [], onSearchClick, heroData }) => {
             </div>
           </motion.div>
 
-          {/* Right Content - Illustration (Now visible on mobile) */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="flex justify-center lg:justify-end relative order-first lg:order-last mb-2 lg:mb-0"
-          >
-            <div className="relative w-full max-w-[220px] lg:max-w-[600px]">
-              <img 
-                src={heroImage} 
-                alt="Delivery Illustration" 
-                className="w-full h-auto"
-                style={{
-                  maskImage: 'radial-gradient(circle at center, black 65%, transparent 100%)',
-                  WebkitMaskImage: 'radial-gradient(circle at center, black 65%, transparent 100%)',
-                  filter: 'drop-shadow(0 20px 20px rgba(0,0,0,0.08))'
-                }}
-              />
-              {/* Floating elements - simplified for mobile */}
-              <motion.div 
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="absolute -top-4 -left-4 sm:top-10 sm:left-0 bg-white p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-xl border border-gray-50 flex items-center gap-2 sm:gap-3"
-              >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-lg sm:rounded-xl flex items-center justify-center text-orange-500">
-                  <FiBox className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div>
-                  <div className="text-[7px] sm:text-[10px] font-black text-gray-400 uppercase tracking-tight">Delivered</div>
-                  <div className="text-[9px] sm:text-[12px] font-black text-gray-900 leading-none">Successful!</div>
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
+          {/* Right Content - Dynamic Hero Image (only shown if admin uploaded one) */}
+          {heroImage && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="flex justify-center lg:justify-end relative order-first lg:order-last mb-2 lg:mb-0"
+            >
+              <div className="relative w-full max-w-[220px] lg:max-w-[600px]">
+                <img 
+                  src={heroImage} 
+                  alt="Hero Illustration" 
+                  className="w-full h-auto"
+                  style={{
+                    maskImage: 'radial-gradient(circle at center, black 65%, transparent 100%)',
+                    WebkitMaskImage: 'radial-gradient(circle at center, black 65%, transparent 100%)',
+                    filter: 'drop-shadow(0 20px 20px rgba(0,0,0,0.08))'
+                  }}
+                />
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
       
-      {/* Reduced spacing indicator */}
+      {/* Spacing */}
       <div className="h-2 w-full" />
     </div>
   );
 };
 
 export default HeroBanner;
+
 

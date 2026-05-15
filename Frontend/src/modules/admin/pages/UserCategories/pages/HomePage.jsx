@@ -6,7 +6,7 @@ import Modal from "../components/Modal";
 import ToggleSwitch from "../components/ToggleSwitch"; // Import ToggleSwitch
 import { ensureIds, saveCatalog, slugify, toAssetUrl } from "../utils";
 
-import { homeContentService, serviceService } from "../../../../../services/catalogService";
+import { homeContentService, serviceService, publicCatalogService } from "../../../../../services/catalogService";
 
 const RedirectionSelector = ({
   targetCategoryId,
@@ -213,6 +213,7 @@ const HomePage = () => {
   // Uploading state for all modals
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingHeroImage, setUploadingHeroImage] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const categories = useMemo(() => {
@@ -401,6 +402,8 @@ const HomePage = () => {
         contactUs: homeData.contactUs
       };
       await homeContentService.update(payload);
+      // Invalidate public cache so changes show up immediately for users
+      publicCatalogService.invalidateCache();
       toast.success('Home page updated successfully!');
     } catch (error) {
       console.error('Failed to sync home content:', error);
@@ -709,14 +712,75 @@ const HomePage = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Hero Image URL</label>
-                <input
-                  type="text"
-                  value={heroForm.imageUrl || home?.heroSection?.imageUrl || ""}
-                  onChange={(e) => setHeroForm({ ...heroForm, imageUrl: e.target.value })}
-                  placeholder="/hero-illustration.png"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                />
+                <label className="block text-sm font-bold text-gray-700 mb-1">Hero Image</label>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    {heroForm.imageUrl && (
+                      <img 
+                        src={toAssetUrl(heroForm.imageUrl)} 
+                        alt="Hero Preview" 
+                        className="w-20 h-20 object-cover rounded-lg border border-gray-200 shadow-sm"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingHeroImage}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setUploadingHeroImage(true);
+                            try {
+                              const folder = `Nexora/Hero`;
+                              const response = await serviceService.uploadImage(file, folder);
+                              if (response.success && response.imageUrl) {
+                                setHeroForm(p => ({ ...p, imageUrl: response.imageUrl }));
+                                toast.success("Hero image uploaded!");
+                              } else {
+                                toast.error("Upload failed");
+                              }
+                            } catch (error) {
+                              console.error('Hero upload error:', error);
+                              toast.error("Failed to upload image");
+                            } finally {
+                              setUploadingHeroImage(false);
+                            }
+                          }
+                        }}
+                        className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-black file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all cursor-pointer"
+                      />
+                      {uploadingHeroImage && (
+                        <div className="flex items-center gap-2 mt-2 text-blue-600">
+                          <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-600 border-t-transparent"></div>
+                          <span className="text-[10px] font-bold">Uploading...</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={heroForm.imageUrl || home?.heroSection?.imageUrl || ""}
+                      onChange={(e) => setHeroForm({ ...heroForm, imageUrl: e.target.value })}
+                      placeholder="Or enter image URL manually..."
+                      className="flex-1 px-4 py-2 text-xs border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                    {(heroForm.imageUrl || home?.heroSection?.imageUrl) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHeroForm(p => ({ ...p, imageUrl: '' }));
+                          patchHome({ heroSection: { ...heroForm, imageUrl: '' } });
+                        }}
+                        className="flex-shrink-0 px-3 py-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-xl text-xs font-bold transition-colors"
+                        title="Remove hero image"
+                      >
+                        ✕ Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

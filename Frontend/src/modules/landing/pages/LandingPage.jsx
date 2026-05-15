@@ -323,7 +323,7 @@ const LandingPage = () => {
         <div className="container mx-auto px-4 sm:px-8 max-w-7xl">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {[
-              { label: 'Verified Xperts', value: '450+', color: 'text-brand' },
+              { label: 'Verified Partners', value: '450+', color: 'text-brand' },
               { label: 'Indore Families', value: '12k+', color: 'text-white' },
               { label: 'Certified Parts', value: '1.5k+', color: 'text-brand' },
               { label: 'Reliability Score', value: '99%', color: 'text-white' },
@@ -342,11 +342,11 @@ const LandingPage = () => {
         <div className="container mx-auto px-4 sm:px-8 max-w-7xl">
           <div className="text-center mb-16 sm:mb-24">
             <span className="text-brand font-normal text-[10px] mb-4 block">Platform Glimpse</span>
-            <h2 className="text-4xl sm:text-7xl font-bold text-gray-900 mb-6 leading-tight">One Ecosystem, <br /><span className="text-brand">Three Super Apps.</span></h2>
+            <h2 className="text-4xl sm:text-7xl font-bold text-gray-900 mb-6 leading-tight">One Ecosystem, <br /><span className="text-brand">Unified Hub.</span></h2>
             <p className="max-w-2xl mx-auto text-gray-500 font-normal">Experience the power of a unified technical ecosystem designed for speed, transparency, and global standards.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 sm:gap-16 lg:gap-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 sm:gap-16 lg:gap-20 max-w-4xl mx-auto">
             {/* User App Glimpse */}
             <motion.div
               whileHover={{ y: -10 }}
@@ -385,24 +385,6 @@ const LandingPage = () => {
               <p className="text-gray-500 text-sm font-normal px-4">"Full-stack digital operating system to scale your local business."</p>
             </motion.div>
 
-            {/* Xpert App Glimpse */}
-            <motion.div
-              whileHover={{ y: -10 }}
-              className="flex flex-col items-center text-center group"
-            >
-              <div className="relative w-full max-w-[260px] sm:max-w-[280px] mb-10">
-                <div className="absolute inset-0 bg-orange-500/20 blur-[80px] rounded-full scale-50 group-hover:scale-100 transition-transform duration-700"></div>
-                <div className="relative z-10 p-2.5 sm:p-4 bg-gray-900 rounded-[2.5rem] sm:rounded-[3rem] border-[4px] sm:border-[8px] border-white shadow-2xl aspect-[9/18.5] overflow-hidden transform group-hover:rotate-1 transition-transform duration-500">
-                  <img src="/Homster xpert .png" alt="Homestr Xpert App" className="w-full h-full object-contain bg-gray-50 rounded-2xl brightness-95 group-hover:brightness-100 transition-all duration-500" />
-                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-12 h-1 bg-white/20 rounded-full"></div>
-                </div>
-              </div>
-              <div className="w-14 h-14 bg-white shadow-xl rounded-2xl flex items-center justify-center mb-6 text-orange-600">
-                <FaTools size={24} />
-              </div>
-              <h4 className="text-2xl font-normal mb-3">Xpert Pro</h4>
-              <p className="text-gray-500 text-sm font-normal px-4 text-nowrap">"Professional toolkit for engineers with live tracking and CRM."</p>
-            </motion.div>
           </div>
         </div>
       </section>
@@ -415,7 +397,7 @@ const LandingPage = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {[
-              { title: "Real-time Tracking", desc: "Monitor your Xpert live on the map as they head to your location.", icon: <FaMapMarker />, bg: "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=800" },
+              { title: "Real-time Tracking", desc: "Monitor your partner live on the map as they head to your location.", icon: <FaMapMarker />, bg: "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=800" },
               { title: "Doorstep Billing", desc: "Verified invoices generated at home. Transparency in every charge.", icon: <FaFileInvoiceDollar />, bg: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=800" },
               { title: "Platform Warranty", desc: "6-month warranty on every certified Homestr spare part replaced.", icon: <FaShieldAlt />, bg: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800" },
               { title: "Direct Connect", desc: "Call or chat with your assigned technician directly in-app.", icon: <FaHandshake />, bg: "https://images.unsplash.com/photo-1521791136064-7986c2959213?auto=format&fit=crop&q=80&w=800" }
@@ -447,11 +429,10 @@ const LandingPage = () => {
             <div className="w-16 sm:w-24 h-1 sm:h-1.5 bg-brand mx-auto rounded-full"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10 max-w-4xl mx-auto">
             {[
               { to: "/user", icon: <FaUser />, title: "As a User", btn: "Book Service" },
               { to: "/vendor/login", icon: <FaStore />, title: "Vendor Partner", btn: "Partner Now" },
-              { to: "/worker/login", icon: <FaHammer />, title: "As an Xpert", btn: "Start Earning" },
             ].map((box, idx) => (
               <Link key={idx} to={box.to} className="group p-8 sm:p-12 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] sm:rounded-[3.5rem] transition-all duration-700 hover:bg-white hover:shadow-2xl hover:-translate-y-2 flex flex-col items-center">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 text-white rounded-[1.5rem] sm:rounded-3xl flex items-center justify-center mb-6 sm:mb-10 transition-all duration-500 group-hover:bg-brand group-hover:text-white group-hover:rotate-6">

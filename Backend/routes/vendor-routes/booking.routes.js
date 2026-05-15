@@ -36,8 +36,10 @@ const assignWorkerValidation = [
 ];
 
 const updateStatusValidation = [
-  body('status').isIn(['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rejected'])
-    .withMessage('Invalid status')
+  body('status').isIn([
+    'pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rejected',
+    'packed', 'shipped', 'delivered'
+  ]).withMessage('Invalid status')
 ];
 
 const addNotesValidation = [

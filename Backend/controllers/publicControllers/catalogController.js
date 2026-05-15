@@ -32,26 +32,34 @@ const getPublicCategories = async (req, res) => {
     }
 
     const allCategories = await Category.find(query)
-      .select('title slug homeIconUrl homeBadge hasSaleBadge homeOrder showOnHome vendorId cityIds description')
+      .select('title slug homeIconUrl homeBadge hasSaleBadge homeOrder showOnHome vendorId cityIds description group')
       .sort({ homeOrder: 1, createdAt: -1 })
       .lean();
 
     // Filter categories based on online vendor availability
     const filteredCategories = await Promise.all(allCategories.map(async (cat) => {
-      // 1. If it's a platform category (no vendorId)
+      // 1. If it's a platform category (no vendorId), always return it so vendors can see and join
       if (!cat.vendorId) {
-        // Check if any online vendor is available in city for this category
-        const vendors = await findNearbyVendors(null, 10, {
-          service: cat.title,
-          city: cityName
-        });
-        return vendors.length > 0 ? cat : null;
+        return cat;
       }
 
       // 2. If it's a vendor-specific category
       if (cat.vendorId) {
-        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true, availability: 'AVAILABLE' }).select('address');
+        // Show vendor category if vendor is Online (even if BUSY)
+        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true }).select('address status');
         if (!ownerVendor) return null;
+
+        // NEW: If offeringType filter is provided, check if the vendor has items of that type in this category
+        if (req.query.offeringType) {
+          const Service = require('../../models/UserService'); // It's named UserService but exported as Service in models/UserService.js
+          const hasMatchingItems = await Service.exists({
+            categoryId: cat._id,
+            vendorId: cat.vendorId,
+            status: 'active',
+            offeringType: req.query.offeringType
+          });
+          if (!hasMatchingItems) return null;
+        }
 
         if (cityName && ownerVendor.address?.city) {
           const isMatch = new RegExp(cityName, 'i').test(ownerVendor.address.city);
@@ -77,7 +85,8 @@ const getPublicCategories = async (req, res) => {
           icon: cat.homeIconUrl || '',
           badge: cat.homeBadge || '',
           hasSaleBadge: cat.hasSaleBadge || false,
-          showOnHome: cat.showOnHome || false
+          showOnHome: cat.showOnHome || false,
+          group: cat.group || 'None'
         });
       }
     });
@@ -146,8 +155,8 @@ const getPublicBrands = async (req, res) => {
       })
         .populate({
           path: 'vendorId',
-          select: 'name businessName profilePhoto isOnline',
-          match: { isOnline: true, availability: 'AVAILABLE' }
+          select: 'name businessName profilePhoto isOnline availability',
+          match: { isOnline: true }
         })
         .lean();
 
@@ -317,9 +326,13 @@ const getPublicBrandBySlug = async (req, res) => {
  */
 const getPublicServices = async (req, res) => {
   try {
-    const { brandId, brandSlug, categoryId } = req.query;
+    const { brandId, brandSlug, categoryId, offeringType } = req.query;
 
     const query = { status: 'active' };
+    
+    if (offeringType) {
+      query.offeringType = offeringType;
+    }
 
     if (brandId) {
       query.brandId = brandId;
@@ -356,23 +369,51 @@ const getPublicServices = async (req, res) => {
     const services = await Service.find(query)
       .populate({
         path: 'vendorId',
-        select: 'name businessName profilePhoto isOnline'
+        select: 'name businessName profilePhoto isOnline availability'
       })
       .populate('brandId', 'title iconUrl')
+      .populate('categoryId', 'title status')
       .sort({ createdAt: 1 })
       .lean();
 
-    // Filter out vendor-specific services if the vendor is offline
-    const filteredServices = services.filter(svc => {
-      // If it's a platform service (no vendorId), show it
-      if (!svc.vendorId) return true;
-      // If it's a vendor service, only show if the vendor is online
-      return svc.vendorId.isOnline === true;
+    // Filter services based on vendor availability
+    const filteredServices = await Promise.all(services.map(async (svc) => {
+      // 1. If it's a vendor-specific service
+      if (svc.vendorId) {
+        return svc.vendorId.isOnline === true ? svc : null;
+      }
+
+      // 2. If it's a platform service (no vendorId)
+      // Check if any online/available vendor in the city supports this service's category
+      const { findNearbyVendors } = require('../../services/locationService');
+      const City = require('../../models/City');
+      const { cityId } = req.query;
+      
+      let cityName = '';
+      if (cityId) {
+        const cityDoc = await City.findById(cityId).select('name').lean();
+        cityName = cityDoc ? cityDoc.name : '';
+      }
+
+      const vendors = await findNearbyVendors(null, 10, {
+        service: svc.categoryTitle || svc.title,
+        city: cityName
+      });
+
+      return vendors.length > 0 ? svc : null;
+    }));
+
+    const finalServices = filteredServices.filter(svc => {
+      if (!svc) return false;
+      // Ensure parent category is active (populated categoryId should exist and have status active if we populated it)
+      // Since we populated categoryId, we can check svc.categoryId
+      if (svc.categoryId && svc.categoryId.status === 'inactive') return false;
+      return true;
     });
 
     res.status(200).json({
       success: true,
-      services: filteredServices.map(svc => ({
+      services: finalServices.map(svc => ({
         id: svc._id.toString(),
         title: svc.title,
         slug: svc.slug,
@@ -385,7 +426,9 @@ const getPublicServices = async (req, res) => {
         brandIcon: svc.brandId?.iconUrl,
         vendorId: svc.vendorId?._id,
         vendorName: svc.vendorId?.businessName || svc.vendorId?.name,
-        vendorPhoto: svc.vendorId?.profilePhoto
+        vendorPhoto: svc.vendorId?.profilePhoto,
+        categoryId: svc.categoryId?._id,
+        categoryTitle: svc.categoryId?.title
       }))
     });
   } catch (error) {
@@ -393,6 +436,58 @@ const getPublicServices = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch services'
+    });
+  }
+};
+
+/**
+ * Get single service details for user app
+ * GET /api/public/services/:id
+ */
+const getPublicServiceById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const svc = await Service.findById(id)
+      .populate({
+        path: 'vendorId',
+        select: 'name businessName profilePhoto isOnline availability'
+      })
+      .populate('categoryId', 'title')
+      .lean();
+
+    if (!svc) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      service: {
+        id: svc._id.toString(),
+        title: svc.title,
+        iconUrl: svc.iconUrl,
+        basePrice: svc.basePrice,
+        gstPercentage: svc.gstPercentage,
+        description: svc.description,
+        detailedDescription: svc.detailedDescription,
+        features: svc.features || [],
+        benefits: svc.benefits || [],
+        images: svc.images || [],
+        vendorId: svc.vendorId?._id,
+        vendorName: svc.vendorId?.businessName || svc.vendorId?.name,
+        vendorPhoto: svc.vendorId?.profilePhoto,
+        categoryId: svc.categoryId?._id,
+        categoryTitle: svc.categoryId?.title
+      }
+    });
+  } catch (error) {
+    console.error('Get public service details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch product details'
     });
   }
 };
@@ -507,14 +602,27 @@ const getPublicHomeData = async (req, res) => {
     const City = require('../../models/City');
 
     // Fetch categories, home content and city details in parallel
-    const [allCategories, homeContent, cityDoc] = await Promise.all([
+    // Always try city-specific first, then fall back to global default
+    const [allCategories, citySpecificContent, defaultContent, cityDoc] = await Promise.all([
       Category.find({ status: 'active', showOnHome: true })
-        .select('title slug homeIconUrl homeBadge hasSaleBadge showOnHome vendorId cityIds description')
+        .select('title slug homeIconUrl homeBadge hasSaleBadge showOnHome vendorId cityIds description group offeringType')
         .sort({ homeOrder: 1, createdAt: -1 })
         .lean(),
-      HomeContent.getHomeContent(cityId),
+      cityId ? HomeContent.findOne({ cityId }) : null,
+      HomeContent.findOne({ cityId: null }),
       cityId ? City.findById(cityId).select('name').lean() : null
     ]);
+
+    // Use city-specific content if it has meaningful data (heroSection with imageUrl),
+    // otherwise fall back to the global default document
+    let homeContent = null;
+    if (cityId && citySpecificContent && citySpecificContent.heroSection?.imageUrl) {
+      homeContent = citySpecificContent;
+    } else if (defaultContent) {
+      homeContent = defaultContent;
+    } else {
+      homeContent = await HomeContent.getHomeContent(null);
+    }
 
     const cityName = cityDoc ? cityDoc.name : '';
 
@@ -530,9 +638,6 @@ const getPublicHomeData = async (req, res) => {
           return null;
         }
 
-        // Check if any online vendor is available (nearby or in city) for this category
-        // findNearbyVendors handles both: distance search if userLocation is present, 
-        // or city-wide online check if userLocation is null but cityName/cityId is provided.
         const vendors = await findNearbyVendors(userLocation, 10, {
           service: cat.title,
           city: cityName
@@ -543,8 +648,10 @@ const getPublicHomeData = async (req, res) => {
 
       // 2. If it's a vendor-specific category
       if (cat.vendorId) {
-        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true, availability: 'AVAILABLE' }).select('geoLocation address');
-        if (!ownerVendor) return null;
+        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true }).select('geoLocation address name');
+        if (!ownerVendor) {
+          return null;
+        }
 
         if (userLocation) {
           const { calculateDistance } = require('../../services/locationService');
@@ -554,7 +661,8 @@ const getPublicHomeData = async (req, res) => {
 
           if (vLoc.lat && vLoc.lng) {
             const distance = calculateDistance(userLocation, vLoc);
-            return distance <= 10 ? cat : null;
+            const isNearby = distance <= 10;
+            return isNearby ? cat : null;
           }
         }
 
@@ -585,7 +693,9 @@ const getPublicHomeData = async (req, res) => {
           badge: cat.homeBadge || '',
           hasSaleBadge: cat.hasSaleBadge || false,
           showOnHome: cat.showOnHome || false,
-          description: cat.description || ''
+          group: cat.group || 'None',
+          description: cat.description || '',
+          offeringType: cat.offeringType || 'SERVICE'
         });
       }
     });
@@ -685,6 +795,7 @@ module.exports = {
   getPublicBrands,
   getPublicBrandBySlug,
   getPublicServices,
+  getPublicServiceById,
   getPublicHomeContent,
   getPublicHomeData
 };

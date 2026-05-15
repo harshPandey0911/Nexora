@@ -78,10 +78,7 @@ const LiveBookingCard = ({ hasBottomNav }) => {
         // Find the first booking that is in an active state (checking both cases to be safe)
         const ongoing = res.data.find(b => {
           const s = b.status?.toUpperCase();
-          // Hide LiveBookingCard if status is WORK_DONE and review is already done
-          if (s === 'WORK_DONE' && b.rating) return false;
-
-          return ['ASSIGNED', 'STARTED', 'JOURNEY_STARTED', 'VISITED', 'IN_PROGRESS', 'WORK_DONE', 'SEARCHING', 'REQUESTED'].includes(s);
+          return ['ASSIGNED', 'STARTED', 'JOURNEY_STARTED', 'VISITED', 'IN_PROGRESS', 'SEARCHING', 'REQUESTED'].includes(s);
         });
         setActiveBooking(ongoing || null);
       }
@@ -146,7 +143,7 @@ const LiveBookingCard = ({ hasBottomNav }) => {
             navigate(`/user/booking/${activeBooking._id || activeBooking.id}`);
           }
         }}
-        className={`fixed ${hasBottomNav ? 'bottom-24' : 'bottom-6'} left-4 right-4 z-50`}
+        className={`fixed ${hasBottomNav ? 'bottom-24' : 'bottom-6'} left-4 right-4 md:left-auto md:right-8 md:w-[420px] z-50`}
       >
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 flex items-center gap-4 relative overflow-hidden cursor-pointer active:scale-95 transition-transform group">
 

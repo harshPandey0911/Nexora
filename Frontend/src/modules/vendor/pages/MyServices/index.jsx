@@ -1,46 +1,81 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiBriefcase, FiStar, FiChevronRight, FiInfo, FiPlus, FiTrash2, FiAlertCircle } from 'react-icons/fi';
+import { 
+  FiPackage, FiPlus, FiTrash2, FiSearch, 
+  FiBriefcase, FiStar, FiChevronDown, FiBox, FiTool
+} from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
-import { vendorTheme as themeColors } from '../../../../theme';
-import BottomNav from '../../components/layout/BottomNav';
 import vendorService from '../../services/vendorService';
+import { publicCatalogService } from '../../../../services/catalogService';
 import { toast } from 'react-hot-toast';
 
 const MyServices = () => {
   const navigate = useNavigate();
-  const [services, setServices] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [groupedServices, setGroupedServices] = useState({});
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all');
-  const [showConfirm, setShowConfirm] = useState(null); // stores categoryId to be removed
+  const [showConfirm, setShowConfirm] = useState(null);
   const [isRemoving, setIsRemoving] = useState(false);
+  
+  const [quickAdd, setQuickAdd] = useState({ title: '', basePrice: '', categoryId: '' });
+  const [isAdding, setIsAdding] = useState(false);
 
-  useLayoutEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const root = document.getElementById('root');
-    const bgStyle = themeColors.backgroundGradient;
-
-    if (html) html.style.background = bgStyle;
-    if (body) body.style.background = bgStyle;
-    if (root) root.style.background = bgStyle;
-
-    return () => {
-      if (html) html.style.background = '';
-      if (body) body.style.background = '';
-      if (root) root.style.background = '';
-    };
-  }, []);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
 
   const loadServices = async () => {
     try {
       setLoading(true);
-      const res = await vendorService.getMyServices();
+      const res = await vendorService.getMyCustomContent();
+      const resStats = await vendorService.getMyServices(); // For category stats
+      const publicCatsRes = await publicCatalogService.getCategories(); // Fetch all platform categories
+
       if (res.success) {
-        setServices(res.data || []);
+        const myCats = (res.data?.categories || []).map(c => ({ ...c, id: c._id || c.id }));
+        const platformCats = (publicCatsRes.success ? publicCatsRes.categories : []).map(c => ({ ...c, id: c._id || c.id }));
+        
+        // Filter by SERVICE type and merge (Prioritize myCats)
+        const combined = [...myCats];
+        platformCats.forEach(pc => {
+          if (!combined.find(vc => vc.title.toLowerCase() === pc.title.toLowerCase())) {
+            combined.push(pc);
+          }
+        });
+
+        const serviceCats = combined.filter(c => !c.offeringType || c.offeringType === 'SERVICE');
+        
+        console.log('[loadServices] Final categories with IDs:', serviceCats.map(c => ({ title: c.title, id: c.id })));
+
+        // Add stats from getMyServices to categories
+        const statsMap = {};
+        if (resStats.success) {
+           resStats.data.forEach(s => {
+             statsMap[s.id || s._id] = s.stats;
+           });
+        }
+
+        const catsWithStats = serviceCats.map(cat => ({
+          ...cat,
+          stats: statsMap[cat.id] || { totalJobs: 0, completedJobs: 0, rating: 0 }
+        }));
+
+        setCategories(catsWithStats);
+        
+        // Group by categoryId
+        const grouped = {};
+        const allItems = (res.data?.services || []).map(s => ({ ...s, id: s._id || s.id }));
+        const servicesOnly = allItems.filter(item => !item.offeringType || item.offeringType === 'SERVICE');
+
+        servicesOnly.forEach(p => {
+          const catId = p.categoryId?._id || p.categoryId || 'uncategorized';
+          if (!grouped[catId]) grouped[catId] = [];
+          grouped[catId].push(p);
+        });
+        setGroupedServices(grouped);
       }
     } catch (error) {
       console.error('Error loading services:', error);
+      toast.error('Failed to load services');
     } finally {
       setLoading(false);
     }
@@ -50,186 +85,291 @@ const MyServices = () => {
     loadServices();
   }, []);
 
-  const handleRemoveService = async (categoryId) => {
+  const handleUpdateCategory = async (categoryId) => {
+    if (!editTitle.trim()) return setEditingCategory(null);
     try {
-      setIsRemoving(true);
+      setLoading(true);
+      const res = await vendorService.updateCategory(categoryId, { title: editTitle });
+      if (res.success) {
+        toast.success('Category updated');
+        setEditingCategory(null);
+        loadServices();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update category');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId) => {
+    if (!window.confirm('Are you sure you want to remove this category from your portfolio?')) return;
+    try {
+      setLoading(true);
       const res = await vendorService.removeService(categoryId);
       if (res.success) {
-        toast.success(res.message || 'Service removed');
-        setServices(prev => prev.filter(s => s.id !== categoryId));
+        toast.success(res.message);
+        loadServices();
+      }
+    } catch (error) {
+      toast.error('Failed to remove category');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveItem = async (itemId) => {
+    try {
+      setIsRemoving(true);
+      const res = await vendorService.removeService(itemId);
+      if (res.success) {
+        toast.success('Service item removed');
+        loadServices();
         setShowConfirm(null);
       }
     } catch (error) {
-      console.error('Remove service error:', error);
-      toast.error(error.response?.data?.message || 'Failed to remove service');
+      console.error('Remove item error:', error);
+      toast.error('Failed to remove item');
     } finally {
       setIsRemoving(false);
     }
   };
 
+  const handleQuickAdd = async (e, catId) => {
+    e.preventDefault();
+    if (!quickAdd.title || !quickAdd.basePrice) return toast.error('Please enter service name and price');
+    
+    try {
+      setIsAdding(true);
+      const res = await vendorService.addVendorService({
+        title: quickAdd.title,
+        basePrice: quickAdd.basePrice,
+        categoryId: catId,
+        offeringType: 'SERVICE'
+      });
+      if (res.success) {
+        toast.success('Service added!');
+        setQuickAdd({ title: '', basePrice: '', categoryId: '' });
+        loadServices();
+      }
+    } catch (error) {
+      toast.error('Failed to add service');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen pb-24" style={{ background: '#FFFFFF' }}>
-      <header className="px-6 py-5 flex items-center justify-between bg-transparent">
-        <h1 className="text-xl font-black text-gray-900">My Services</h1>
-        <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center border border-gray-100">
-          <FiBriefcase className="w-5 h-5 text-black" />
+    <div className="space-y-8 pb-20">
+      {/* Header - White Style */}
+      <div className="bg-white p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between text-gray-900 border border-gray-100 gap-6">
+        <div>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none uppercase">
+            Service Portfolio
+          </h2>
+          <p className="text-gray-500 font-medium mt-2">
+            Configure your expertise and pricing for user bookings
+          </p>
         </div>
-      </header>
-
-      <main className="px-4 py-6 max-w-lg mx-auto">
-        {/* Stats Header (Black Theme) */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-white rounded-[28px] p-5 border border-gray-100 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Expertise</p>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-black text-gray-900">{services.length}</span>
-              <span className="text-[10px] font-bold text-black bg-gray-50 px-2 py-0.5 rounded-full">Categories</span>
-            </div>
-          </div>
-          <div className="bg-white rounded-[28px] p-5 border border-gray-100 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Overall Rating</p>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-black text-gray-900">
-                {services.length > 0 
-                  ? (services.reduce((acc, s) => acc + s.stats.rating, 0) / services.length).toFixed(1) 
-                  : '0.0'}
-              </span>
-              <FiStar className="w-4 h-4 text-amber-400 fill-amber-400" />
-            </div>
-          </div>
+        <div className="flex items-center gap-3">
+           <button 
+             onClick={() => navigate('/vendor/add-custom-content?type=SERVICE')}
+             className="flex items-center gap-2 px-6 py-3 bg-gray-50 text-gray-400 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-100 transition-all active:scale-95 border border-gray-100"
+           >
+             <FiPlus className="w-4 h-4" />
+             New Skill Set
+           </button>
         </div>
+      </div>
 
-        {/* Section Title (Black Theme) */}
-        <div className="flex items-center justify-between mb-6 px-1">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-black animate-pulse"></div>
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Authorized Portfolios</h2>
-          </div>
-          <button 
-            onClick={() => navigate('/vendor/add-custom-content')}
-            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-gray-200 active:scale-95 transition-all"
-          >
-            <FiPlus className="w-3 h-3" />
-            Add New
-          </button>
-        </div>
-
-        {/* Services List */}
+      {/* Main Content */}
+      <div className="space-y-8">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-4" style={{ borderColor: `#000000 transparent #000000 #000000` }}></div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Portfolio...</p>
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Syncing Expertise...</p>
           </div>
-        ) : services.length === 0 ? (
-          <div className="bg-white rounded-[32px] p-12 text-center border border-gray-100">
-            <div className="w-20 h-20 mx-auto mb-6 bg-gray-50 rounded-full flex items-center justify-center">
-              <FiBriefcase className="w-10 h-10 text-gray-200" />
-            </div>
-            <h3 className="text-xl font-black text-gray-800 mb-2">No Services Yet</h3>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Contact admin to get assigned categories</p>
+        ) : categories.length === 0 ? (
+          <div className="bg-white rounded-3xl p-20 text-center border border-dashed border-gray-200">
+             <FiBriefcase className="w-16 h-16 text-gray-100 mx-auto mb-4" />
+             <h3 className="text-xl font-black text-gray-800 uppercase">No Active Skills</h3>
+             <p className="text-sm text-gray-400 mt-2">Awaiting administrative assignment or custom skill creation</p>
           </div>
         ) : (
-          <div className="space-y-5">
-            {services.map((service, index) => (
-              <motion.div
-                key={service.id || index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="group relative bg-white rounded-[32px] p-1 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-500"
-              >
-                <div className="flex p-4 gap-4">
-                  {/* Service Image/Icon */}
-                  <div className="relative w-24 h-24 rounded-[2rem] overflow-hidden shrink-0 shadow-inner">
-                    <img 
-                      src={service.imageUrl || service.iconUrl || 'https://via.placeholder.com/150'} 
-                      alt={service.title} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                    <div className="absolute bottom-2 left-0 right-0 text-center">
-                      <span className="text-[8px] font-black uppercase tracking-tighter text-white bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full">
-                        {service.status}
-                      </span>
+          categories.map(cat => (
+            <div key={cat._id} className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
+              {/* Category Header with Inline Add */}
+              <div className="bg-gray-50/50 px-8 py-6 border-b border-gray-100">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-gray-100 flex items-center justify-center overflow-hidden shadow-sm">
+                      {cat.imageUrl ? (
+                        <img src={cat.imageUrl} className="w-full h-full object-cover" alt="" />
+                      ) : (
+                        <FiTool className="text-gray-400 w-6 h-6" />
+                      )}
                     </div>
-                  </div>
-
-                  {/* Details */}
-                  <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
                     <div>
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-black text-gray-900 truncate tracking-tight">{service.title}</h3>
+                      {editingCategory === cat.id ? (
                         <div className="flex items-center gap-2">
+                          <input 
+                            type="text"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            className="px-3 py-1 bg-white border border-blue-500/30 rounded-lg text-sm font-bold text-gray-800 focus:outline-none"
+                            autoFocus
+                            onKeyDown={(e) => e.key === 'Enter' && handleUpdateCategory(cat.id)}
+                          />
                           <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowConfirm(service.id);
-                            }}
-                            className="p-2 rounded-xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+                            onClick={() => handleUpdateCategory(cat.id)}
+                            className="text-[10px] font-black text-blue-600 uppercase"
                           >
-                            <FiTrash2 className="w-3.5 h-3.5" />
+                            Save
                           </button>
-                          <div className="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg">
-                            <span className="text-[10px] font-black text-amber-600">{service.stats.rating}</span>
-                            <FiStar className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
-                          </div>
                         </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{cat.title}</h3>
+                          {cat.vendorId && (
+                            <>
+                              <button 
+                                onClick={() => {
+                                  setEditingCategory(cat.id);
+                                  setEditTitle(cat.title);
+                                }}
+                                className="p-1.5 text-gray-300 hover:text-blue-500 transition-all"
+                              >
+                                <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="14" width="14" xmlns="http://www.w3.org/2000/svg"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                className="p-1.5 text-gray-300 hover:text-red-500 transition-all"
+                                title="Delete Category"
+                              >
+                                <FiTrash2 size={14} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 mt-1">
+                        <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">
+                          {groupedServices[cat._id]?.length || 0} Specialties
+                        </p>
+                        <div className="w-1 h-1 bg-gray-300 rounded-full" />
+                        <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest flex items-center gap-1">
+                           <FiStar className="fill-amber-500" /> {cat.stats?.rating || '0.0'} Rating
+                        </p>
                       </div>
-                      <p className="text-[10px] text-gray-500 line-clamp-2 mt-1 leading-relaxed font-medium">
-                        {service.description || `High-quality ${service.title} services for your professional needs.`}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex gap-3">
-                        <div className="flex flex-col">
-                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Jobs</span>
-                          <span className="text-xs font-black text-gray-800">{service.stats.totalJobs}</span>
-                        </div>
-                        <div className="w-[1px] h-6 bg-gray-100 mt-1" />
-                        <div className="flex flex-col">
-                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Done</span>
-                          <span className="text-xs font-black text-black">{service.stats.completedJobs}</span>
-                        </div>
-                      </div>
-                      
-                      <button 
-                        onClick={() => navigate(`/vendor/jobs?category=${service.title}`)}
-                        className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-black hover:bg-black hover:text-white transition-all duration-300 shadow-sm active:scale-90"
-                      >
-                        <FiChevronRight className="w-5 h-5" />
-                      </button>
                     </div>
                   </div>
+                  
+                  {/* Quick Add Form */}
+                  <form 
+                    onSubmit={(e) => handleQuickAdd(e, cat._id)}
+                    className="flex flex-wrap items-center gap-3 bg-white p-2 rounded-[20px] border border-gray-100 shadow-sm"
+                  >
+                    <input 
+                      type="text"
+                      placeholder="Service (e.g. AC Cleaning)"
+                      value={quickAdd.categoryId === cat._id ? quickAdd.title : ''}
+                      onChange={(e) => setQuickAdd({ ...quickAdd, title: e.target.value, categoryId: cat._id })}
+                      className="px-4 py-2 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-700 focus:bg-white focus:border-blue-500/30 outline-none min-w-[180px] transition-all"
+                    />
+                    <input 
+                      type="number"
+                      placeholder="Price"
+                      value={quickAdd.categoryId === cat._id ? quickAdd.basePrice : ''}
+                      onChange={(e) => setQuickAdd({ ...quickAdd, basePrice: e.target.value, categoryId: cat._id })}
+                      className="w-24 px-4 py-2 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-700 focus:bg-white focus:border-blue-500/30 outline-none transition-all"
+                    />
+                    <button 
+                      type="submit"
+                      disabled={isAdding && quickAdd.categoryId === cat._id}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50"
+                    >
+                      {isAdding && quickAdd.categoryId === cat._id ? '...' : <><FiPlus className="w-3.5 h-3.5" /> Add Skill</>}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => handleDeleteCategory(cat._id)}
+                      className="p-2.5 bg-gray-50 text-gray-400 hover:text-red-500 rounded-xl transition-all"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </form>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-gray-50">
+                      <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Service Specification</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Pricing</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 px-2">
+                    {!groupedServices[cat._id] || groupedServices[cat._id].length === 0 ? (
+                      <tr>
+                        <td colSpan="3" className="px-8 py-12 text-center">
+                          <div className="flex flex-col items-center gap-2">
+                            <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">No specialized skills added</p>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase">Define your service rates above</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      groupedServices[cat._id].map(item => (
+                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                          <td className="px-8 py-5">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
+                                {item.iconUrl ? (
+                                   <img src={item.iconUrl} className="w-full h-full object-cover" alt="" />
+                                ) : (
+                                   <FiBriefcase className="text-gray-300 w-5 h-5" />
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-black text-gray-800 uppercase truncate tracking-tight">{item.title}</p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">SKU: {item.id.slice(-6).toUpperCase()}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-8 py-5">
+                            <span className="text-lg font-black text-blue-600">₹{item.basePrice.toLocaleString()}</span>
+                          </td>
+                          <td className="px-8 py-5 text-right">
+                            <div className="flex items-center justify-end gap-3">
+                               <button 
+                                 onClick={() => navigate(`/vendor/service/edit/${item.id}`)}
+                                 className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all border border-blue-100 shadow-sm active:scale-95"
+                               >
+                                 Details
+                               </button>
+                               <button 
+                                 onClick={() => setShowConfirm(item.id)}
+                                 className="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-90"
+                               >
+                                 <FiTrash2 className="w-4 h-4" />
+                               </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))
         )}
+      </div>
 
-        {/* Info Card (Black/Gray Theme) */}
-        <div className="mt-10 p-6 bg-gray-50 rounded-[28px] border border-gray-100">
-          <div className="flex gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
-              <FiInfo className="w-5 h-5 text-black" />
-            </div>
-            <div>
-              <h4 className="text-sm font-black text-gray-900">Need more categories?</h4>
-              <p className="text-[10px] text-gray-500 mt-1 font-medium leading-relaxed">
-                Your service portfolio is managed by the administrator. To add new skills or service categories, please raise a support ticket.
-              </p>
-              <button 
-                onClick={() => navigate('/vendor/support')}
-                className="mt-3 text-[10px] font-black uppercase tracking-widest text-black underline"
-              >
-                Open Support Ticket
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Confirmation Modal */}
+      {/* Modern Confirmation Modal */}
       <AnimatePresence>
         {showConfirm && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
@@ -238,51 +378,41 @@ const MyServices = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowConfirm(null)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-sm bg-white rounded-[32px] p-8 shadow-2xl overflow-hidden"
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-sm bg-white rounded-2xl p-8 shadow-2xl border border-gray-100 text-center"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50" />
+              <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <FiTrash2 className="w-8 h-8 text-rose-500" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Remove Skill?</h3>
+              <p className="text-sm text-gray-500 mb-8">
+                Are you sure you want to remove this service expertise?
+              </p>
               
-              <div className="relative z-10 text-center">
-                <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <FiAlertCircle className="w-8 h-8 text-red-500" />
-                </div>
-                <h3 className="text-xl font-black text-gray-900 mb-3">Remove Service?</h3>
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-8 leading-relaxed px-4">
-                  Are you sure you want to remove this service from your portfolio? You won't receive new jobs for this category.
-                </p>
-                
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowConfirm(null)}
-                    className="flex-1 py-4 rounded-2xl bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleRemoveService(showConfirm)}
-                    disabled={isRemoving}
-                    className="flex-1 py-4 rounded-2xl bg-black text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-gray-200 active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    {isRemoving ? (
-                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      'Remove'
-                    )}
-                  </button>
-                </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirm(null)}
+                  className="flex-1 py-3 rounded-xl bg-gray-100 text-sm font-bold text-gray-600 hover:bg-gray-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleRemoveItem(showConfirm)}
+                  disabled={isRemoving}
+                  className="flex-1 py-3 rounded-xl bg-rose-600 text-sm font-bold text-white shadow-lg shadow-rose-200 hover:bg-rose-700 transition-all"
+                >
+                  {isRemoving ? 'Removing...' : 'Remove'}
+                </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-
-      <BottomNav />
     </div>
   );
 };

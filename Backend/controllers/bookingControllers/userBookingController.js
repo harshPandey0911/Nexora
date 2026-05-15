@@ -49,7 +49,8 @@ const createBooking = async (req, res) => {
       categoryIcon: reqCategoryIcon,
       brandName: reqBrandName,
       brandIcon: reqBrandIcon,
-      bookingType // Extract bookingType
+      bookingType, // Extract bookingType
+      offeringType // Extract offeringType
     } = req.body;
 
     let visitingCharges = 0; // Convenience fee disabled
@@ -76,7 +77,7 @@ const createBooking = async (req, res) => {
 
     // 1. Parallel Fetching: Service and User
     const [service, user] = await Promise.all([
-      Service.findById(serviceId).select('title basePrice discountPrice description images iconUrl categoryId category categoryIds vendorId').lean(),
+      Service.findById(serviceId).select('title basePrice discountPrice description images iconUrl categoryId category categoryIds vendorId offeringType').lean(),
       User.findById(userId).select('name phone wallet plans')
     ]);
 
@@ -132,21 +133,23 @@ const createBooking = async (req, res) => {
 
     let nearbyVendors = [];
     
-    // IF SERVICE HAS A VENDOR ID, ONLY NOTIFY THAT VENDOR (EXCLUSIVE)
-    if (service.vendorId) {
-      console.log(`[CreateBooking] Service is custom. vendorId found: ${service.vendorId}`);
-      const ownerVendor = await Vendor.findById(service.vendorId);
+    // IF VENDOR ID IS PROVIDED BY FRONTEND OR SERVICE HAS A VENDOR ID, ONLY NOTIFY THAT VENDOR (EXCLUSIVE)
+    const targetVendorId = vendorId || service.vendorId;
+
+    if (targetVendorId) {
+      console.log(`[CreateBooking] targetVendorId found: ${targetVendorId}`);
+      const ownerVendor = await Vendor.findById(targetVendorId);
       if (ownerVendor) {
-        console.log(`[CreateBooking] Owner vendor found: ${ownerVendor.businessName} (${ownerVendor._id})`);
+        console.log(`[CreateBooking] Selected vendor: ${ownerVendor.businessName} (${ownerVendor._id})`);
         // Mock a nearby vendor object for the downstream logic
         nearbyVendors = [{
           _id: ownerVendor._id,
-          distance: 0, // Assume they are eligible regardless of distance if it's their own service
+          distance: 0, // Explicitly selected
           businessName: ownerVendor.businessName,
           phone: ownerVendor.phone
         }];
       } else {
-        console.log(`[CreateBooking] Owner vendor NOT found for id: ${service.vendorId}`);
+        console.log(`[CreateBooking] Target vendor NOT found for id: ${targetVendorId}`);
       }
     } else {
       console.log(`[LocationService] Searching vendors with: center=${JSON.stringify(bookingLocation)}, radius=10km, filters=${JSON.stringify(vendorFilters)}`);
@@ -310,10 +313,12 @@ const createBooking = async (req, res) => {
       brandIcon = formattedBookedItems[0].brandIcon || null;
     }
 
+    const isProduct = (service.offeringType || offeringType) === 'PRODUCT';
+
     const booking = await Booking.create({
       bookingNumber,
       userId,
-      vendorId: null, // Will be assigned when vendor accepts
+      vendorId: isProduct ? targetVendorId : null, // Assign immediately if product
       serviceId,
       categoryId: finalCategory?._id || categoryId,
       serviceName: service.title,
@@ -323,6 +328,7 @@ const createBooking = async (req, res) => {
       brandName: reqBrandName || brandName,
       brandIcon: reqBrandIcon || brandIcon,
       bookingType: bookingType || 'scheduled',
+      offeringType: isProduct ? 'PRODUCT' : 'SERVICE',
 
       description: service.description,
       serviceImages: service.images || [],
@@ -350,12 +356,9 @@ const createBooking = async (req, res) => {
         start: timeSlot.start,
         end: timeSlot.end
       },
-      // userNotes: userNotes || null, // Removed
-      // isPlusAdded: isPlusAdded || false, // Removed
       paymentMethod: paymentMethod || null,
-      status: bookingStatus,
+      status: isProduct ? 'confirmed' : bookingStatus, // Auto-confirm if product
       paymentStatus: bookingPaymentStatus
-      // notifiedVendors will be set after wave sorting
     });
 
     // --- IMMEDIATE RESPONSE ---
@@ -411,7 +414,28 @@ const createBooking = async (req, res) => {
         }
 
         // Nearby vendors already found above
-        // WAVE-BASED ALERTING: Sort by distance and only notify first wave
+        // WAVE-BASED ALERTING: Sort by distance and only notify first wave (Only for services)
+        if (isProduct) {
+          console.log(`[CreateBooking][bg] Product order - skipping wave alerting as vendor ${targetVendorId} is already assigned.`);
+          // Just set the notified vendors to the assigned vendor
+          bookingForBackground.notifiedVendors = [targetVendorId];
+          await bookingForBackground.save();
+          
+          // Emit socket only to this vendor
+          const { getIO } = require('../../sockets');
+          const io = getIO();
+          if (io) {
+             io.to(`vendor_${targetVendorId}`).emit('new_booking_request', {
+                bookingId: bookingForBackground._id,
+                serviceName: serviceForBackground.title,
+                customerName: userForBackground.name,
+                price: finalAmount,
+                offeringType: 'PRODUCT'
+             });
+          }
+          return;
+        }
+
         const sortedVendors = nearbyVendors.sort((a, b) => (a.distance || 0) - (b.distance || 0));
 
         // Wave 1: First 3 vendors

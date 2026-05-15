@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiCheck, FiX, FiEye, FiSearch, FiFilter, FiDownload, FiLoader, FiPower, FiTrash2 } from 'react-icons/fi';
+import { FiCheck, FiX, FiEye, FiSearch, FiFilter, FiDownload, FiLoader, FiPower, FiTrash2, FiShield } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import CardShell from '../UserCategories/components/CardShell';
 import Modal from '../UserCategories/components/Modal';
@@ -13,6 +13,23 @@ const AllVendors = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
+  const [updatingPermissions, setUpdatingPermissions] = useState(false);
+
+  const AVAILABLE_PERMISSIONS = [
+    { id: 'dashboard', label: 'Dashboard Overview', description: 'Main analytics and quick stats' },
+    { id: 'orders', label: 'Service Bookings', description: 'Manage service requests and bookings' },
+    { id: 'product-orders', label: 'Product Orders', description: 'Manage e-commerce product orders' },
+    { id: 'services', label: 'Manage Services', description: 'Configure service offerings and pricing' },
+    { id: 'manage-products', label: 'Manage Products', description: 'Inventory and product management' },
+    { id: 'earnings', label: 'Revenue Analytics', description: 'Detailed financial reports' },
+    { id: 'wallet', label: 'Wallet & Payouts', description: 'Transaction history and withdrawals' },
+    { id: 'reviews', label: 'Ratings & Reviews', description: 'Customer feedback management' },
+    { id: 'notifications', label: 'Alert Hub', description: 'System and booking notifications' },
+    { id: 'store-settings', label: 'Store Settings', description: 'Business information and preferences' },
+    { id: 'profile-settings', label: 'Profile Settings', description: 'Personal account details' },
+    { id: 'support', label: 'Support Center', description: 'Help desk and ticket management' },
+  ];
 
   // Load vendors from backend
   useEffect(() => {
@@ -43,6 +60,7 @@ const AllVendors = () => {
           },
           createdAt: vendor.createdAt,
           isActive: vendor.isActive,
+          permissions: vendor.permissions || AVAILABLE_PERMISSIONS.map(p => p.id),
           trainingScore: vendor.trainingScore || 0,
           rating: vendor.rating || 0,
           completedJobs: vendor.completedJobs || 0,
@@ -175,6 +193,32 @@ const AllVendors = () => {
   const handleViewDetails = (vendor) => {
     setSelectedVendor(vendor);
     setIsViewModalOpen(true);
+  };
+
+  const handleOpenPermissions = (vendor) => {
+    setSelectedVendor(vendor);
+    setIsPermissionsModalOpen(true);
+  };
+
+  const handleUpdatePermissions = async (vendorId, newPermissions) => {
+    try {
+      setUpdatingPermissions(true);
+      const response = await adminVendorService.updatePermissions(vendorId, newPermissions);
+      if (response.success) {
+        setVendors(prev => prev.map(v => 
+          v.id === vendorId ? { ...v, permissions: newPermissions } : v
+        ));
+        toast.success('Permissions updated successfully');
+        setIsPermissionsModalOpen(false);
+      } else {
+        toast.error(response.message || 'Failed to update permissions');
+      }
+    } catch (error) {
+      console.error('Error updating permissions:', error);
+      toast.error('Failed to update permissions');
+    } finally {
+      setUpdatingPermissions(false);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -326,6 +370,15 @@ const AllVendors = () => {
                             title="View Details"
                           >
                             <FiEye className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Manage Permissions */}
+                          <button
+                            onClick={() => handleOpenPermissions(vendor)}
+                            className="p-1.5 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                            title="Manage Permissions"
+                          >
+                            <FiShield className="w-3.5 h-3.5" />
                           </button>
 
                           {/* Toggle Active Status */}
@@ -577,6 +630,90 @@ const AllVendors = () => {
           </div>
         )}
       </Modal >
+
+      {/* Manage Permissions Modal */}
+      <Modal
+        isOpen={isPermissionsModalOpen}
+        onClose={() => {
+          setIsPermissionsModalOpen(false);
+          setSelectedVendor(null);
+        }}
+        title={`Manage Permissions: ${selectedVendor?.name}`}
+        size="md"
+      >
+        {selectedVendor && (
+          <div className="space-y-6">
+            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4">
+              <p className="text-xs text-blue-800 font-medium leading-relaxed">
+                <FiShield className="inline-block mr-1 w-3.5 h-3.5" />
+                Select the modules this vendor is allowed to access. Changes will take effect immediately upon the next refresh.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-admin">
+              {AVAILABLE_PERMISSIONS.map((perm) => {
+                const isGranted = selectedVendor.permissions?.includes(perm.id);
+                return (
+                  <div 
+                    key={perm.id}
+                    onClick={() => {
+                      const newPerms = isGranted 
+                        ? selectedVendor.permissions.filter(p => p !== perm.id)
+                        : [...(selectedVendor.permissions || []), perm.id];
+                      setSelectedVendor({ ...selectedVendor, permissions: newPerms });
+                    }}
+                    className={`p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center gap-3 ${
+                      isGranted 
+                        ? 'border-teal-500 bg-teal-50/30' 
+                        : 'border-gray-100 bg-white hover:border-gray-200'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-md flex items-center justify-center border-2 transition-all ${
+                      isGranted ? 'bg-teal-500 border-teal-500 text-white' : 'border-gray-200 bg-white'
+                    }`}>
+                      {isGranted && <FiCheck className="w-3.5 h-3.5 font-bold" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-xs font-bold ${isGranted ? 'text-teal-900' : 'text-gray-700'}`}>
+                        {perm.label}
+                      </p>
+                      <p className="text-[10px] text-gray-500 font-medium">
+                        {perm.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-4 border-t border-gray-100 flex gap-3">
+              <button
+                onClick={() => setIsPermissionsModalOpen(false)}
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleUpdatePermissions(selectedVendor.id, selectedVendor.permissions)}
+                disabled={updatingPermissions}
+                className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-all text-xs shadow-lg shadow-teal-900/20 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {updatingPermissions ? (
+                  <>
+                    <FiLoader className="animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <FiCheck />
+                    Save Permissions
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div >
   );
 };

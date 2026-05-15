@@ -124,7 +124,7 @@ const ProfileDetails = () => {
   }, []);
 
   return (
-    <div className="min-h-screen pb-28 relative" style={{ background: '#FFFFFF' }}>
+    <div className="p-4 lg:p-6 min-h-screen pb-28 relative" style={{ background: '#FFFFFF' }}>
       {/* Premium Background Pattern */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0"
@@ -140,7 +140,7 @@ const ProfileDetails = () => {
 
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-5 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-4">
-          <motion.button 
+          <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-xl bg-white shadow-sm border border-black/[0.02] flex items-center justify-center"
@@ -198,20 +198,20 @@ const ProfileDetails = () => {
         <div className="space-y-6 mb-12">
           {/* Data Clusters */}
           {[
-            { 
-              group: 'Corporate Identity', 
+            {
+              group: 'Corporate Identity',
               items: [
                 { label: 'Master Identity', value: profile.name, icon: FiUser },
                 { label: 'Corporate Entity', value: profile.businessName, icon: FiBriefcase }
-              ] 
+              ]
             },
-            { 
-              group: 'Communication Channels', 
+            {
+              group: 'Communication Channels',
               items: [
                 { label: 'Encryption Link (Mobile)', value: profile.phone, icon: FiPhone },
                 { label: 'Network Access (Email)', value: profile.email, icon: FiMail },
                 { label: 'Geospatial Coordinates', value: profile.address, icon: FiMapPin }
-              ] 
+              ]
             }
           ].map((cluster, cIdx) => (
             <div key={cIdx} className="bg-white/70 backdrop-blur-md rounded-[36px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60">

@@ -276,6 +276,23 @@ const vendorSchema = new mongoose.Schema({
   commissionRate: {
     type: Number,
     default: 15 // Default 15%
+  },
+  permissions: {
+    type: [String],
+    default: [
+      'dashboard', 
+      'orders', 
+      'product-orders', 
+      'services', 
+      'manage-products', 
+      'earnings', 
+      'wallet', 
+      'reviews', 
+      'notifications', 
+      'store-settings', 
+      'profile-settings', 
+      'support'
+    ]
   }
 }, {
   timestamps: true

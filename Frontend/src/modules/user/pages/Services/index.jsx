@@ -58,7 +58,7 @@ const ServicesPage = () => {
         
         // Fetch both categories and home data for the header
         const [catRes, homeRes] = await Promise.all([
-          publicCatalogService.getCategories(cityId),
+          publicCatalogService.getCategories(cityId, 'SERVICE'),
           publicCatalogService.getHomeData(cityId)
         ]);
 
@@ -92,7 +92,13 @@ const ServicesPage = () => {
                           cat.description?.toLowerCase().includes(searchQuery.toLowerCase());
     
     if (activeTab === 'All') return matchesSearch;
-    // Simple mapping for demonstration - in production this would be based on category types from backend
+    
+    // Check for explicit group assignment from Admin
+    if (cat.group && cat.group !== 'None') {
+      return matchesSearch && cat.group === activeTab;
+    }
+
+    // Fallback: Legacy title-based matching
     if (activeTab === 'Delivery') return matchesSearch && (cat.title.toLowerCase().includes('delivery') || cat.title.toLowerCase().includes('grocery'));
     if (activeTab === 'Needs') return matchesSearch && (cat.title.toLowerCase().includes('grocery') || cat.title.toLowerCase().includes('medicine'));
     if (activeTab === 'Home') return matchesSearch && cat.title.toLowerCase().includes('home');
@@ -102,10 +108,7 @@ const ServicesPage = () => {
   });
 
   const handleCategoryClick = (category) => {
-    setSelectedCategory({
-      ...category,
-      icon: toAssetUrl(category.icon)
-    });
+    setSelectedCategory(category);
     setIsCategoryModalOpen(true);
   };
 

@@ -11,7 +11,7 @@ const Header = memo(({
   onBack,
   showBack = true,
   showSearch = false,
-  showNotifications = true,
+  showNotifications = false,
   notificationCount = 0
 }) => {
   const navigate = useNavigate();
@@ -62,68 +62,60 @@ const Header = memo(({
 
   return (
     <header
-      className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md"
+      className="bg-white fixed top-0 left-0 right-0 z-[100] transition-all duration-300 lg:left-[278px] border-b border-gray-100 shadow-sm"
       style={{
-        borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
       }}
     >
-      <div className="px-5 py-4 flex items-center justify-between">
-        {/* Left: Back button or Logo */}
-        <div className="flex items-center gap-3">
-          {showBack ? (
-            <motion.button
-              onClick={handleBack}
-              className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 text-black shadow-sm"
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiArrowLeft className="w-5 h-5" />
-            </motion.button>
-          ) : (
-            <motion.div
-              className="cursor-pointer"
-              onClick={handleLogoClick}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Logo className="h-10 w-auto" />
-            </motion.div>
-          )}
-          {showBack && <h1 className="text-lg font-black text-gray-900 tracking-tight">{title || 'Vendor'}</h1>}
-        </div>
-
-        {/* Right: Search and Notifications */}
-        <div className="flex items-center gap-2">
-          {showSearch && (
+      <div className="flex items-center justify-between px-4 lg:px-6 py-5">
+        {/* Left: Back button & Page Title */}
+        <div className="flex items-center gap-4">
+          {showBack && (
             <button
-              className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 text-black shadow-sm active:scale-95 transition-all"
-              onClick={() => navigate('/vendor/jobs')}
+              onClick={handleBack}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 active:scale-95"
             >
-              <FiSearch className="w-5 h-5" />
+              <FiArrowLeft className="w-6 h-6" />
             </button>
           )}
-          {showNotifications && (
-            <motion.div
-              className="relative"
-              whileTap={{ scale: 0.95 }}
+          <div>
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-800 leading-tight">
+              {title || 'Vendor Hub'}
+            </h1>
+            <p className="text-[10px] sm:text-xs text-gray-500 font-medium">
+              Manage your business operations and performance
+            </p>
+          </div>
+        </div>
+
+        {/* Right: Notifications */}
+        <div className="flex items-center gap-4">
+          {showSearch && (
+            <button
+              className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors text-gray-600"
+              onClick={() => navigate('/vendor/jobs')}
             >
+              <FiSearch className="w-6 h-6" />
+            </button>
+          )}
+          
+          {showNotifications && (
+            <div className="relative">
               <button
                 onClick={handleNotifications}
-                className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 text-black shadow-sm"
+                className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors text-gray-600"
               >
-                <FiBell className="w-5 h-5" />
+                <FiBell className="w-6 h-6" />
               </button>
               
               {count > 0 && (
                 <span
-                  className="absolute -top-1.5 -right-1.5 bg-black text-white text-[9px] font-black rounded-full flex items-center justify-center z-20 min-w-[18px] h-[18px] px-1 border-2 border-white shadow-sm"
+                  className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center min-w-[18px] h-[18px] px-1 border-2 border-white shadow-sm"
                 >
-                  {count > 9 ? '9+' : count}
+                  {count > 99 ? '99+' : count}
                 </span>
               )}
-            </motion.div>
+            </div>
           )}
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiUser, FiEdit2, FiMapPin, FiBriefcase, FiStar, FiSettings, FiChevronRight, FiLogOut, FiPlus, FiUsers } from 'react-icons/fi';
+import { FiUser, FiEdit2, FiMapPin, FiBriefcase, FiStar, FiSettings, FiChevronRight, FiLogOut, FiPlus, FiUsers, FiAlertTriangle } from 'react-icons/fi';
 import { FaWallet } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { vendorTheme as themeColors } from '../../../../theme';
@@ -33,22 +33,6 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useLayoutEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const root = document.getElementById('root');
-    const bgStyle = themeColors.backgroundGradient;
-
-    if (html) html.style.background = bgStyle;
-    if (body) body.style.background = bgStyle;
-    if (root) root.style.background = bgStyle;
-
-    return () => {
-      if (html) html.style.background = '';
-      if (body) body.style.background = '';
-      if (root) root.style.background = '';
-    };
-  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -139,16 +123,18 @@ const Profile = () => {
 
   if (error && !profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: themeColors.backgroundGradient }}>
-        <div className="text-center p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Error loading profile</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <div className="text-center p-12 max-w-sm mx-auto">
+          <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-rose-100 shadow-sm">
+            <FiAlertTriangle className="w-10 h-10 text-rose-500" />
+          </div>
+          <h2 className="text-xl font-black text-gray-900 mb-4 uppercase tracking-widest">Protocol Sync Failure</h2>
+          <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-10 leading-relaxed">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-6 py-3 rounded-xl text-white font-semibold transition-all duration-300 hover:opacity-90"
-            style={{ backgroundColor: themeColors.button }}
+            className="w-full py-5 bg-blue-600 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
           >
-            Refresh Page
+            Restart Uplink
           </button>
         </div>
       </div>
@@ -160,176 +146,169 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen pb-28 relative" style={{ background: '#FFFFFF' }}>
-      {/* Premium Background Pattern */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.1) 0%, transparent 70%),
-              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
-              #F8FAFC
-            `
-          }}
-        />
-      </div>
-
-      <header className="px-6 py-6 flex items-center justify-between relative z-10">
-        <h1 className="text-2xl font-[1000] text-gray-900 tracking-tight">Identity Hub</h1>
+    <div className="space-y-8 pb-12">
+      {/* Header - White Style */}
+      <div className="bg-white p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between text-gray-900 border border-gray-100 gap-6">
+        <div>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none">
+            Identity Hub
+          </h2>
+          <p className="text-gray-500 font-medium mt-2">
+            Manage your personal credentials and professional profile
+          </p>
+        </div>
         <motion.button 
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate('/vendor/settings')}
-          className="w-12 h-12 rounded-[20px] bg-white shadow-sm flex items-center justify-center border border-black/[0.03] group"
+          className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center group hover:bg-white transition-all shadow-inner"
         >
-          <FiSettings className="w-5 h-5 text-gray-400 group-hover:text-teal-600 transition-colors" />
+          <FiSettings className="w-8 h-8 text-gray-400 group-hover:text-blue-600 transition-colors" />
         </motion.button>
-      </header>
+      </div>
 
-      <main className="px-5 relative z-10 max-w-lg mx-auto">
-        {/* Profile Master Card (Teal Gradient) */}
-        <div 
-          className="rounded-[40px] p-8 shadow-[0_20px_50px_rgba(13,148,136,0.15)] mb-10 relative overflow-hidden group"
-          style={{ background: 'linear-gradient(135deg, #0D9488 0%, #0F766E 100%)' }}
-        >
-          {/* Decorative Elements */}
-          <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000" />
-          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/10 rounded-full blur-2xl" />
+      {/* Profile Master Card (Lighter Blue Gradient) */}
+      <div 
+        className="rounded-[40px] p-10 shadow-xl shadow-blue-500/10 mb-8 relative overflow-hidden group"
+        style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' }}
+      >
+        {/* Decorative Elements */}
+        <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000" />
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
 
-          <div className="relative z-10 flex flex-col items-center text-center">
-            {/* Master Avatar */}
-            <div className="relative mb-6">
-              <div className="w-28 h-28 rounded-[36px] bg-white/20 border-4 border-white/30 overflow-hidden backdrop-blur-xl flex items-center justify-center shadow-2xl">
-                {profile.photo ? (
-                  <img src={profile.photo} alt={profile.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-teal-800/50 flex items-center justify-center">
-                    <FiUser className="w-12 h-12 text-teal-200/50" />
-                  </div>
-                )}
-              </div>
-              <motion.button 
-                whileTap={{ scale: 0.9 }}
-                onClick={() => navigate('/vendor/profile/details')}
-                className="absolute -bottom-2 -right-2 w-10 h-10 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-teal-50 text-teal-600"
-              >
-                <FiEdit2 className="w-4 h-4" />
-              </motion.button>
-            </div>
-
-            <div className="w-full">
-              <h2 className="text-2xl font-[1000] text-white truncate mb-1 tracking-tight">{profile.name}</h2>
-              <p className="text-[10px] font-black text-teal-100/60 uppercase tracking-[0.25em] mb-6">
-                {profile.businessName || 'Verified Elite Partner'}
-              </p>
-              
-              <div className="flex items-center justify-center gap-4">
-                <div className="px-4 py-2 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10 flex items-center gap-2">
-                  <FiStar className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-                  <span className="text-[11px] font-[1000] text-white tracking-wide">{profile.rating.toFixed(1)} Rating</span>
+        <div className="relative z-10 flex flex-col items-center text-center">
+          {/* Master Avatar */}
+          <div className="relative mb-6">
+            <div className="w-28 h-28 rounded-[36px] bg-white/20 border-4 border-white/30 overflow-hidden backdrop-blur-xl flex items-center justify-center shadow-2xl">
+              {profile.photo ? (
+                <img src={profile.photo} alt={profile.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-blue-400/30 flex items-center justify-center">
+                  <FiUser className="w-12 h-12 text-white/50" />
                 </div>
-                <div className="px-4 py-2 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10 flex items-center gap-2">
-                  <FiBriefcase className="w-3.5 h-3.5 text-teal-200" />
-                  <span className="text-[11px] font-[1000] text-white tracking-wide">{profile.totalJobs} Deployments</span>
-                </div>
-              </div>
+              )}
             </div>
-          </div>
-        </div>
-
-        {/* Dynamic Action Grid (High Contrast) */}
-        <div className="grid grid-cols-3 gap-5 mb-10">
-          {[
-            { label: 'Financials', icon: FaWallet, path: '/vendor/wallet', color: 'teal' },
-            { label: 'Operations', icon: FiBriefcase, path: '/vendor/jobs', color: 'indigo' },
-            { label: 'Team', icon: FiUsers, path: '/vendor/workers', color: 'orange' },
-          ].map((item, idx) => (
-            <motion.button
-              key={idx}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate(item.path)}
-              className="bg-white rounded-[32px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-black/[0.02] flex flex-col items-center text-center group hover:bg-black transition-all duration-500"
+            <motion.button 
+              whileTap={{ scale: 0.9 }}
+              onClick={() => navigate('/vendor/profile/details')}
+              className="absolute -bottom-2 -right-2 w-10 h-10 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-blue-50 text-blue-600"
             >
-              <div className="w-12 h-12 rounded-[20px] bg-gray-50 flex items-center justify-center mb-3 group-hover:bg-white/10 transition-all">
-                <item.icon className="w-5 h-5 text-gray-900 group-hover:text-white" />
-              </div>
-              <span className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest group-hover:text-white transition-colors">{item.label}</span>
+              <FiEdit2 className="w-4 h-4" />
             </motion.button>
-          ))}
-        </div>
-
-        {/* Management Ecosystem (Teal Accent) */}
-        <div className="space-y-4 mb-12">
-          <div className="flex items-center justify-between px-2 mb-6">
-            <h3 className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.25em]">Partner Ecosystem</h3>
-            <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
           </div>
-          
-          {menuItems.map((item) => {
-            const IconComponent = item.icon || FiSettings;
-            return (
-              <motion.button
-                key={item.id}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(item.path)}
-                className={`w-full flex items-center justify-between p-5 rounded-[32px] border transition-all duration-500 ${
-                  item.highlight 
-                  ? 'bg-black border-black shadow-2xl shadow-black/10 text-white' 
-                  : 'bg-white/70 backdrop-blur-md border-white/60 text-gray-900 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:border-teal-500/20'
-                }`}
-              >
-                <div className="flex items-center gap-5">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border transition-all ${
-                    item.highlight ? 'bg-white/10 border-white/10' : 'bg-gray-50 border-black/[0.02]'
-                  }`}>
-                    {item.customIcon ? (
-                      <span className={`text-base font-[1000] ${item.highlight ? 'text-white' : 'text-gray-900'}`}>{item.customIcon}</span>
-                    ) : (
-                      <IconComponent className={`w-6 h-6 ${item.highlight ? 'text-white' : 'text-gray-900'}`} />
-                    )}
-                  </div>
-                  <div className="text-left">
-                    <span className="text-[13px] font-[1000] tracking-tight block">{item.label}</span>
-                    <span className={`text-[8px] font-black uppercase tracking-widest opacity-40 ${item.highlight ? 'text-white/60' : 'text-gray-400'}`}>
-                      Access Module
-                    </span>
-                  </div>
-                </div>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                  item.highlight ? 'bg-white/10' : 'bg-gray-50'
-                }`}>
-                  <FiChevronRight className={`w-5 h-5 ${item.highlight ? 'text-white' : 'text-gray-300'}`} />
-                </div>
-              </motion.button>
-            );
-          })}
-        </div>
 
-        {/* Termination Controller */}
-        <div className="mb-12">
+          <div className="w-full">
+            <h2 className="text-3xl font-black text-white truncate mb-1 tracking-tight">{profile.name}</h2>
+            <p className="text-[10px] font-bold text-blue-50 uppercase tracking-widest mb-6">
+              {profile.businessName || 'Verified Elite Partner'}
+            </p>
+            
+            <div className="flex items-center justify-center gap-6">
+              <div className="px-6 py-3 bg-white/15 rounded-2xl backdrop-blur-md border border-white/10 flex items-center gap-3">
+                <FiStar className="w-4 h-4 text-amber-300 fill-amber-300" />
+                <span className="text-xs font-bold text-white tracking-wide">{profile.rating.toFixed(1)} Rating</span>
+              </div>
+              <div className="px-6 py-3 bg-white/15 rounded-2xl backdrop-blur-md border border-white/10 flex items-center gap-3">
+                <FiBriefcase className="w-4 h-4 text-white/80" />
+                <span className="text-xs font-bold text-white tracking-wide">{profile.totalJobs} Deployments</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dynamic Action Grid */}
+      <div className="grid grid-cols-3 gap-6">
+        {[
+          { label: 'Financials', icon: FaWallet, path: '/vendor/wallet' },
+          { label: 'Operations', icon: FiBriefcase, path: '/vendor/jobs' },
+          { label: 'Team', icon: FiUsers, path: '/vendor/workers' },
+        ].map((item, idx) => (
           <motion.button
+            key={idx}
             whileTap={{ scale: 0.95 }}
-            onClick={async () => {
-              try {
-                await vendorAuthService.logout();
-                toast.success('Logged out');
-                navigate('/vendor/login');
-              } catch (e) {
-                localStorage.clear();
-                navigate('/vendor/login');
-              }
-            }}
-            className="w-full py-6 rounded-[32px] bg-rose-50 border border-rose-100 text-rose-500 text-[11px] font-[1000] uppercase tracking-[0.25em] flex items-center justify-center gap-4 active:scale-95 transition-all shadow-xl shadow-rose-900/5 group"
+            onClick={() => navigate(item.path)}
+            className="bg-white rounded-[32px] p-6 border border-gray-100 flex flex-col items-center text-center group hover:shadow-md transition-all shadow-sm"
           >
-            <FiLogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            Terminate Session
+            <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-4 group-hover:bg-blue-50 transition-all border border-gray-100">
+              <item.icon className="w-6 h-6 text-gray-400 group-hover:text-blue-600 transition-colors" />
+            </div>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest group-hover:text-gray-900 transition-colors">{item.label}</span>
           </motion.button>
-          
-          <div className="mt-8 flex flex-col items-center gap-2 opacity-30">
-            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Powered by Nexora Operational Intelligence</p>
-            <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest">Build v2.4.0-Premium</p>
-          </div>
+        ))}
+      </div>
+
+      {/* Management Ecosystem */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-2 mb-4">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Partner Ecosystem</h3>
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
         </div>
-      </main>
+        
+        {menuItems.map((item) => {
+          const IconComponent = item.icon || FiSettings;
+          return (
+            <motion.button
+              key={item.id}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate(item.path)}
+              className={`w-full flex items-center justify-between p-6 rounded-[28px] border transition-all duration-300 shadow-sm ${
+                item.highlight 
+                ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-200' 
+                : 'bg-white border-gray-100 text-gray-800 hover:shadow-md'
+              }`}
+            >
+              <div className="flex items-center gap-6">
+                <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center shrink-0 border transition-all ${
+                  item.highlight ? 'bg-white/20 border-white/10' : 'bg-gray-50 border-gray-100'
+                }`}>
+                  {item.customIcon ? (
+                    <span className={`text-lg font-black ${item.highlight ? 'text-white' : 'text-gray-400'}`}>{item.customIcon}</span>
+                  ) : (
+                    <IconComponent className={`w-6 h-6 ${item.highlight ? 'text-white' : 'text-gray-400'}`} />
+                  )}
+                </div>
+                <div className="text-left">
+                  <span className="text-base font-bold tracking-tight block uppercase">{item.label}</span>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${item.highlight ? 'text-white/60' : 'text-gray-400'}`}>
+                    Access Module
+                  </span>
+                </div>
+              </div>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                item.highlight ? 'bg-white/10' : 'bg-gray-50'
+              }`}>
+                <FiChevronRight className={`w-5 h-5 ${item.highlight ? 'text-white' : 'text-gray-400'}`} />
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Termination Controller */}
+      <div className="pt-8">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={async () => {
+            try {
+              await vendorAuthService.logout();
+              toast.success('Logged out');
+              navigate('/vendor/login');
+            } catch (e) {
+              localStorage.clear();
+              navigate('/vendor/login');
+            }
+          }}
+          className="w-full py-6 rounded-[32px] bg-rose-50 border border-rose-100 text-rose-600 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-4 active:scale-95 transition-all hover:bg-rose-600 hover:text-white group shadow-sm"
+        >
+          <FiLogOut className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+          Terminate Session
+        </motion.button>
+        
+        <div className="mt-8 flex flex-col items-center gap-2 opacity-30">
+          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center">Powered by Nexora Operational Intelligence</p>
+          <p className="text-[7px] font-bold text-gray-400 uppercase tracking-widest text-center">Build v2.4.0-Premium</p>
+        </div>
+      </div>
     </div>
   );
 };

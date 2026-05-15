@@ -5,10 +5,35 @@ import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { playNotificationSound, isSoundEnabled, playAlertRing } from '../utils/notificationSound';
 import { registerFCMToken } from '../services/pushNotificationService';
+import { acceptBooking, rejectBooking } from '../modules/vendor/services/bookingService';
 
 const SwipeableNotification = ({ t, data, onClick }) => {
   const x = useMotionValue(0);
   const opacity = useTransform(x, [-200, 0, 200], [0, 1, 0]);
+  const [isActionLoading, setIsActionLoading] = useState(null);
+
+  const handleAction = async (e, action) => {
+    e.stopPropagation();
+    if (!data.bookingId) return;
+    
+    setIsActionLoading(action);
+    try {
+      if (action === 'accept') {
+        await acceptBooking(data.bookingId);
+        toast.success('Job Accepted!');
+      } else {
+        await rejectBooking(data.bookingId, 'Rejected from notification');
+        toast.success('Job Skipped');
+      }
+      window.dispatchEvent(new Event('vendorJobsUpdated'));
+      toast.dismiss(t.id);
+    } catch (err) {
+      console.error(`Error ${action}ing job:`, err);
+      toast.error(`Failed to ${action} job`);
+    } finally {
+      setIsActionLoading(null);
+    }
+  };
 
   return (
     <motion.div
@@ -29,37 +54,52 @@ const SwipeableNotification = ({ t, data, onClick }) => {
       }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
       whileTap={{ scale: 0.98 }}
-      className="max-w-md w-full bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-gray-900/5 cursor-pointer dark:bg-gray-800 dark:ring-gray-700"
+      className="max-w-md w-full bg-[#1A1D21] border border-white/10 shadow-2xl rounded-3xl pointer-events-auto flex flex-col ring-1 ring-white/5 cursor-pointer overflow-hidden"
       onClick={onClick}
     >
-      <div className="flex-1 w-0 p-4">
+      <div className="flex-1 w-0 p-5">
         <div className="flex items-start">
           <div className="flex-shrink-0 pt-0.5">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
-              <span className="text-lg">🔔</span>
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg border border-white/10">
+              <span className="text-xl">{data.type === 'new_booking_request' ? '⚡' : '🔔'}</span>
             </div>
           </div>
-          <div className="ml-3 flex-1">
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              {data.title}
-            </p>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+          <div className="ml-4 flex-1">
+            <div className="flex items-center justify-between">
+              <p className="text-[13px] font-black text-white uppercase tracking-tight">
+                {data.title}
+              </p>
+              {data.type === 'new_booking_request' && (
+                <span className="text-[9px] font-black px-2 py-1 bg-blue-500/20 text-blue-400 rounded-lg border border-blue-500/20 uppercase tracking-widest animate-pulse">
+                  Urgent
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-[12px] font-medium text-gray-400 leading-relaxed">
               {data.message}
             </p>
           </div>
         </div>
       </div>
-      <div className="flex border-l border-gray-200 dark:border-gray-700">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toast.dismiss(t.id);
-          }}
-          className="w-full border border-transparent rounded-none rounded-r-2xl p-4 flex items-center justify-center text-sm font-medium text-gray-400 hover:text-gray-500 focus:outline-none"
-        >
-          ✕
-        </button>
-      </div>
+      
+      {data.type === 'new_booking_request' && (
+        <div className="flex border-t border-white/5 p-3 gap-3 bg-white/[0.02]">
+          <button
+            disabled={!!isActionLoading}
+            onClick={(e) => handleAction(e, 'accept')}
+            className="flex-1 bg-emerald-600 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 transition-all active:scale-95 disabled:opacity-50"
+          >
+            {isActionLoading === 'accept' ? '...' : 'Accept Job'}
+          </button>
+          <button
+            disabled={!!isActionLoading}
+            onClick={(e) => handleAction(e, 'reject')}
+            className="flex-1 bg-white/5 text-gray-500 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-gray-300 transition-all active:scale-95 disabled:opacity-50 border border-white/5"
+          >
+            {isActionLoading === 'reject' ? '...' : 'Reject'}
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };
@@ -138,7 +178,10 @@ export const SocketProvider = ({ children }) => {
       auth: {
         token: token
       },
-      transports: ['polling', 'websocket'], // Try polling first for reliability
+      extraHeaders: {
+        Authorization: `Bearer ${token}`
+      },
+      transports: ['websocket', 'polling'], // Prioritize websocket for speed
       path: '/socket.io/',
       secure: true,
       rejectUnauthorized: false,
@@ -287,14 +330,47 @@ export const SocketProvider = ({ children }) => {
           localStorage.setItem('vendorStats', JSON.stringify(stats));
         }
 
+        // Show interactive toast notification with buttons
+        toast.custom((t) => (
+          <SwipeableNotification
+            t={t}
+            data={{
+              ...data,
+              type: 'new_booking_request',
+              title: '⚡ NEW BOOKING SIGNAL',
+              message: `Incoming ${data.serviceName} request from ${data.customerName}. Accept now to secure deployment.`
+            }}
+            onClick={() => {
+              toast.dismiss(t.id);
+              navigate(`/vendor/booking/${data.bookingId}`);
+            }}
+            actions={[
+              {
+                label: 'Accept',
+                onClick: () => {
+                  acceptBooking(data.bookingId);
+                  toast.dismiss(t.id);
+                }
+              },
+              {
+                label: 'Reject',
+                onClick: () => {
+                  rejectBooking(data.bookingId);
+                  toast.dismiss(t.id);
+                }
+              }
+            ]}
+          />
+        ), {
+          id: `new-booking-${data.bookingId}`,
+          duration: 10000, // Longer duration for critical alerts
+          position: 'top-right'
+        });
+
         // Notify app components to refresh
         window.dispatchEvent(new Event('vendorJobsUpdated'));
         window.dispatchEvent(new Event('vendorStatsUpdated'));
         window.dispatchEvent(new Event('vendorNotificationsUpdated'));
-
-        // Always show the global alert instead of navigating
-        const event = new CustomEvent('showDashboardBookingAlert', { detail: newJob });
-        window.dispatchEvent(event);
       });
 
       // Listen for booking_taken - when another vendor accepts a job
@@ -395,7 +471,7 @@ export const SocketProvider = ({ children }) => {
     return () => {
       newSocket.disconnect();
     };
-  }, [userType]); // Only re-run if userType changes. Navigate is stable.
+  }, [userType, localStorage.getItem(userType ? (userType === 'vendor' ? 'vendorAccessToken' : userType === 'worker' ? 'workerAccessToken' : userType === 'admin' ? 'adminAccessToken' : 'accessToken') : '')]); // Re-run when userType OR token changes
 
   return (
     <SocketContext.Provider value={socket}>

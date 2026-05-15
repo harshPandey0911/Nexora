@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FiDollarSign, FiArrowRight, FiCreditCard, FiAlertCircle, FiCheckCircle, FiEdit2, FiClock, FiPlusCircle, FiActivity } from 'react-icons/fi';
 import { vendorTheme as themeColors } from '../../../../theme';
 import Header from '../../components/layout/Header';
@@ -32,22 +32,7 @@ const WithdrawalRequest = () => {
     platformFeeRate: 2
   });
 
-  useLayoutEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const root = document.getElementById('root');
-    const bgStyle = themeColors.backgroundGradient;
-
-    if (html) html.style.background = bgStyle;
-    if (body) body.style.background = bgStyle;
-    if (root) root.style.background = bgStyle;
-
-    return () => {
-      if (html) html.style.background = '';
-      if (body) body.style.background = '';
-      if (root) root.style.background = '';
-    };
-  }, []);
+  // Removed legacy layout effect background injection
 
   useEffect(() => {
     loadData();
@@ -171,261 +156,264 @@ const WithdrawalRequest = () => {
   const tdsAmount = Math.round(grossAmount * (tdsRate / 100));
   const netAmount = grossAmount - commissionAmount - platformFeeAmount - tdsAmount;
 
-  if (!wallet.available && !history.length) {
-    return <LogoLoader />;
-  }
-
   return (
-    <div className="min-h-screen pb-28 bg-white relative" style={{ background: '#FFFFFF' }}>
-      {/* Premium Background Pattern */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.1) 0%, transparent 70%),
-              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
-              #F8FAFC
-            `
-          }}
-        />
-      </div>
-
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-5 flex items-center justify-between relative z-10">
+    <AnimatePresence mode="wait">
+      {(!wallet.available && !history.length) ? (
+        <LogoLoader key="loader" fullScreen overlay />
+      ) : (
+        <motion.div
+          key="content"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.5 }}
+          className="min-h-screen bg-gray-50 pb-28 relative"
+        >
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100 px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-xl bg-white shadow-sm border border-black/[0.02] flex items-center justify-center"
+            className="w-10 h-10 rounded-xl bg-gray-50 shadow-sm border border-gray-100 flex items-center justify-center text-gray-700"
           >
-            <FiArrowRight className="w-5 h-5 text-gray-900 rotate-180" />
+            <FiArrowRight className="w-5 h-5 rotate-180" />
           </motion.button>
-          <h1 className="text-xl font-[1000] text-gray-900 tracking-tight">Redeem Assets</h1>
+          <h1 className="text-xl font-black text-gray-900 tracking-tight">Redeem Assets</h1>
         </div>
-        <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-black/[0.02] flex items-center justify-center">
-          <FiActivity className="w-5 h-5 text-teal-600" />
+        <div className="w-10 h-10 bg-gray-50 rounded-xl shadow-sm border border-gray-100 flex items-center justify-center">
+          <FiActivity className="w-5 h-5 text-blue-600" />
         </div>
       </header>
 
-      <main className="px-5 pt-8 relative z-10 max-w-lg mx-auto">
-        {/* Compact Premium Balance Card */}
-        <div
-          className="rounded-[40px] p-8 shadow-[0_20px_50px_rgba(13,148,136,0.15)] mb-8 relative overflow-hidden group"
-          style={{ background: 'linear-gradient(135deg, #0D9488 0%, #0F766E 100%)' }}
-        >
-          <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000" />
-
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-[10px] font-[1000] text-teal-50/60 uppercase tracking-[0.2em] mb-1">Redeemable Liquidity</p>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-xl font-[1000] text-teal-200">₹</span>
-                <h2 className="text-4xl font-[1000] text-white tracking-tighter leading-none">{wallet.available.toLocaleString()}</h2>
-              </div>
-            </div>
-            <div className="w-14 h-14 rounded-[22px] bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/50">
-              <FiDollarSign className="w-7 h-7" />
-            </div>
-          </div>
-
-          <div className="relative z-10 mt-6 pt-5 border-t border-white/5 flex items-center gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-teal-300 animate-pulse" />
-            <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Assets Verified & Transferrable</p>
-          </div>
-        </div>
-
-        {/* Amount Input Section */}
-        <div className="bg-white/70 backdrop-blur-md rounded-[36px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 mb-6 group transition-all">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em]">Settlement Value</h3>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleMaxAmount}
-              className="text-[9px] font-[1000] text-teal-600 px-4 py-2 rounded-full bg-teal-50 active:scale-95 transition-all uppercase tracking-widest border border-teal-100/50"
-            >
-              Maximum
-            </motion.button>
-          </div>
-
-          <div className="relative mb-8">
-            <div className="absolute top-1/2 left-0 -translate-y-1/2 text-gray-200 font-[1000] text-4xl opacity-50">₹</div>
-            <input
-              type="text"
-              value={amount}
-              onChange={(e) => handleAmountChange(e.target.value)}
-              placeholder="0"
-              className={`w-full pl-10 pr-2 py-4 bg-transparent border-b-2 border-dashed ${error ? 'border-rose-200 text-rose-500' : 'border-gray-100 focus:border-teal-500'
-                } text-5xl font-[1000] text-right focus:outline-none transition-all text-gray-900 placeholder:text-gray-100 tracking-tighter`}
-            />
-          </div>
-
-          {error && (
-            <div className="bg-rose-50 rounded-2xl p-4 flex items-center gap-3 mb-8">
-              <FiAlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
-              <p className="text-rose-600 text-[10px] font-[1000] uppercase tracking-widest leading-relaxed">
-                {error}
-              </p>
-            </div>
-          )}
-
-          {amount && !error && (
-            <div className="bg-gray-50/50 rounded-[28px] p-6 space-y-4 border border-black/[0.02]">
-              <div className="flex justify-between items-center text-[10px] font-[1000] uppercase tracking-widest text-gray-400">
-                <span>Network Fee ({commissionRate + platformFeeRate}%)</span>
-                <span className="text-gray-900">₹{(commissionAmount + platformFeeAmount).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center text-[10px] font-[1000] uppercase tracking-widest text-gray-400">
-                <span>Statutory TDS (1%)</span>
-                <span className="text-gray-900">₹{tdsAmount.toLocaleString()}</span>
-              </div>
-              <div className="pt-4 border-t border-black/[0.05] flex justify-between items-center">
-                <span className="text-[11px] font-[1000] text-gray-900 uppercase tracking-widest">Net Credit</span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-sm font-black text-teal-600">₹</span>
-                  <span className="text-3xl font-[1000] text-teal-600 tracking-tighter">{netAmount.toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Bank Details Container */}
-        <div className="bg-white/70 backdrop-blur-md rounded-[36px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 mb-10">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-[20px] bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
-                <FiCreditCard className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-[11px] font-[1000] text-gray-900 uppercase tracking-widest">Destination</h3>
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Verified Payout Path</p>
-              </div>
-            </div>
-            {isBankSaved && !showBankForm && (
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowBankForm(true)}
-                className="text-[10px] font-[1000] text-teal-600 uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-teal-50 transition-all"
-              >
-                <FiEdit2 /> Update
-              </motion.button>
-            )}
-          </div>
-
-          {!isBankSaved || showBankForm ? (
-            <div className="space-y-5">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest ml-1">Account Holder</label>
-                  <input
-                    type="text"
-                    name="accountHolderName"
-                    value={bankAccount.accountHolderName}
-                    onChange={handleBankInputChange}
-                    className="w-full px-5 py-4 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-xs font-[1000] text-gray-900 uppercase tracking-widest transition-all"
-                    placeholder="ENTER FULL NAME"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest ml-1">Bank Name</label>
-                    <input
-                      type="text"
-                      name="bankName"
-                      value={bankAccount.bankName}
-                      onChange={handleBankInputChange}
-                      className="w-full px-5 py-4 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-xs font-[1000] text-gray-900 uppercase tracking-widest transition-all"
-                      placeholder="HDFC, SBI, ETC."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest ml-1">IFSC Code</label>
-                    <input
-                      type="text"
-                      name="ifscCode"
-                      value={bankAccount.ifscCode}
-                      onChange={handleBankInputChange}
-                      className="w-full px-5 py-4 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-xs font-[1000] text-gray-900 uppercase tracking-widest transition-all"
-                      placeholder="IFSC000XXXX"
-                      maxLength={11}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest ml-1">Account Number</label>
-                  <input
-                    type="tel"
-                    name="accountNumber"
-                    value={bankAccount.accountNumber}
-                    onChange={handleBankInputChange}
-                    className="w-full px-5 py-4 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-lg font-[1000] text-gray-900 tracking-[0.2em] transition-all"
-                    placeholder="0000 0000 0000"
-                    inputMode="numeric"
-                  />
-                </div>
-              </div>
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={saveBankDetails}
-                className="w-full py-5 bg-gray-900 text-white rounded-[24px] font-[1000] text-[11px] uppercase tracking-[0.25em] shadow-xl shadow-black/10 active:scale-95 transition-all"
-              >
-                Authenticate Account
-              </motion.button>
-            </div>
-          ) : (
+      <main className="px-5 pt-6 relative z-10 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* Left Column: Balance & Input */}
+          <div className="space-y-5">
+            {/* Compact Premium Balance Card */}
             <div
-              className="bg-gray-50/50 rounded-[32px] p-6 border border-gray-100 flex flex-col gap-6 group cursor-pointer hover:border-teal-500/20 transition-all"
-              onClick={() => setShowBankForm(true)}
+              className="rounded-2xl p-6 shadow-lg shadow-blue-500/5 relative overflow-hidden group"
+              style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' }}
             >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-[9px] text-gray-400 font-[1000] uppercase tracking-widest mb-1.5 opacity-60">Primary Payout Institution</p>
-                  <p className="font-[1000] text-gray-900 text-sm uppercase tracking-[0.1em]">{bankAccount.bankName}</p>
+              <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000" />
+
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-[9px] font-black text-blue-50 uppercase tracking-[0.2em] mb-1 opacity-80">Redeemable Liquidity</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-lg font-black text-blue-100">₹</span>
+                    <h2 className="text-3xl font-black text-white tracking-tighter leading-none">{wallet.available.toLocaleString()}</h2>
+                  </div>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600 border border-teal-100/50">
-                  <FiCheckCircle className="w-5 h-5" />
+                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white">
+                  <FiDollarSign className="w-6 h-6" />
                 </div>
               </div>
-              <div>
-                <p className="text-[9px] text-gray-400 font-[1000] uppercase tracking-widest mb-2 opacity-60">Current Linked Account</p>
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-1.5">
-                    {[1, 2, 3, 4].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-200" />)}
-                  </div>
-                  <p className="font-[1000] text-gray-900 text-xl tracking-[0.25em]">
-                    {bankAccount.accountNumber?.slice(-4)}
+
+              <div className="relative z-10 mt-4 pt-4 border-t border-white/10 flex items-center gap-2.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <p className="text-[8px] font-black text-blue-50 uppercase tracking-widest opacity-80">Assets Verified & Transferrable</p>
+              </div>
+            </div>
+
+            {/* Amount Input Section */}
+            <div className="bg-white rounded-2xl p-7 border border-gray-100 shadow-sm">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em]">Settlement Value</h3>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleMaxAmount}
+                  className="text-[8px] font-black text-blue-600 px-4 py-1.5 rounded-lg bg-blue-50 active:scale-95 transition-all uppercase tracking-widest border border-blue-100"
+                >
+                  Maximum
+                </motion.button>
+              </div>
+
+              <div className="relative mb-6">
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 text-gray-200 font-black text-3xl">₹</div>
+                <input
+                  type="text"
+                  value={amount}
+                  onChange={(e) => handleAmountChange(e.target.value)}
+                  placeholder="0"
+                  className={`w-full pl-10 pr-2 py-2 bg-transparent border-b-2 border-dashed ${error ? 'border-red-500 text-red-500' : 'border-gray-100 focus:border-blue-500'
+                    } text-5xl font-black text-right focus:outline-none transition-all text-gray-900 placeholder:text-gray-200 tracking-tighter`}
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-50 rounded-xl p-4 flex items-center gap-3 mb-6 border border-red-100">
+                  <FiAlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                  <p className="text-red-500 text-[9px] font-black uppercase tracking-widest leading-relaxed">
+                    {error}
                   </p>
                 </div>
-              </div>
+              )}
+
+              {amount && !error && (
+                <div className="bg-gray-50 rounded-xl p-6 space-y-4 border border-gray-100">
+                  <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">
+                    <span>Infrastructure Fee ({commissionRate + platformFeeRate}%)</span>
+                    <span className="text-gray-800">₹{(commissionAmount + platformFeeAmount).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">
+                    <span>Statutory TDS (1%)</span>
+                    <span className="text-gray-800">₹{tdsAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
+                    <span className="text-[10px] font-black text-gray-900 uppercase tracking-[0.2em]">Net Deployment Credit</span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xs font-black text-blue-600">₹</span>
+                      <span className="text-3xl font-black text-blue-600 tracking-tighter">{netAmount.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Right Column: Bank Details & Action */}
+          <div className="space-y-5">
+            <div className="bg-white rounded-2xl p-7 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100 shadow-inner">
+                    <FiCreditCard className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-[0.2em]">Destination Path</h3>
+                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-1">Authorized Institution</p>
+                  </div>
+                </div>
+                {isBankSaved && !showBankForm && (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowBankForm(true)}
+                    className="text-[9px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 transition-all hover:bg-blue-100 border border-blue-100"
+                  >
+                    <FiEdit2 className="w-3.5 h-3.5" /> Update
+                  </motion.button>
+                )}
+              </div>
+
+              {!isBankSaved || showBankForm ? (
+                <div className="space-y-5">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Account Proprietor</label>
+                      <input
+                        type="text"
+                        name="accountHolderName"
+                        value={bankAccount.accountHolderName}
+                        onChange={handleBankInputChange}
+                        className="w-full px-5 py-3.5 bg-gray-50 rounded-xl border border-gray-100 focus:border-blue-500 outline-none text-[11px] font-black text-gray-800 uppercase tracking-widest transition-all placeholder:text-gray-300"
+                        placeholder="ENTER FULL LEGAL NAME"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Institution</label>
+                        <input
+                          type="text"
+                          name="bankName"
+                          value={bankAccount.bankName}
+                          onChange={handleBankInputChange}
+                          className="w-full px-5 py-3.5 bg-gray-50 rounded-xl border border-gray-100 focus:border-blue-500 outline-none text-[11px] font-black text-gray-800 uppercase tracking-widest transition-all placeholder:text-gray-300"
+                          placeholder="BANK NAME"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Protocol Code</label>
+                        <input
+                          type="text"
+                          name="ifscCode"
+                          value={bankAccount.ifscCode}
+                          onChange={handleBankInputChange}
+                          className="w-full px-5 py-3.5 bg-gray-50 rounded-xl border border-gray-100 focus:border-blue-500 outline-none text-[11px] font-black text-gray-800 uppercase tracking-widest transition-all placeholder:text-gray-300"
+                          placeholder="IFSC CODE"
+                          maxLength={11}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">Identification Number</label>
+                      <input
+                        type="tel"
+                        name="accountNumber"
+                        value={bankAccount.accountNumber}
+                        onChange={handleBankInputChange}
+                        className="w-full px-5 py-3.5 bg-gray-50 rounded-xl border border-gray-100 focus:border-blue-500 outline-none text-base font-black text-gray-800 tracking-[0.3em] transition-all placeholder:text-gray-200"
+                        placeholder="0000 0000 0000"
+                        inputMode="numeric"
+                      />
+                    </div>
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={saveBankDetails}
+                    className="w-full py-4.5 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.3em] shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
+                  >
+                    Authenticate Protocol
+                  </motion.button>
+                </div>
+              ) : (
+                <div
+                  className="bg-gray-50 rounded-2xl p-6 border border-gray-100 flex flex-col gap-6 group cursor-pointer hover:bg-gray-100 transition-all shadow-inner"
+                  onClick={() => setShowBankForm(true)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-[8px] text-gray-400 font-black uppercase tracking-[0.3em] mb-1.5">Primary Asset Destination</p>
+                      <p className="font-black text-gray-900 text-sm uppercase tracking-[0.2em]">{bankAccount.bankName}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100 shadow-sm">
+                      <FiCheckCircle className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[8px] text-gray-400 font-black uppercase tracking-[0.3em] mb-2">Verified Settlement Path</p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-1.5">
+                        {[1, 2, 3, 4].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-200" />)}
+                      </div>
+                      <p className="font-black text-gray-900 text-xl tracking-[0.3em]">
+                        {bankAccount.accountNumber?.slice(-4)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Final Execution Button */}
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSubmit}
+              disabled={!amount || !!error || !isBankSaved || loading}
+              className="w-full py-6 rounded-2xl font-black text-white text-[10px] uppercase tracking-[0.35em] flex items-center justify-center gap-4 transition-all active:scale-95 disabled:opacity-50 bg-blue-600 shadow-xl shadow-blue-900/40 group relative overflow-hidden"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-3 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  Deploy Asset Settlement
+                  <FiArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+                </>
+              )}
+            </motion.button>
+          </div>
         </div>
 
-        {/* Final Execution Button */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={handleSubmit}
-          disabled={!amount || !!error || !isBankSaved || loading}
-          className="w-full py-6 rounded-[30px] font-[1000] text-white text-[12px] uppercase tracking-[0.35em] flex items-center justify-center gap-4 transition-all active:scale-95 disabled:opacity-20 bg-teal-600 shadow-2xl shadow-teal-900/20 group relative overflow-hidden"
-        >
-          {loading ? (
-            <div className="w-6 h-6 border-3 border-white/20 border-t-white rounded-full animate-spin" />
-          ) : (
-            <>
-              Initialize Transfer
-              <FiArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
-            </>
-          )}
-        </motion.button>
-
-        <div className="mt-12 flex flex-col items-center gap-2 px-8">
+        <div className="mt-12 flex flex-col items-center gap-3 px-10">
           <FiClock className="w-4 h-4 text-gray-300" />
-          <p className="text-center text-[9px] text-gray-400 font-black uppercase tracking-[0.15em] leading-relaxed opacity-50">
+          <p className="text-center text-[8px] text-gray-400 font-black uppercase tracking-[0.2em] leading-relaxed">
             Secure processing timeline: 24-48 business hours.<br />
             Digital receipt will be issued post-verification.
           </p>
         </div>
       </main>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

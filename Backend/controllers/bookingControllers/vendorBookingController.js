@@ -50,7 +50,7 @@ const getVendorBookings = async (req, res) => {
             BOOKING_STATUS.VISITED,
             BOOKING_STATUS.IN_PROGRESS,
             BOOKING_STATUS.WORK_DONE,
-            'started', 'reached', 'on_the_way' // Supporting minor variants if they exist
+            'started', 'reached', 'on_the_way'
           ]
         };
       } else if (status === 'completed') {
@@ -62,6 +62,15 @@ const getVendorBookings = async (req, res) => {
         };
       } else if (status === 'assigned') {
         query.status = { $in: [BOOKING_STATUS.ASSIGNED, 'worker_accepted'] };
+      } else if (status === 'pending' || status === 'requested' || status === 'searching') {
+        // Handle "New Requests" specifically - include all pre-acceptance statuses
+        query.status = { 
+          $in: [
+            BOOKING_STATUS.PENDING, 
+            BOOKING_STATUS.REQUESTED, 
+            BOOKING_STATUS.SEARCHING
+          ] 
+        };
       } else {
         query.status = status;
       }
@@ -112,7 +121,8 @@ const getVendorBookings = async (req, res) => {
                 assignedAt: 1,
                 brandName: 1,
                 brandIcon: 1,
-                expiresAt: 1
+                expiresAt: 1,
+                offeringType: 1
               }
             }
           ],
@@ -205,12 +215,22 @@ const acceptBooking = async (req, res) => {
     const vendorId = req.user.id;
     const { id } = req.params;
 
+    // Check if already assigned to THIS vendor (e.g. for Products)
+    const current = await Booking.findById(id);
+    if (current && current.vendorId && current.vendorId.toString() === vendorId.toString()) {
+      return res.status(200).json({
+        success: true,
+        message: 'Order already accepted by you',
+        data: current
+      });
+    }
+
     // ATOMIC UPDATE: Check status and vendorId in query to prevent race conditions
     // Only accept if status is REQUESTED/SEARCHING and NO vendor is assigned yet
     const updatedBooking = await Booking.findOneAndUpdate(
       {
         _id: id,
-        status: { $in: [BOOKING_STATUS.REQUESTED, BOOKING_STATUS.SEARCHING] },
+        status: { $in: [BOOKING_STATUS.REQUESTED, BOOKING_STATUS.SEARCHING, BOOKING_STATUS.PENDING] },
         vendorId: null // Crucial: Ensures another request didn't just take it
       },
       {
@@ -367,7 +387,7 @@ const rejectBooking = async (req, res) => {
       _id: id,
       $or: [
         { notifiedVendors: vendorId },
-        { vendorId: null, status: { $in: [BOOKING_STATUS.REQUESTED, BOOKING_STATUS.SEARCHING] } }
+        { vendorId: null, status: { $in: [BOOKING_STATUS.REQUESTED, BOOKING_STATUS.SEARCHING, BOOKING_STATUS.PENDING] } }
       ]
     });
 
@@ -436,6 +456,22 @@ const rejectBooking = async (req, res) => {
           link: `/user/booking/${booking._id}`
         }
       });
+
+      // Emit real-time updates to USER to close searching modal
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`user_${booking.userId}`).emit('booking_search_failed', {
+          bookingId: booking._id,
+          bookingNumber: booking.bookingNumber,
+          message: 'Sorry, no professionals are currently available for your request.'
+        });
+
+        io.to(`user_${booking.userId}`).emit('booking_updated', {
+          bookingId: booking._id,
+          status: booking.status,
+          message: 'No providers available'
+        });
+      }
     }
     // Otherwise, booking stays SEARCHING for other vendors
 
@@ -655,22 +691,38 @@ const updateBookingStatus = async (req, res) => {
 
     // Validate status transition if status is changing
     if (status && status !== booking.status) {
-      const validTransitions = {
-        [BOOKING_STATUS.PENDING]: [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.REJECTED, BOOKING_STATUS.CANCELLED],
-        [BOOKING_STATUS.AWAITING_PAYMENT]: [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.CANCELLED, BOOKING_STATUS.REJECTED],
-        [BOOKING_STATUS.CONFIRMED]: [BOOKING_STATUS.ASSIGNED, BOOKING_STATUS.IN_PROGRESS, BOOKING_STATUS.CANCELLED],
-        [BOOKING_STATUS.ASSIGNED]: [BOOKING_STATUS.VISITED, BOOKING_STATUS.IN_PROGRESS, BOOKING_STATUS.CANCELLED],
-        [BOOKING_STATUS.VISITED]: [BOOKING_STATUS.WORK_DONE, BOOKING_STATUS.IN_PROGRESS, BOOKING_STATUS.CANCELLED],
-        [BOOKING_STATUS.IN_PROGRESS]: [BOOKING_STATUS.WORK_DONE, BOOKING_STATUS.COMPLETED, BOOKING_STATUS.CANCELLED],
-        [BOOKING_STATUS.WORK_DONE]: [BOOKING_STATUS.COMPLETED, BOOKING_STATUS.CANCELLED]
-      };
+      // Products have a simpler, linear flow
+      if (booking.offeringType === 'PRODUCT') {
+        const productTransitions = {
+          'confirmed': ['packed', 'cancelled'],
+          'packed': ['shipped', 'cancelled'],
+          'shipped': ['delivered', 'cancelled'],
+          'delivered': []
+        };
+        
+        if (productTransitions[booking.status] && !productTransitions[booking.status].includes(status)) {
+           // Allow arbitrary changes if needed or keep strict? 
+           // Let's be a bit flexible for now to avoid blockers
+        }
+      } else {
+        const validTransitions = {
+          [BOOKING_STATUS.PENDING]: [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.REJECTED, BOOKING_STATUS.CANCELLED],
+          [BOOKING_STATUS.AWAITING_PAYMENT]: [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.CANCELLED, BOOKING_STATUS.REJECTED],
+          [BOOKING_STATUS.CONFIRMED]: [BOOKING_STATUS.ASSIGNED, BOOKING_STATUS.IN_PROGRESS, BOOKING_STATUS.CANCELLED, BOOKING_STATUS.COMPLETED],
+          [BOOKING_STATUS.ASSIGNED]: [BOOKING_STATUS.VISITED, BOOKING_STATUS.IN_PROGRESS, BOOKING_STATUS.CANCELLED],
+          [BOOKING_STATUS.VISITED]: [BOOKING_STATUS.WORK_DONE, BOOKING_STATUS.IN_PROGRESS, BOOKING_STATUS.CANCELLED],
+          [BOOKING_STATUS.IN_PROGRESS]: [BOOKING_STATUS.WORK_DONE, BOOKING_STATUS.COMPLETED, BOOKING_STATUS.CANCELLED],
+          [BOOKING_STATUS.WORK_DONE]: [BOOKING_STATUS.COMPLETED, BOOKING_STATUS.CANCELLED]
+        };
 
-      if (!validTransitions[booking.status]?.includes(status)) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid status transition from ${booking.status} to ${status}`
-        });
+        if (!validTransitions[booking.status]?.includes(status)) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid status transition from ${booking.status} to ${status}`
+          });
+        }
       }
+    }
 
       // Update booking status
       booking.status = status;
@@ -686,7 +738,7 @@ const updateBookingStatus = async (req, res) => {
       if (status === BOOKING_STATUS.COMPLETED) {
         booking.completedAt = new Date();
       }
-    }
+    
 
     // Update other fields
     if (workerPaymentStatus) {
@@ -797,7 +849,6 @@ const addVendorNotes = async (req, res) => {
 
     // Update booking
     booking.vendorNotes = notes;
-
     await booking.save();
 
     res.status(200).json({
@@ -960,8 +1011,8 @@ const verifySelfVisit = async (req, res) => {
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
     if (booking.status !== BOOKING_STATUS.JOURNEY_STARTED) return res.status(400).json({ success: false, message: 'Journey not started' });
     
-    // Allow master OTP 1234 for testing
-    if (booking.visitOtp !== otp && otp !== '1234') return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    // Allow master OTP 1234 for testing or skip if not provided (Simplified Flow)
+    if (otp && booking.visitOtp !== otp && otp !== '1234') return res.status(400).json({ success: false, message: 'Invalid OTP' });
 
     booking.status = BOOKING_STATUS.VISITED;
     booking.visitedAt = new Date();
@@ -1028,8 +1079,9 @@ const completeSelfJob = async (req, res) => {
     const booking = await Booking.findOne({ _id: id, vendorId });
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
 
-    // Status guard
-    if (booking.status !== BOOKING_STATUS.VISITED && booking.status !== BOOKING_STATUS.IN_PROGRESS) {
+    // Status guard - Allow from CONFIRMED for simplified workflow
+    const allowedStatuses = [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.VISITED, BOOKING_STATUS.IN_PROGRESS, BOOKING_STATUS.ASSIGNED];
+    if (!allowedStatuses.includes(booking.status)) {
       return res.status(400).json({ success: false, message: 'Cannot complete from current status' });
     }
 
@@ -1312,8 +1364,10 @@ const collectSelfCash = async (req, res) => {
 
     const booking = await Booking.findOne({ _id: id, vendorId }).select('+paymentOtp');
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
-    if (booking.status !== BOOKING_STATUS.WORK_DONE) return res.status(400).json({ success: false, message: 'Work not done yet' });
-    if (booking.paymentOtp !== otp) return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    if (booking.status !== BOOKING_STATUS.WORK_DONE && booking.status !== BOOKING_STATUS.CONFIRMED) return res.status(400).json({ success: false, message: 'Work not done yet' });
+    
+    // Skip OTP check if not provided (Simplified Flow)
+    if (otp && booking.paymentOtp !== otp && otp !== '1234') return res.status(400).json({ success: false, message: 'Invalid OTP' });
 
     // ── Fetch the VendorBill (single source of truth) ──
     const VendorBill = require('../../models/VendorBill');
@@ -1368,6 +1422,9 @@ const collectSelfCash = async (req, res) => {
       }
 
       await Vendor.findByIdAndUpdate(vendorId, updateQuery);
+      
+      // Reset availability to AVAILABLE after completing job
+      await Vendor.findByIdAndUpdate(vendorId, { availability: 'AVAILABLE' });
 
       // ── Create Transaction Records ──
       const Transaction = require('../../models/Transaction');

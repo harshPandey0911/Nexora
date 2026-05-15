@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiX, FiShield, FiSmartphone, FiMinimize2 } from 'react-icons/fi';
+import { FiX, FiShield, FiSmartphone } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const OtpVerificationModal = ({ isOpen, onClose, onVerify, loading }) => {
@@ -38,45 +38,46 @@ const OtpVerificationModal = ({ isOpen, onClose, onVerify, loading }) => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-white/60 backdrop-blur-xl">
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 40 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 40 }}
-          className="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] relative"
+          className="bg-white w-full max-w-sm rounded-[3rem] overflow-hidden shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] relative border border-gray-100"
         >
           {/* Header */}
-          <div className="relative h-28 bg-gradient-to-br from-blue-600 to-indigo-700 flex flex-col items-center justify-center">
-            <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div className="relative h-44 bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 flex flex-col items-center justify-center">
+            <div className="absolute inset-0 opacity-30 pointer-events-none">
               <motion.div
-                animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="absolute -top-10 -left-10 w-40 h-40 bg-white rounded-full"
+                animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
+                transition={{ duration: 6, repeat: Infinity }}
+                className="absolute -top-20 -left-20 w-64 h-64 bg-white/20 rounded-full blur-3xl"
               />
             </div>
 
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 z-50 p-2 bg-black/20 hover:bg-black/30 backdrop-blur-md rounded-full text-white transition-all active:scale-95"
+              className="absolute top-6 right-6 z-50 p-3 bg-white/10 hover:bg-white/20 backdrop-blur-2xl rounded-2xl text-white transition-all active:scale-95 border border-white/10"
             >
-              <FiMinimize2 className="w-5 h-5" />
+              <FiX className="w-5 h-5" />
             </button>
 
-            <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 flex items-center justify-center shadow-lg mb-2">
-              <FiShield className="w-6 h-6 text-white" />
+            <div className="w-16 h-16 bg-white/10 backdrop-blur-2xl rounded-2xl border border-white/20 flex items-center justify-center shadow-2xl mb-4">
+              <FiShield className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-white text-lg font-black tracking-tight">Payment Verification</h2>
+            <h2 className="text-white text-xs font-black uppercase tracking-[0.3em] opacity-80 mb-1">Secure Protocol</h2>
+            <p className="text-white text-xl font-black tracking-tight">Payment Verification</p>
           </div>
 
           {/* Body */}
-          <div className="px-6 py-8">
-            <div className="text-center mb-6">
-              <p className="text-gray-500 text-sm font-medium">
-                Enter the 4-digit code sent to the customer
+          <div className="px-10 py-12 bg-white">
+            <div className="text-center mb-10">
+              <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] leading-relaxed">
+                Enter the 4-digit verification code transmitted to the user
               </p>
             </div>
 
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-12">
               <input
                 ref={inputRef}
                 type="number"
@@ -84,16 +85,22 @@ const OtpVerificationModal = ({ isOpen, onClose, onVerify, loading }) => {
                 onChange={handleChange}
                 disabled={loading}
                 placeholder="0000"
-                className="w-full text-center bg-gray-50 border border-gray-200 rounded-2xl py-4 text-4xl font-black tracking-[0.5em] text-gray-900 outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all placeholder:text-gray-200"
+                className="w-full text-center bg-gray-50 border border-gray-100 rounded-[2rem] py-8 text-6xl font-black tracking-[0.4em] text-gray-900 outline-none focus:border-blue-600/30 transition-all placeholder:text-gray-200 shadow-inner"
               />
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-4">
               {loading ? (
-                <div className="text-blue-600 font-bold animate-pulse">Verifying...</div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce delay-100" />
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce delay-200" />
+                  <span className="text-blue-600 font-black text-[10px] uppercase tracking-widest">Validating...</span>
+                </div>
               ) : (
-                <div className="text-xs text-center text-gray-400">
-                  Auto-verifying on entry
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                  <FiSmartphone className="w-3 h-3 text-blue-600" />
+                  Auto-verification Engaged
                 </div>
               )}
             </div>

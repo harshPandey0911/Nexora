@@ -347,6 +347,16 @@ const updateStatus = async (req, res) => {
     
     await vendor.save();
 
+    // Sync with Redis cache for real-time visibility
+    try {
+      const { setVendorOnline, setVendorAvailability } = require('../../services/redisService');
+      await setVendorOnline(vendorId, isOnline);
+      await setVendorAvailability(vendorId, vendor.availability);
+    } catch (redisError) {
+      console.error('[Redis] Failed to sync vendor status:', redisError);
+      // Don't fail the request if Redis sync fails
+    }
+
     res.status(200).json({ 
       success: true, 
       message: `Status updated to ${isOnline ? 'Online' : 'Offline'}`,

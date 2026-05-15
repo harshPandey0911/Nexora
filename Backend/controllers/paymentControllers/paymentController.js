@@ -192,6 +192,9 @@ const verifyPaymentWebhook = async (req, res) => {
       }
 
       console.log(`[Payment] Credited ₹${vendorEarning} to vendor ${booking.vendorId}`);
+      
+      // Reset vendor availability to AVAILABLE
+      await Vendor.findByIdAndUpdate(booking.vendorId, { availability: 'AVAILABLE' });
     }
 
     // Record stats in the Daily Earning Tracker (Async)
@@ -382,6 +385,9 @@ const processWalletPayment = async (req, res) => {
       }
 
       console.log(`[Wallet Payment] Credited ₹${vendorEarning} to vendor ${booking.vendorId}`);
+      
+      // Reset vendor availability to AVAILABLE
+      await Vendor.findByIdAndUpdate(booking.vendorId, { availability: 'AVAILABLE' });
     }
 
     // Record stats in the Daily Earning Tracker (Async)

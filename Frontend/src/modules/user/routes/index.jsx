@@ -84,6 +84,8 @@ const CancellationPolicy = lazyLoad(() => import('../pages/CancellationPolicy'))
 const About = lazyLoad(() => import('../pages/About'));
 const Contact = lazyLoad(() => import('../pages/Contact'));
 const Services = lazyLoad(() => import('../pages/Services'));
+const Products = lazyLoad(() => import('../pages/Products'));
+const ProductDetails = lazyLoad(() => import('../pages/Products/ProductDetails'));
 
 // Loading fallback component
 import LogoLoader from '../../../components/common/LogoLoader';
@@ -151,6 +153,8 @@ const UserRoutes = () => {
                 <Route path="/about" element={<ProtectedRoute userType="user"><About /></ProtectedRoute>} />
                 <Route path="/contact" element={<ProtectedRoute userType="user"><Contact /></ProtectedRoute>} />
                 <Route path="/services" element={<ProtectedRoute userType="user"><Services /></ProtectedRoute>} />
+                <Route path="/products" element={<ProtectedRoute userType="user"><Products /></ProtectedRoute>} />
+                <Route path="/product/:id" element={<ProtectedRoute userType="user"><ProductDetails /></ProtectedRoute>} />
                 <Route path="/help-support" element={<ProtectedRoute userType="user"><HelpSupport /></ProtectedRoute>} />
                 <Route path="/cancellation-policy" element={<ProtectedRoute userType="user"><CancellationPolicy /></ProtectedRoute>} />
               </Routes>
@@ -161,7 +165,7 @@ const UserRoutes = () => {
         {/* These components are OUTSIDE Suspense so they persist during page loads */}
         {!isBookingDetailsPage && !isBookingConfirmationPage && !isPublicPage && <LiveBookingCard hasBottomNav={shouldShowBottomNav} />}
         {shouldShowBottomNav && <BottomNav />}
-        {(['/user', '/user/', '/user/about', '/user/contact', '/user/services'].includes(location.pathname)) && <Footer />}
+        {(['/user', '/user/', '/user/about', '/user/contact', '/user/services', '/user/products'].includes(location.pathname)) && <Footer />}
       </ErrorBoundary>
     </ThemeManager>
   );

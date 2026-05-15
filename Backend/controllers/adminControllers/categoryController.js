@@ -42,6 +42,7 @@ const getAllCategories = async (req, res) => {
         isPopular: cat.isPopular,
         vendorId: cat.vendorId,
         cityIds: cat.cityIds || [],
+        group: cat.group || 'None',
         metaTitle: cat.metaTitle,
         metaDescription: cat.metaDescription,
         createdAt: cat.createdAt,
@@ -89,6 +90,7 @@ const getCategoryById = async (req, res) => {
         imageUrl: category.imageUrl,
         status: category.status,
         isPopular: category.isPopular,
+        group: category.group || 'None',
         metaTitle: category.metaTitle,
         metaDescription: category.metaDescription,
         createdAt: category.createdAt,
@@ -134,7 +136,8 @@ const createCategory = async (req, res) => {
       isPopular,
       metaTitle,
       metaDescription,
-      cityIds
+      cityIds,
+      group
     } = req.body;
 
     console.log('Creating category with payload:', req.body);
@@ -197,6 +200,7 @@ const createCategory = async (req, res) => {
       metaTitle: metaTitle?.trim() || null,
       metaDescription: metaDescription?.trim() || null,
       cityIds: cityIds || [],
+      group: group || 'None',
       createdBy: req.user.id
     });
 
@@ -268,7 +272,8 @@ const updateCategory = async (req, res) => {
       isPopular,
       metaTitle,
       metaDescription,
-      cityIds: updateCityIds
+      cityIds: updateCityIds,
+      group
     } = req.body;
 
     const category = await Category.findById(id);
@@ -328,6 +333,7 @@ const updateCategory = async (req, res) => {
     if (isPopular !== undefined) category.isPopular = Boolean(isPopular);
     if (metaTitle !== undefined) category.metaTitle = metaTitle?.trim() || null;
     if (metaDescription !== undefined) category.metaDescription = metaDescription?.trim() || null;
+    if (group !== undefined) category.group = group;
 
     if (updateCityIds !== undefined) {
       category.cityIds = updateCityIds;

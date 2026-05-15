@@ -1,0 +1,71 @@
+{
+  "success": true,
+  "categories": [],
+  "homeContent": {
+    "banners": [],
+    "promos": [],
+    "curated": [],
+    "noteworthy": [],
+    "booked": [],
+    "categorySections": [],
+    "isBannersVisible": true,
+    "isPromosVisible": true,
+    "isCuratedVisible": false,
+    "isNoteworthyVisible": false,
+    "isBookedVisible": true,
+    "isCategorySectionsVisible": true,
+    "isCategoriesVisible": true,
+    "isStatsVisible": true,
+    "isAppDownloadVisible": true,
+    "isOrderTrackingVisible": true,
+    "isHowItWorksVisible": true,
+    "heroSection": {
+      "title": "Everything You Need, Delivered to You.",
+      "subtitle": "One super app for all your daily needs. Fast, reliable & secure delivery at your doorstep.",
+      "primaryBtnText": "Get Started",
+      "secondaryBtnText": "Explore Services",
+      "imageUrl": "https://res.cloudinary.com/dqtyjdyhe/image/upload/v1778672312/Nexora/Hero/gw9a5jmnyszjtgdr7qdg.jpg"
+    },
+    "stats": [],
+    "appDownload": {
+      "title": "Download the Nexora GO App",
+      "subtitle": "Better experience, exclusive offers & faster everything. Scan to download or use the stores.",
+      "playStoreUrl": "#",
+      "appStoreUrl": "#",
+      "qrCodeUrl": "",
+      "imageUrl": ""
+    },
+    "navLinks": [],
+    "siteIdentity": {
+      "brandName": "NEXORA GO",
+      "slogan": "Everything you need, one place"
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "subtitle": "Simple steps to get your services done",
+      "items": []
+    },
+    "isAboutUsVisible": true,
+    "isOffersVisible": true,
+    "isContactUsVisible": true,
+    "aboutUs": {
+      "title": "About Us",
+      "content": "",
+      "imageUrl": "",
+      "features": []
+    },
+    "offers": {
+      "title": "Exclusive Offers",
+      "subtitle": "Save more with our latest deals",
+      "items": []
+    },
+    "contactUs": {
+      "title": "Contact Us",
+      "subtitle": "We are here to help",
+      "email": "",
+      "phone": "",
+      "address": "",
+      "workingHours": ""
+    }
+  }
+}

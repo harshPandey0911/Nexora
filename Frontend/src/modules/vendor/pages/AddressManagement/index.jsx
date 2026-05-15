@@ -5,8 +5,7 @@ import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { toast } from 'react-hot-toast';
 import { vendorTheme as themeColors } from '../../../../theme';
 import vendorService from '../../../../services/vendorService';
-import Header from '../../components/layout/Header';
-import BottomNav from '../../components/layout/BottomNav';
+import vendorService from '../../../../services/vendorService';
 import LocationPicker from '../../../user/pages/Checkout/components/LocationPicker';
 
 const libraries = ['places', 'geometry'];
@@ -165,29 +164,47 @@ const AddressManagement = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: themeColors.backgroundGradient }}>
-      <Header
-        title="Manage Business Address"
-        showBack={true}
-        onBack={() => navigate('/vendor/settings')}
-      />
+    <div className="min-h-screen pb-20 relative">
+      {/* Premium Background Pattern */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gray-50" />
+      </div>
 
-      <main className="px-4 py-6">
-        {/* Info Card - Same logic as Modal */}
-        <div className="rounded-xl p-3 mb-6 border" style={{ backgroundColor: `${themeColors.brand.teal}0D`, borderColor: `${themeColors.brand.teal}1A` }}>
-          <div className="flex items-start gap-3">
-            <FiMapPin className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: themeColors.button }} />
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-gray-100 px-10 py-6 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate('/vendor/settings')}
+            className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-blue-600 transition-all"
+          >
+            <FiArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-black text-gray-900 tracking-tight">Deployment Base</h1>
+        </div>
+        <div className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center shadow-inner">
+          <FiMapPin className="w-6 h-6 text-blue-500" />
+        </div>
+      </header>
+
+      <main className="px-10 pt-10 relative z-10 max-w-[1600px] mx-auto">
+        {/* Info Card */}
+        <div className="bg-white rounded-[32px] p-6 mb-10 border border-gray-100 relative overflow-hidden group shadow-sm">
+          <div className="absolute inset-0 bg-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-start gap-5 relative z-10">
+            <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+              <FiMapPin className="w-6 h-6 text-blue-500" />
+            </div>
             <div>
-              <h3 className="font-semibold mb-1 text-sm" style={{ color: themeColors.button }}>Set Business Location</h3>
-              <p className="text-xs" style={{ color: `${themeColors.brand.teal}CC` }}>
-                Place the pin accurately on the map to help customers locate you easily.
+              <h3 className="text-gray-900 font-black text-sm uppercase tracking-widest mb-1">Geospatial Configuration</h3>
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-relaxed">
+                Calibrate your operational base coordinates. Precise positioning ensures optimal job matching and dispatch accuracy.
               </p>
             </div>
           </div>
         </div>
 
         {/* Map Section */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden mb-6 border border-gray-100">
+        {/* Map Section */}
+        <div className="bg-white/5 rounded-[48px] overflow-hidden mb-10 border border-white/10 shadow-2xl h-[400px]">
           <LocationPicker
             onLocationSelect={handleLocationSelect}
             initialPosition={selectedLocation}
@@ -195,12 +212,13 @@ const AddressManagement = () => {
         </div>
 
         {/* Form Inputs Container */}
-        <div className="bg-white rounded-xl p-4 shadow-md space-y-4">
+        {/* Form Inputs Container */}
+        <div className="bg-white rounded-[48px] p-10 border border-gray-100 space-y-8 shadow-sm">
 
           {/* Address Autocomplete */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Street Address / Area
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] ml-2">
+              Primary Access Coordinates (Street/Area)
             </label>
             {isLoaded ? (
               <Autocomplete
@@ -212,16 +230,13 @@ const AddressManagement = () => {
                 }}
               >
                 <div className="relative">
-                  <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+                  <FiSearch className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-300 w-6 h-6 z-10" />
                   <input
                     type="text"
-                    placeholder="Search for area, street name..."
+                    placeholder="ENTER OPERATIONAL VECTOR..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border-2 rounded-lg text-sm focus:outline-none transition-colors"
-                    style={{ borderColor: '#e5e7eb' }}
-                    onFocus={(e) => e.target.style.borderColor = themeColors.button}
-                    onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                    className="w-full bg-gray-50 border border-gray-100 rounded-[28px] pl-16 pr-8 py-5 text-sm text-gray-700 focus:outline-none focus:border-blue-500 focus:bg-white transition-all uppercase tracking-widest placeholder:text-gray-200"
                   />
                 </div>
               </Autocomplete>
@@ -229,38 +244,35 @@ const AddressManagement = () => {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Loading Maps..."
+                  placeholder="SYNCHRONIZING MAPS..."
                   disabled
-                  className="w-full pl-4 py-3 border-2 rounded-lg text-sm bg-gray-100"
+                  className="w-full bg-white/5 border border-white/10 rounded-[28px] pl-8 py-5 text-sm text-gray-800 animate-pulse"
                 />
               </div>
             )}
           </div>
 
           {/* House Number */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Shop / Building Number
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] ml-2">
+              Facility Identifier (Shop/Building)
             </label>
             <div className="relative">
-              <FiHome className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <FiHome className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-300 w-6 h-6" />
               <input
                 type="text"
-                placeholder="e.g. Shop 101, Complex B"
+                placeholder="e.g. FACILITY 101, HUB B"
                 value={houseNumber}
                 onChange={(e) => setHouseNumber(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border-2 rounded-lg text-sm focus:outline-none transition-colors"
-                style={{ borderColor: '#e5e7eb' }}
-                onFocus={(e) => e.target.style.borderColor = themeColors.button}
-                onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                className="w-full bg-gray-50 border border-gray-100 rounded-[28px] pl-16 pr-8 py-5 text-sm text-gray-700 focus:outline-none focus:border-blue-500 focus:bg-white transition-all uppercase tracking-widest placeholder:text-gray-200"
               />
             </div>
           </div>
 
-          {/* Coordinates Display (Optional, for transparency) */}
+          {/* Coordinates Display */}
           {selectedLocation && (
-            <p className="text-xs text-gray-400">
-              Lat/Lng: {selectedLocation.lat?.toFixed(5)}, {selectedLocation.lng?.toFixed(5)}
+            <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest text-center">
+              Global Position: {selectedLocation.lat?.toFixed(6)} / {selectedLocation.lng?.toFixed(6)}
             </p>
           )}
 
@@ -268,19 +280,13 @@ const AddressManagement = () => {
           <button
             onClick={handleSave}
             disabled={!searchQuery || !selectedLocation || loading}
-            className="w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-            style={{
-              background: themeColors.button,
-              boxShadow: `0 4px 12px ${themeColors.button}40`
-            }}
+            className="w-full py-6 rounded-[28px] bg-blue-600 text-white text-[12px] font-black uppercase tracking-[0.4em] shadow-xl shadow-blue-500/20 active:scale-95 disabled:opacity-20 transition-all flex items-center justify-center gap-4"
           >
             <FiSave className="w-5 h-5" />
-            {loading ? 'Saving...' : 'Save Business Address'}
+            {loading ? 'AUTHORIZING...' : 'AUTHORIZE LOCATION'}
           </button>
         </div>
       </main>
-
-      <BottomNav />
     </div>
   );
 };

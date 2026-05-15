@@ -50,49 +50,56 @@ const BottomNav = React.memo(() => {
           return (
             <button
               key={item.id}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleTabClick(item.path)}
               className="relative flex items-center justify-center transition-all duration-300"
             >
               <motion.div
                 layout
                 initial={false}
                 animate={{
-                  width: isActive ? 'auto' : '48px',
+                  width: isActive ? 'auto' : '44px',
                   backgroundColor: isActive ? '#0D463C' : 'transparent',
                 }}
-                className={`flex items-center gap-2 px-3 h-11 rounded-full overflow-hidden`}
+                className="flex items-center gap-2 px-3 h-11 rounded-full overflow-hidden"
               >
                 <div className="relative">
                   <Icon
-                    className={`w-5 h-5 transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-400'
-                      }`}
+                    className={`w-5 h-5 transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-400'}`}
                   />
                   {item.isCart && cartCount > 0 && (
                     <span className="absolute -top-2 -right-3 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-lg">
                       {cartCount > 9 ? '9+' : cartCount}
                     </span>
                   )}
+                </div>
+                
+                {isActive && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-xs font-bold text-white whitespace-nowrap"
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
               </motion.div>
-              <span className={`text-[10px] font-bold tracking-tight transition-colors duration-300 ${isActive ? 'text-teal-600' : 'text-gray-400'}`}>
-                {item.label}
-              </span>
-            </div>
 
-              {/* Bottom Dot */ }
-          <AnimatePresence>
-            {isActive && (
-              <motion.div
-                layoutId="active-dot"
-                className="absolute bottom-2 w-1 h-1 bg-teal-600 rounded-full"
-                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-              />
-            )}
-          </AnimatePresence>
+              {/* Bottom Dot indicator if not expanded */}
+              {!isActive && (
+                <AnimatePresence>
+                  {activeTab === item.id && (
+                    <motion.div
+                      layoutId="active-dot"
+                      className="absolute -bottom-1 w-1 h-1 bg-teal-600 rounded-full"
+                    />
+                  )}
+                </AnimatePresence>
+              )}
             </button>
-      );
+          );
         })}
-    </div>
-    </nav >
+      </div>
+    </nav>
   );
 });
 

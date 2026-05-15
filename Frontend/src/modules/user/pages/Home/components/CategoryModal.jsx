@@ -214,35 +214,69 @@ const CategoryModal = React.memo(({ isOpen, onClose, category, location, cartCou
                       ))}
                     </div>
                   ) : (
-                    <>
-                      {services.length > 0 ? (
-                        <div className="space-y-4">
-                          {services.map((svc) => (
-                            <div key={svc.id || svc._id} className="flex justify-between items-center p-4 border border-gray-100 rounded-2xl hover:shadow-lg transition-all bg-white group active:scale-[0.98]">
-                              <div className="flex-1 pr-4">
-                                <div className="flex flex-wrap items-center gap-2 mb-2">
-                                  <h3 className="font-black text-gray-900 text-base leading-tight">{svc.title}</h3>
+                    <>                      {services.length > 0 ? (
+                        <>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                            {services.map((svc) => (
+                              <div 
+                                key={svc.id || svc._id} 
+                                className="bg-white rounded-[20px] border border-gray-100 hover:border-teal-100 hover:shadow-lg transition-all duration-500 overflow-hidden flex flex-col group active:scale-[0.98]"
+                              >
+                                {/* Service Image Section */}
+                                <div className="relative aspect-square bg-gray-50 overflow-hidden">
+                                  <img 
+                                    src={toAssetUrl(svc.icon || svc.vendorPhoto || '')} 
+                                    alt={svc.title}
+                                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                    onError={(e) => {
+                                      e.target.src = 'https://ui-avatars.com/api/?name=' + svc.title + '&background=f0fdfa&color=0d9488&bold=true';
+                                    }}
+                                  />
                                   {(svc.vendorName || svc.brandName) && (
-                                    <span className="text-[8px] font-black uppercase tracking-widest text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100/50">
-                                      {svc.vendorName || svc.brandName}
-                                    </span>
+                                    <div className="absolute top-3 left-3">
+                                      <span className="text-[8px] font-black uppercase tracking-widest text-teal-700 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg shadow-sm border border-teal-50">
+                                        {svc.vendorName || svc.brandName}
+                                      </span>
+                                    </div>
                                   )}
+                                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg shadow-sm flex items-center gap-1">
+                                    <span className="text-[10px] font-black text-gray-900">4.5</span>
+                                    <span className="text-orange-400 text-[8px]">★</span>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xl font-black text-emerald-600">₹{svc.basePrice}</span>
-                                  {svc.originalPrice && svc.originalPrice > svc.basePrice && (
-                                    <span className="text-xs text-gray-400 line-through font-bold opacity-60">₹{svc.originalPrice}</span>
-                                  )}
+
+                                {/* Details Section */}
+                                <div className="p-4 flex flex-col flex-1">
+                                  <div className="mb-3">
+                                    <h3 className="font-black text-gray-900 text-[13px] leading-tight mb-1 group-hover:text-teal-600 transition-colors line-clamp-1">
+                                      {svc.title}
+                                    </h3>
+                                    <p className="text-[10px] font-medium text-gray-400 line-clamp-1">
+                                      {svc.description || 'Professional Service'}
+                                    </p>
+                                  </div>
+
+                                  <div className="mt-auto flex items-center justify-between gap-2">
+                                    <div className="flex flex-col">
+                                      <span className="text-sm font-black text-teal-600">₹{svc.basePrice}</span>
+                                      {svc.originalPrice && svc.originalPrice > svc.basePrice && (
+                                        <span className="text-[9px] text-gray-400 line-through opacity-60">₹{svc.originalPrice}</span>
+                                      )}
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-1.5">
+                                      <button
+                                        onClick={() => handleServiceClick(svc)}
+                                        className="h-8 px-3 bg-teal-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1 hover:bg-teal-700 shadow-lg shadow-teal-100 active:scale-90 transition-all"
+                                      >
+                                        <FiPlus className="w-3 h-3" /> Add
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                              <button
-                                onClick={() => handleServiceClick(svc)}
-                                className="px-5 py-2.5 bg-teal-600 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-teal-700 shadow-lg shadow-teal-100 active:scale-90 transition-all"
-                              >
-                                <FiPlus className="w-3 h-3" /> Add
-                              </button>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                           
                           {/* Bottom Disclaimer */}
                           <div className="mt-8 pt-4 border-t border-gray-50 flex items-start gap-3 bg-gray-50/50 p-5 rounded-[2rem]">
@@ -255,7 +289,7 @@ const CategoryModal = React.memo(({ isOpen, onClose, category, location, cartCou
                               * This is a base price only. Additional charges may apply based on the specific service requirements discussed with the professional.
                             </p>
                           </div>
-                        </div>
+                        </>
                       ) : (
                         <div className="text-center py-20 bg-gray-50/50 rounded-[2.5rem] border-2 border-dashed border-gray-100">
                           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">

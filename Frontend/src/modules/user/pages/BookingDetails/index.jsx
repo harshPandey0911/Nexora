@@ -140,27 +140,19 @@ const BookingDetails = () => {
   // Track if we've shown the payment modal this session to prevent re-opening on data refresh
 
 
-  // Handle Payment Modal Visibility - Auto-open on new payment request from vendor
+  // Handle Payment Modal Visibility - Simplified Flow
   useEffect(() => {
     if (!booking) return;
 
     const isPaymentDone = booking.paymentStatus === 'success' || booking.cashCollected === true;
 
-    // Track the latest OTP to detect a fresh payment request from the vendor
-    const lastSeenOtp = sessionStorage.getItem(`last_seen_otp_${booking._id}`);
-    const hasNewOtpRequest = booking.customerConfirmationOTP && booking.customerConfirmationOTP !== lastSeenOtp;
-
-    // We also show if it was never shown and we have a pending payment request
+    // We only show if it was never shown and we have a pending payment request
     const hasShown = sessionStorage.getItem(`payment_modal_shown_${booking._id}`);
 
-    if (!isPaymentDone && (hasNewOtpRequest || (!hasShown && (booking.customerConfirmationOTP || booking.qrPaymentInitiated)))) {
+    if (!isPaymentDone && !hasShown && (booking.status === 'work_done' || booking.qrPaymentInitiated)) {
       setShowPaymentModal(true);
       sessionStorage.setItem(`payment_modal_shown_${booking._id}`, 'true');
-      if (booking.customerConfirmationOTP) {
-        sessionStorage.setItem(`last_seen_otp_${booking._id}`, booking.customerConfirmationOTP);
-      }
-    } else if (booking.qrPaymentInitiated === false && booking.customerConfirmationOTP && !isPaymentDone) {
-      // Re-trigger if it switches from QR to Cash
+    } else if (booking.qrPaymentInitiated === false && booking.status === 'work_done' && !isPaymentDone) {
       setShowPaymentModal(true);
     }
     // Close if payment becomes done
@@ -213,6 +205,14 @@ const BookingDetails = () => {
     switch (status) {
       case 'confirmed':
         return <FiCheckCircle className="w-5 h-5 text-green-500" />;
+      case 'packed':
+        return <FiPackage className="w-5 h-5 text-blue-500" />;
+      case 'shipped':
+        return <FiLoader className="w-5 h-5 text-blue-500 animate-spin" />;
+      case 'out_for_delivery':
+        return <FiNavigation className="w-5 h-5 text-emerald-500" />;
+      case 'delivered':
+        return <FiCheckCircle className="w-5 h-5 text-green-600" />;
       case 'in_progress':
       case 'journey_started':
         return <FiLoader className="w-5 h-5 text-blue-500 animate-spin" />;
@@ -236,6 +236,10 @@ const BookingDetails = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'confirmed':
+      case 'packed':
+      case 'shipped':
+      case 'out_for_delivery':
+      case 'delivered':
         return 'bg-green-50 text-green-700 border-green-200';
       case 'in_progress':
       case 'journey_started':
@@ -260,6 +264,10 @@ const BookingDetails = () => {
   const getStatusLabel = (status) => {
     switch (status) {
       case 'confirmed': return 'Confirmed';
+      case 'packed': return 'Packed & Ready';
+      case 'shipped': return 'Order Shipped';
+      case 'out_for_delivery': return 'Out for Delivery';
+      case 'delivered': return 'Delivered';
       case 'journey_started': return 'Agent En Route';
       case 'visited': return 'Agent Arrived';
       case 'in_progress': return 'In Progress';
@@ -623,7 +631,7 @@ const BookingDetails = () => {
         <main className="max-w-xl mx-auto px-4 py-6 space-y-6">
 
 
-          {/* Visual Progress Stepper */}
+          {/* Visual Progress Stepper - Simplified */}
           {['cancelled', 'rejected'].includes(booking.status?.toLowerCase()) ? (
             <div className="bg-red-50 rounded-2xl p-4 border border-red-100 flex items-center gap-3 text-red-700">
               <FiXCircle className="w-5 h-5 shrink-0" />
@@ -633,52 +641,47 @@ const BookingDetails = () => {
             <div className="bg-white rounded-3xl p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100">
               <div className="flex justify-between relative z-10">
                 {/* Step 1: Booked */}
-                <div className="flex flex-col items-center gap-2 w-1/4">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${['pending', 'requested', 'searching', 'confirmed', 'assigned', 'journey_started', 'visited', 'in_progress', 'work_done', 'completed'].includes(booking.status?.toLowerCase())
+                <div className="flex flex-col items-center gap-2 w-1/3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${['pending', 'requested', 'searching', 'confirmed', 'assigned', 'packed', 'shipped', 'out_for_delivery', 'delivered', 'completed', 'work_done'].includes(booking.status?.toLowerCase())
                     ? 'bg-teal-600 text-white shadow-lg shadow-teal-200' : 'bg-gray-100 text-gray-400'
                     }`}>
                     <FiCheckCircle className="w-4 h-4" />
                   </div>
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide text-center">Booked</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide text-center">
+                    {booking.offeringType === 'PRODUCT' ? 'Ordered' : 'Booked'}
+                  </p>
                 </div>
 
-                {/* Step 2: Assigned */}
-                <div className="flex flex-col items-center gap-2 w-1/4">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${['assigned', 'journey_started', 'visited', 'in_progress', 'work_done', 'completed'].includes(booking.status?.toLowerCase())
+                {/* Step 2: Accepted */}
+                <div className="flex flex-col items-center gap-2 w-1/3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${['confirmed', 'assigned', 'packed', 'shipped', 'out_for_delivery', 'delivered', 'completed', 'work_done', 'journey_started', 'visited', 'in_progress'].includes(booking.status?.toLowerCase())
                     ? 'bg-teal-600 text-white shadow-lg shadow-teal-200' : 'bg-gray-100 text-gray-400'
                     }`}>
                     2
                   </div>
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide text-center">Assigned</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide text-center">
+                    Accepted
+                  </p>
                 </div>
 
-                {/* Step 3: In Progress */}
-                <div className="flex flex-col items-center gap-2 w-1/4">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${['journey_started', 'visited', 'in_progress', 'work_done', 'completed'].includes(booking.status?.toLowerCase())
+                {/* Step 3: Done */}
+                <div className="flex flex-col items-center gap-2 w-1/3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${['work_done', 'delivered', 'completed'].includes(booking.status?.toLowerCase())
                     ? 'bg-teal-600 text-white shadow-lg shadow-teal-200' : 'bg-gray-100 text-gray-400'
                     }`}>
                     3
                   </div>
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide text-center">Started</p>
-                </div>
-
-                {/* Step 4: Done */}
-                <div className="flex flex-col items-center gap-2 w-1/4">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${['work_done', 'completed'].includes(booking.status?.toLowerCase())
-                    ? 'bg-teal-600 text-white shadow-lg shadow-teal-200' : 'bg-gray-100 text-gray-400'
-                    }`}>
-                    4
-                  </div>
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide text-center">Done</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide text-center">
+                    Work Done
+                  </p>
                 </div>
               </div>
               {/* Connect lines */}
-              <div className="absolute top-[4.5rem] left-[15%] right-[15%] h-0.5 bg-gray-100 -z-0">
+              <div className="absolute top-[4.5rem] left-[20%] right-[20%] h-0.5 bg-gray-100 -z-0">
                 <div className="h-full bg-teal-500 transition-all duration-1000" style={{
                   width:
-                    ['work_done', 'completed'].includes(booking.status?.toLowerCase()) ? '100%' :
-                      ['journey_started', 'visited', 'in_progress'].includes(booking.status?.toLowerCase()) ? '66%' :
-                        ['assigned'].includes(booking.status?.toLowerCase()) ? '33%' : '0%'
+                    ['work_done', 'delivered', 'completed'].includes(booking.status?.toLowerCase()) ? '100%' :
+                    ['confirmed', 'assigned', 'packed', 'shipped', 'out_for_delivery', 'journey_started', 'visited', 'in_progress'].includes(booking.status?.toLowerCase()) ? '50%' : '0%'
                 }}></div>
               </div>
             </div>
@@ -722,8 +725,8 @@ const BookingDetails = () => {
             </div>
           )}
 
-          {/* Service Partner Card */}
-          {(booking.workerId || booking.assignedTo || booking.vendorId) && ['confirmed', 'assigned', 'journey_started', 'visited', 'in_progress', 'work_done'].includes(booking.status?.toLowerCase()) && (
+          {/* Service Partner Card - Only for Services */}
+          {(booking.workerId || booking.assignedTo || booking.vendorId) && booking.offeringType !== 'PRODUCT' && ['confirmed', 'assigned', 'journey_started', 'visited', 'in_progress', 'work_done'].includes(booking.status?.toLowerCase()) && (
             <div className="bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
               <div className="flex justify-between items-start mb-4">
                 {['journey_started', 'visited', 'in_progress'].includes(booking.status?.toLowerCase()) ? (
@@ -795,45 +798,8 @@ const BookingDetails = () => {
             </div>
           )}
 
-          {/* Arrival OTP Card - Show during early stages until verified */}
-          {(booking.arrivalOTP || booking.visitOtp) && ['confirmed', 'assigned', 'journey_started'].includes(booking.status?.toLowerCase()) && (
-            <div className="relative overflow-hidden rounded-3xl shadow-lg border border-blue-100 mb-6 active:scale-[0.99] transition-all">
-              {/* Animated gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 opacity-95"></div>
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15)_0%,transparent_50%)]"></div>
-
-              <div className="relative z-10 p-6 flex flex-col items-center">
-                <div className="flex items-center gap-3 w-full mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-                    <FiMapPin className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white tracking-tight">Verification OTP</h3>
-                    <p className="text-xs text-blue-100 font-medium">Share when professional reaches</p>
-                  </div>
-                </div>
-
-                {/* OTP Display */}
-                <div className="flex justify-center gap-3 mb-5">
-                  {String(booking.arrivalOTP || booking.visitOtp).split('').map((digit, idx) => (
-                    <div
-                      key={idx}
-                      className="w-14 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/40 shadow-xl"
-                    >
-                      <span className="text-3xl font-black text-white drop-shadow-md">{digit}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="w-full bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20">
-                  <div className="flex items-center justify-center gap-2 text-white text-sm">
-                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span>
-                    <p className="font-medium">Waiting for professional to reach your location</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Arrival OTP Card REMOVED AS PER SIMPLIFIED FLOW */}
+          {/* Formerly lines 801-839 */}
 
           {/* Professional Arrived Notification - Only after OTP verified */}
           {booking?.status?.toLowerCase() === 'visited' && (
@@ -952,22 +918,7 @@ const BookingDetails = () => {
                       <FiChevronRight className="w-4 h-4" />
                     </button>
 
-                    <div className="flex flex-col items-center mb-6">
-                      <p className="text-[10px] font-bold text-orange-100 uppercase tracking-[0.2em] mb-3 opacity-90">Verification Code</p>
-                      <div className="flex justify-center gap-2">
-                        {String(booking.customerConfirmationOTP || booking.paymentOtp || '0000').split('').map((digit, idx) => (
-                          <div
-                            key={idx}
-                            className="w-12 h-14 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-lg"
-                          >
-                            <span className="text-2xl font-black text-white">{digit}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-[10px] text-orange-50 mt-3 font-medium bg-black/10 px-3 py-1 rounded-full backdrop-blur-sm">
-                        Share this code with the professional ONLY after your satisfaction
-                      </p>
-                    </div>
+                    {/* Verification Code Display Removed for Simplified Flow */}
                   </>
                 )}
 

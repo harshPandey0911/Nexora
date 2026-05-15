@@ -266,6 +266,12 @@ const bookingSchema = new mongoose.Schema({
     default: BOOKING_STATUS.PENDING,
     index: true
   },
+  offeringType: {
+    type: String,
+    enum: ['SERVICE', 'PRODUCT'],
+    default: 'SERVICE',
+    index: true
+  },
   workerResponse: {
     type: String,
     enum: ['PENDING', 'ACCEPTED', 'REJECTED'],

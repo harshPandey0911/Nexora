@@ -69,8 +69,8 @@ const BottomNav = memo(() => {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom">
-      <div className="mx-4 mb-4 bg-white/90 backdrop-blur-xl border border-black/[0.05] rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden h-[72px]">
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom lg:hidden">
+      <div className="mx-4 mb-4 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden h-[72px]">
         <div className="flex items-center justify-around h-full px-2 relative">
           {navItems.map((item) => {
             const isActive = isActiveRoute(item.path);
@@ -86,34 +86,31 @@ const BottomNav = memo(() => {
                 {isActive && (
                   <motion.div
                     layoutId="nav-pill-vendor"
-                    className="absolute inset-x-1 inset-y-2 bg-teal-50 rounded-[20px] border border-teal-100/50"
+                    className="absolute inset-x-1 inset-y-2 bg-blue-50 rounded-[18px] border border-blue-100/50"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                   />
                 )}
 
                 <div className="relative z-10 flex flex-col items-center gap-1">
                   <motion.div
-                    animate={isActive ? { scale: 1.15, y: -2 } : { scale: 1, y: 0 }}
+                    animate={isActive ? { scale: 1.1, y: -1 } : { scale: 1, y: 0 }}
                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
                     <Icon
-                      className={`w-5 h-5 ${isActive ? 'text-teal-600' : 'text-gray-400'}`}
+                      className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-gray-400'}`}
                       strokeWidth={isActive ? 2.5 : 2}
                     />
                   </motion.div>
 
-                  <motion.span
-                    className={`text-[9px] font-black uppercase tracking-[0.05em] ${isActive ? 'text-teal-700' : 'text-gray-400'}`}
-                    animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0.8, scale: 0.95 }}
-                  >
+                  <span className={`text-[9px] font-bold uppercase tracking-wider ${isActive ? 'text-blue-700' : 'text-gray-400'}`}>
                     {item.label}
-                  </motion.span>
+                  </span>
 
                   {item.badge > 0 && (
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute -top-1 -right-1.5 min-w-[16px] h-[16px] px-1 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm"
+                      className="absolute -top-1 -right-1.5 min-w-[16px] h-[16px] px-1 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm"
                     >
                       {item.badge > 9 ? '9+' : item.badge}
                     </motion.span>
@@ -123,7 +120,7 @@ const BottomNav = memo(() => {
                 {isActive && (
                   <motion.div
                     layoutId="active-dot-vendor"
-                    className="absolute bottom-1.5 w-1 h-1 bg-teal-600 rounded-full"
+                    className="absolute bottom-1.5 w-1 h-1 bg-blue-600 rounded-full"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}

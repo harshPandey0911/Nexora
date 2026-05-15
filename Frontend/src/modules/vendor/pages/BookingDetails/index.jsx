@@ -4,10 +4,12 @@ import { FiMapPin, FiClock, FiDollarSign, FiUser, FiPhone, FiNavigation, FiArrow
 import { motion, AnimatePresence } from 'framer-motion';
 import { vendorTheme as themeColors } from '../../../../theme';
 import Header from '../../components/layout/Header';
-import BottomNav from '../../components/layout/BottomNav';
+import LogoLoader from '../../../../components/common/LogoLoader';
 import {
   getBookingById,
   updateBookingStatus,
+  acceptBooking,
+  rejectBooking,
   assignWorker as assignWorkerApi,
   startSelfJob,
   vendorReached,
@@ -47,22 +49,6 @@ export default function BookingDetails() {
     type: 'warning'
   });
 
-  useLayoutEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const root = document.getElementById('root');
-    const bgStyle = '#F8FAFC';
-
-    if (html) html.style.background = bgStyle;
-    if (body) body.style.background = bgStyle;
-    if (root) root.style.background = bgStyle;
-
-    return () => {
-      if (html) html.style.background = '';
-      if (body) body.style.background = '';
-      if (root) root.style.background = '';
-    };
-  }, []);
 
   const loadBooking = async () => {
     try {
@@ -208,76 +194,81 @@ export default function BookingDetails() {
     }
   }, [socket, id]);
 
-  const handleVerifyVisit = async () => {
-    const otp = otpInput.join('');
-    if (otp.length !== 4) return toast.error('Enter 4-digit OTP');
+  const handleArrived = async () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Confirm Arrival',
+      message: 'Are you sure you have reached the location? This will start the job.',
+      type: 'info',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await updateBookingStatus(id, 'visited');
+          toast.success('Arrival Confirmed! Job Started.');
+          window.dispatchEvent(new Event('vendorJobsUpdated'));
+          loadBooking();
+        } catch (error) {
+          console.error('Error confirming arrival:', error);
+          toast.error('Failed to confirm arrival');
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+  };
 
-    setActionLoading(true);
-
-    if (!navigator.geolocation) {
-      toast.error('Geolocation required for verification');
-      setActionLoading(false);
-      return;
-    }
-
-    // Robust Geolocation Helper - PERMISSIVE MODE
-    const getPosition = () => {
-      return new Promise((resolve, reject) => {
-        // FASTEST STRATEGY: Prefer Wi-Fi/Cell (Low Accuracy) + Cached Positions
-        // Detailed GPS is often blocked indoors where vendors verify arrival
-        const options = {
-          enableHighAccuracy: false, // Critical fix: Disable GPS requirement
-          timeout: 30000,            // 30s timeout
-          maximumAge: Infinity       // Accept any valid cached position
-        };
-
-        navigator.geolocation.getCurrentPosition(
-          resolve,
-          (error) => {
-            console.warn("Standard geo failed, trying high accuracy as last resort...", error);
-            // Emergency fallback: Try GPS if Wi-Fi location fails (rare)
-            navigator.geolocation.getCurrentPosition(
-              resolve,
-              reject,
-              { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-            );
-          },
-          options
-        );
-      });
-    };
-
-    try {
-      const position = await getPosition();
-      const location = { lat: position.coords.latitude, lng: position.coords.longitude };
-      await verifySelfVisit(id, otp, location);
-      toast.success('Visit Verified');
-      setIsVisitModalOpen(false);
-      window.location.reload();
-    } catch (error) {
-      console.error("Geo Error:", error);
-      if (error.code === 1) toast.error('Location permission denied');
-      else if (error.code === 2) toast.error('Location unavailable. Check GPS.');
-      else if (error.code === 3) toast.error('Location timeout. Move to better signal area.');
-      else toast.error('Failed to get location');
-    } finally {
-      setActionLoading(false);
-    }
+  const handleVerifySuccess = () => {
+    loadBooking();
+    window.dispatchEvent(new Event('vendorJobsUpdated'));
+  };
+  const handleCancelJob = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Cancel Payment',
+      message: 'Are you sure you want to cancel this booking? This action cannot be undone and may affect your rating.',
+      type: 'warning',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await updateBookingStatus(id, 'cancelled');
+          toast.success('Booking Cancelled Successfully');
+          window.dispatchEvent(new Event('vendorJobsUpdated'));
+          navigate('/vendor/active-jobs');
+        } catch (error) {
+          console.error('Error cancelling job:', error);
+          toast.error('Failed to cancel booking');
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
   const getAvailableStatuses = (currentStatus, booking) => {
-    // Check payment status
-    const workerPaymentDone = booking?.workerPaymentStatus === 'PAID';
-    const finalSettlementDone = booking?.finalSettlementStatus === 'DONE';
-    const isSelfJob = booking?.assignedTo?.name === 'You (Self)';
+    const isProduct = booking?.offeringType === 'PRODUCT';
+
+    if (isProduct) {
+      const productFlow = {
+        'requested': ['confirmed'],
+        'pending': ['confirmed'],
+        'confirmed': ['packed'],
+        'packed': ['shipped'],
+        'shipped': ['out_for_delivery'],
+        'out_for_delivery': ['delivered'],
+        'delivered': [],
+        'completed': []
+      };
+      return productFlow[currentStatus] || [];
+    }
 
     const statusFlow = {
-      'confirmed': ['assigned', 'visited', 'journey_started'],
-      'assigned': ['visited', 'journey_started'],
-      'journey_started': ['visited'],
-      'visited': ['in_progress', 'work_done'],
-      'in_progress': ['work_done'],
-      'work_done': ['completed', 'final_settlement'],
-      'final_settlement': ['completed'],
+      'requested': ['confirmed'],
+      'searching': ['confirmed'],
+      'confirmed': ['completed', 'work_done'],
+      'assigned': ['work_done', 'completed'],
+      'journey_started': ['work_done', 'completed'],
+      'visited': ['work_done', 'completed'],
+      'in_progress': ['work_done', 'completed'],
+      'work_done': ['completed'],
       'completed': [],
     };
     return statusFlow[currentStatus] || [];
@@ -294,7 +285,6 @@ export default function BookingDetails() {
 
   const canDoFinalSettlement = (booking) => {
     // Check if payment is already done (Online SUCCESS or Cash COLLECTED)
-    // Robust check for various status strings (case-insensitive)
     const pStatus = booking?.paymentStatus?.toLowerCase() || '';
     const isPaid = pStatus === 'success' || pStatus === 'paid' || booking?.cashCollected;
 
@@ -317,21 +307,29 @@ export default function BookingDetails() {
       return;
     }
 
+    const isAccepting = (newStatus === 'confirmed' || newStatus === 'accepted') && (booking.status === 'requested' || booking.status === 'searching');
+
     setConfirmDialog({
       isOpen: true,
-      title: 'Update Status',
-      message: `Are you sure you want to change status to ${newStatus.replace('_', ' ')}?`,
+      title: isAccepting ? 'Accept Booking' : 'Update Status',
+      message: isAccepting 
+        ? 'Are you sure you want to accept this booking request?'
+        : `Are you sure you want to change status to ${newStatus.replace('_', ' ')}?`,
       type: 'info',
       onConfirm: async () => {
         setLoading(true);
         try {
-          await updateBookingStatus(id, newStatus);
+          if (isAccepting) {
+            await acceptBooking(id);
+          } else {
+            await updateBookingStatus(id, newStatus);
+          }
           window.dispatchEvent(new Event('vendorJobsUpdated'));
-          toast.success(`Status updated to ${newStatus.replace('_', ' ')} successfully!`);
+          toast.success(isAccepting ? 'Booking Accepted Successfully!' : `Status updated to ${newStatus.replace('_', ' ')} successfully!`);
           loadBooking();
         } catch (error) {
           console.error('Error updating status:', error);
-          toast.error('Failed to update status. Please try again.');
+          toast.error(error.response?.data?.message || 'Failed to update status. Please try again.');
         } finally {
           setLoading(false);
         }
@@ -360,7 +358,6 @@ export default function BookingDetails() {
       if (res.success) {
         toast.success(res.message || 'Payment recorded successfully');
         setIsPayWorkerModalOpen(false);
-        // Refresh booking data
         loadBooking();
       } else {
         toast.error(res.message || 'Failed to record payment');
@@ -399,17 +396,9 @@ export default function BookingDetails() {
     });
   };
 
-
-
-  // Handle cash collection button click
   const handleCollectCashClick = () => {
-    // If OTP already sent, open modal. Otherwise navigate to full billing page.
-    if (booking?.customerConfirmationOTP || booking?.paymentOtp) {
-      setIsCashModalOpen(true);
-    } else {
-      // Navigate to the full page billing flow
-      navigate(`/vendor/booking/${booking.id || id}/billing`);
-    }
+    // Navigate directly to billing or open cash modal without OTP
+    navigate(`/vendor/booking/${booking.id || id}/billing`);
   };
 
   const handleCashCollectionConfirm = async (amount, extras, code) => {
@@ -428,12 +417,10 @@ export default function BookingDetails() {
   };
 
   const canCollectCash = (booking) => {
-    // Hide if already collected or paid online
     if (booking?.cashCollected || booking?.paymentStatus === 'collected_by_vendor') {
       return false;
     }
 
-    // Cash can be collected when booking is completed/work_done and payment was cash/at home
     const isSelfJob = booking?.assignedTo?.name === 'You (Self)';
     const validStatus = isSelfJob
       ? (booking?.status === 'work_done' || booking?.status === 'completed')
@@ -441,8 +428,6 @@ export default function BookingDetails() {
 
     if (!validStatus) return false;
 
-    // CRITICAL FIX: Allow bill preparation for Plan Benefit bookings
-    // Even if base is pre-paid (SUCCESS), vendor must generate final bill (for extras etc.)
     if (booking?.paymentMethod === 'plan_benefit') {
       return true;
     }
@@ -451,23 +436,12 @@ export default function BookingDetails() {
       return false;
     }
 
-    // IMPORTANT: Only for Cash/Pay at Home methods OR Online if not paid yet.
     return (
       booking?.paymentMethod === 'cash' ||
       booking?.paymentMethod === 'pay_at_home' ||
       booking?.paymentMethod === 'online'
     );
   };
-
-
-
-  if (!booking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: themeColors.backgroundGradient }}>
-        <p className="text-gray-600">Loading...</p>
-      </div>
-    );
-  }
 
   const handleCallUser = () => {
     const phone = booking.user?.phone || booking.customerPhone;
@@ -535,10 +509,6 @@ export default function BookingDetails() {
 
     navigate(`/vendor/booking/${booking.id || id}/map`);
   };
-
-
-
-
 
   const handleCompleteWork = async (photos) => {
     try {
@@ -624,64 +594,54 @@ export default function BookingDetails() {
   const hasBill = !!bill;
 
   return (
-    <div className="min-h-screen pb-36 relative" style={{ background: '#FFFFFF' }}>
-      {/* Premium Background Pattern */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.12) 0%, transparent 70%),
-              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
-              #F8FAFC
-            `
-          }}
-        />
-        <div className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage: `radial-gradient(#0D9488 0.8px, transparent 0.8px)`,
-            backgroundSize: '32px 32px'
-          }}
-        />
-      </div>
 
-      <header className="sticky top-0 z-[60] backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-6 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-4">
+    <AnimatePresence mode="wait">
+      {!booking ? (
+        <LogoLoader key="loader" fullScreen overlay />
+      ) : (
+        <motion.div
+          key="content"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="min-h-screen pb-20 relative bg-gray-50"
+        >
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-6">
           <motion.button 
             whileTap={{ scale: 0.9 }}
-            onClick={() => {
-              console.log('Navigating back...');
-              navigate(-1);
-            }}
-            className="w-12 h-12 bg-white rounded-2xl shadow-xl shadow-teal-900/5 border border-black/[0.02] flex items-center justify-center cursor-pointer relative z-50"
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
           >
-            <FiX className="w-5 h-5 text-gray-900" />
+            <FiX className="w-5 h-5 text-gray-600" />
           </motion.button>
           <div className="flex flex-col">
-            <h1 className="text-xl font-[1000] text-gray-900 tracking-tight leading-none">Job Intel</h1>
-            <span className="text-[8px] font-black text-teal-600 uppercase tracking-[0.2em] mt-1">Deployment ID: {id?.slice(-6).toUpperCase()}</span>
+            <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none">Job Intel</h1>
+            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1.5">Deployment ID: {id?.slice(-6).toUpperCase()}</span>
           </div>
         </div>
-        <div className="w-12 h-12 bg-white rounded-2xl shadow-xl shadow-teal-900/5 border border-black/[0.02] flex items-center justify-center">
-          <FiBriefcase className="w-5 h-5 text-teal-600" />
+        <div className="w-10 h-10 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center">
+          <FiBriefcase className="w-5 h-5 text-blue-600" />
         </div>
       </header>
 
-      <main className="px-5 py-8 relative z-10 max-w-lg mx-auto">
+      <main className="px-6 pt-8 pb-20 relative z-10 max-w-7xl mx-auto">
         {/* Service Archetype Card */}
-        <div className="bg-white/70 backdrop-blur-md rounded-[44px] p-8 mb-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
-          <div className="flex items-start justify-between gap-4">
+        <div className="bg-white rounded-3xl p-6 mb-6 border border-gray-100 shadow-sm">
+          <div className="flex items-start justify-between gap-6">
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-[1000] uppercase tracking-[0.3em] text-gray-400 mb-3">Service Specialization</p>
-              <h2 className="text-2xl font-[1000] text-gray-900 tracking-tight leading-tight">
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Service Specialization</p>
+              <h2 className="text-2xl font-black text-gray-900 tracking-tight leading-tight uppercase">
                 {booking.serviceType}
               </h2>
             </div>
             <div className="flex flex-col items-end gap-3 shrink-0">
-              <div className="px-5 py-2.5 rounded-[18px] text-[10px] font-[1000] uppercase tracking-widest bg-teal-600 text-white shadow-2xl shadow-teal-900/20">
+              <div className="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-blue-600 text-white shadow-lg shadow-blue-500/20">
                 {booking.status.replace('_', ' ')}
               </div>
               {booking.assignedTo?.name === 'You (Self)' && (
-                <span className="text-[8px] font-black text-teal-700 bg-teal-50 px-3 py-1.5 rounded-xl border border-teal-100/50 uppercase tracking-[0.2em]">
+                <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 uppercase tracking-widest">
                   Internal Ops
                 </span>
               )}
@@ -690,22 +650,22 @@ export default function BookingDetails() {
         </div>
 
         {/* Identity Matrix Card */}
-        <div className="bg-white/70 backdrop-blur-md rounded-[44px] p-6 mb-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
+        <div className="bg-white rounded-3xl p-6 mb-6 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-[28px] bg-gray-50 flex items-center justify-center border border-black/[0.02] shadow-inner">
-                <FiUser className="w-7 h-7 text-gray-900" />
+              <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center">
+                <FiUser className="w-8 h-8 text-gray-300" />
               </div>
               <div>
-                <p className="text-[10px] font-[1000] uppercase tracking-[0.25em] text-gray-400 mb-1.5">Target Client</p>
-                <p className="text-lg font-[1000] text-gray-900 leading-tight tracking-tight">{booking.user?.name || booking.customerName || 'Client'}</p>
-                <p className="text-[11px] font-black text-teal-600/60 uppercase tracking-widest mt-1.5">Verified Network</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Target Client</p>
+                <p className="text-xl font-black text-gray-900 leading-tight tracking-tight uppercase">{booking.user?.name || booking.customerName || 'Client'}</p>
+                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">Verified Network</p>
               </div>
             </div>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={handleCallUser}
-              className="w-14 h-14 rounded-[24px] bg-teal-600 flex items-center justify-center shadow-2xl shadow-teal-900/20 border border-white/20"
+              className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all"
             >
               <FiPhone className="w-6 h-6 text-white" />
             </motion.button>
@@ -713,23 +673,23 @@ export default function BookingDetails() {
         </div>
 
         {/* Geospatial Deployment Base */}
-        <div className="bg-white/70 backdrop-blur-md rounded-[44px] p-6 mb-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
+        <div className="bg-white rounded-3xl p-6 mb-6 border border-gray-100 shadow-sm">
           <div className="flex items-start gap-5 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center shrink-0 border border-teal-100/50">
-              <FiMapPin className="w-6 h-6 text-teal-600" />
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100">
+              <FiMapPin className="w-6 h-6 text-blue-600" />
             </div>
-            <div className="flex-1 min-w-0 pt-1">
-              <p className="text-[10px] font-[1000] uppercase tracking-[0.25em] text-gray-400 mb-2">Service Base Coordinates</p>
-              <p className="text-[14px] font-[1000] text-gray-900 leading-relaxed tracking-tight">{booking?.location?.address || 'Location not specified'}</p>
-              <div className="flex items-center gap-2 mt-3">
-                <span className="text-[9px] font-[1000] text-teal-700 bg-teal-50 px-3 py-1.5 rounded-xl border border-teal-100/30 uppercase tracking-widest">
+            <div className="flex-1 min-w-0 pt-0.5">
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Service Base Coordinates</p>
+              <p className="text-base font-bold text-gray-800 leading-relaxed tracking-tight uppercase">{booking?.location?.address || 'Location not specified'}</p>
+              <div className="flex items-center gap-3 mt-3">
+                <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 uppercase tracking-widest">
                   {booking?.location?.distance || 'N/A'} Proximal
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="w-full h-52 rounded-[32px] overflow-hidden mb-6 border border-black/[0.02] relative group cursor-pointer shadow-inner" onClick={() => navigate(`/vendor/booking/${booking.id}/map`)}>
+          <div className="w-full h-64 rounded-[32px] overflow-hidden mb-8 border border-white/5 relative group cursor-pointer shadow-2xl" onClick={() => navigate(`/vendor/booking/${booking.id}/map`)}>
             {(() => {
               const hasCoordinates = booking.location.lat && booking.location.lng && booking.location.lat !== 0 && booking.location.lng !== 0;
               const mapQuery = hasCoordinates ? `${booking.location.lat},${booking.location.lng}` : encodeURIComponent(booking.location.address);
@@ -739,14 +699,14 @@ export default function BookingDetails() {
                     width="100%"
                     height="100%"
                     frameBorder="0"
-                    style={{ border: 0, pointerEvents: 'none', filter: 'grayscale(0.2) contrast(1.1)' }}
+                    style={{ border: 0, pointerEvents: 'none' }}
                     src={`https://maps.google.com/maps?q=${mapQuery}&z=15&output=embed`}
                     allowFullScreen
                   />
-                  <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors flex items-center justify-center">
                     <motion.span 
                       whileHover={{ scale: 1.05 }}
-                      className="bg-black text-white px-6 py-3 rounded-2xl text-[10px] font-[1000] uppercase tracking-widest shadow-2xl"
+                      className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl"
                     >
                       Maximize Analytics
                     </motion.span>
@@ -760,9 +720,9 @@ export default function BookingDetails() {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(`/vendor/booking/${booking.id || id}/map`)}
-              className="flex-1 py-5 rounded-[28px] font-[1000] text-[10px] uppercase tracking-widest border border-black/[0.03] flex items-center justify-center gap-3 bg-white text-gray-900 shadow-xl shadow-black/5"
+              className="flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-gray-200 flex items-center justify-center gap-3 bg-white text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
             >
-              <FiMapPin className="w-4 h-4 text-teal-600" />
+              <FiMapPin className="w-4 h-4 text-blue-600" />
               Base View
             </motion.button>
             <motion.button
@@ -772,99 +732,102 @@ export default function BookingDetails() {
                 const dest = hasCoords ? `${booking.location.lat},${booking.location.lng}` : encodeURIComponent(booking.location.address);
                 window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
               }}
-              className="flex-1 py-5 rounded-[28px] font-[1000] text-[10px] uppercase tracking-widest text-white flex items-center justify-center gap-3 bg-black shadow-2xl shadow-black/20"
+              className="flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-white flex items-center justify-center gap-3 bg-blue-600 shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all"
             >
-              <FiNavigation className="w-4 h-4 text-teal-400" />
+              <FiNavigation className="w-4 h-4 text-blue-200" />
               Navigate
             </motion.button>
           </div>
         </div>
 
         {/* Schedule Intel */}
-        <div className="bg-white/70 backdrop-blur-md rounded-[36px] p-6 mb-6 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
+        <div className="bg-white rounded-3xl p-6 mb-6 border border-gray-100 shadow-sm">
           <div className="flex items-center gap-5">
-            <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0 border border-orange-100/50">
-              <FiClock className="w-6 h-6 text-orange-600" />
+            <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center shrink-0 border border-amber-100">
+              <FiClock className="w-6 h-6 text-amber-500" />
             </div>
             <div>
-              <p className="text-[10px] font-[1000] uppercase tracking-[0.25em] text-gray-400 mb-1.5">Temporal Slot</p>
-              <p className="text-base font-[1000] text-gray-900 tracking-tight">{booking?.timeSlot?.date || 'Date not set'}</p>
-              <p className="text-[11px] font-black text-orange-600/60 uppercase tracking-widest mt-1">{booking?.timeSlot?.time || 'Time not set'}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Temporal Slot</p>
+              <p className="text-base font-bold text-gray-800 tracking-tight">{booking?.timeSlot?.date || 'Date not set'}</p>
+              <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mt-1">{booking?.timeSlot?.time || 'Time not set'}</p>
             </div>
           </div>
         </div>
 
         {/* Core Financial Invoice Module */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-[48px] overflow-hidden shadow-[0_40px_80px_-20px_rgba(0,0,0,0.05)] border border-white/60 mb-8">
-          <div className="bg-gray-900 px-8 py-10 text-white text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-[60px]" />
-            <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.3em] mb-3 opacity-60">Consolidated Gross Value</p>
-            <h2 className="text-5xl font-[1000] tracking-tighter">₹{finalTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+        <div className="bg-white rounded-[32px] overflow-hidden border border-gray-100 mb-8 shadow-sm">
+          <div className="bg-blue-600 px-8 py-10 text-white text-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-[40px]" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-blue-100 mb-3">Contractual Settlement</p>
+            <h2 className="text-4xl font-black tracking-tighter">₹{finalTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${booking.paymentStatus === 'SUCCESS' || booking.paymentStatus === 'paid' ? 'bg-white/20 text-white' : 'bg-amber-400 text-black'}`}>
+                {booking.paymentMethod?.replace('_', ' ') || 'UNPAID'} • {booking.paymentStatus || 'PENDING'}
+              </div>
+            </div>
             {isPlanBenefit && (
-              <div className="inline-flex mt-5 bg-teal-500/10 text-teal-400 border border-teal-500/20 px-4 py-1.5 rounded-full text-[9px] font-[1000] uppercase tracking-widest">
+              <div className="inline-flex mt-4 bg-teal-500/20 text-teal-100 border border-teal-500/30 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">
                 Internal Membership Applied
               </div>
             )}
           </div>
           <div className="p-8 space-y-8">
-            {/* Service Inventory */}
+            {/* Core Provision Analytics */}
             <div>
-              <h4 className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.25em] flex items-center gap-3 mb-6">
-                <span className="w-8 h-8 rounded-xl bg-gray-50 text-teal-600 flex items-center justify-center border border-black/[0.02] shadow-inner"><FiTool className="w-4 h-4" /></span>
-                Service Provision
+              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-3 mb-6">
+                <span className="w-8 h-8 rounded-xl bg-gray-50 text-blue-600 flex items-center justify-center border border-gray-100"><FiActivity className="w-4 h-4" /></span>
+                Core Provision Analytics
               </h4>
               <div className="space-y-4 pl-1">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-[1000] text-gray-900 tracking-tight">{booking.serviceType} (Primary)</span>
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-gray-500 uppercase tracking-tight text-xs">Service Provision Base</span>
                   {isPlanBenefit ? (
-                    <div className="flex items-center gap-3">
-                      <span className="line-through text-gray-400 text-xs opacity-50">₹{originalBase.toFixed(2)}</span>
-                      <span className="text-teal-600 font-[1000] text-[9px] bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-100 uppercase tracking-widest">FREE</span>
+                    <div className="flex flex-col items-end">
+                      <span className="font-bold text-gray-900 text-sm">₹0.00</span>
+                      <span className="text-blue-600 font-black text-[8px] bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase tracking-widest mt-1">FREE</span>
                     </div>
                   ) : (
-                    <span className="font-[1000] text-gray-900">₹{originalBase.toFixed(2)}</span>
+                    <span className="font-bold text-gray-900 text-sm">₹{originalBase.toFixed(2)}</span>
                   )}
                 </div>
 
                 {services.map((s, i) => (
-                  <div key={i} className="flex justify-between items-center text-sm">
-                    <span className="font-black text-gray-500 uppercase tracking-tight text-[11px]">{s.name} × {s.quantity}</span>
-                    <span className="font-[1000] text-gray-900">₹{((parseFloat(s.price) || 0) * (parseFloat(s.quantity) || 1)).toFixed(2)}</span>
+                  <div key={i} className="flex justify-between items-center">
+                    <span className="font-bold text-gray-500 uppercase tracking-tight text-xs">{s.name} × {s.quantity}</span>
+                    <span className="font-bold text-gray-900 text-sm">₹{((parseFloat(s.price) || 0) * (parseFloat(s.quantity) || 1)).toFixed(2)}</span>
                   </div>
                 ))}
 
-                <div className="flex justify-between text-[10px] text-gray-400 font-black uppercase tracking-widest pt-4 border-t border-dashed border-black/[0.05]">
+                <div className="flex justify-between text-[10px] text-gray-400 font-black uppercase tracking-widest pt-4 border-t border-dashed border-gray-100">
                   <span>Operational Tax (18%)</span>
-                  <span>₹{(originalGST + extraServiceGST).toFixed(2)}</span>
+                  <span className="text-gray-900">₹{(originalGST + extraServiceGST).toFixed(2)}</span>
                 </div>
               </div>
             </div>
 
             {/* Asset Logistics */}
             {(parts.length > 0 || customItems.length > 0) && (
-              <div className="pt-8 border-t border-black/[0.03]">
-                <h4 className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.25em] flex items-center gap-3 mb-6">
-                  <span className="w-8 h-8 rounded-xl bg-gray-50 text-orange-600 flex items-center justify-center border border-black/[0.02] shadow-inner"><FiPackage className="w-4 h-4" /></span>
+              <div className="pt-8 border-t border-gray-100">
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-3 mb-6">
+                  <span className="w-8 h-8 rounded-xl bg-gray-50 text-amber-500 flex items-center justify-center border border-gray-100"><FiPackage className="w-4 h-4" /></span>
                   Component Logistics
                 </h4>
                 <div className="space-y-4 pl-1">
                   {parts.map((p, i) => (
-                    <div key={`p-${i}`} className="flex justify-between items-center text-sm">
-                      <span className="font-black text-gray-500 uppercase tracking-tight text-[11px]">{p.name} × {p.quantity}</span>
-                      <span className="font-[1000] text-gray-900">₹{(p.price * p.quantity).toFixed(2)}</span>
+                    <div key={`p-${i}`} className="flex justify-between items-center">
+                      <span className="font-bold text-gray-500 uppercase tracking-tight text-xs">{p.name} × {p.quantity}</span>
+                      <span className="font-bold text-gray-900 text-sm">₹{(p.price * p.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                   {customItems.map((c, i) => (
-                    <div key={`c-${i}`} className="flex justify-between items-center text-sm">
-                      <div>
-                        <span className="font-black text-gray-500 uppercase tracking-tight text-[11px]">{c.name} × {c.quantity}</span>
-                      </div>
-                      <span className="font-[1000] text-gray-900">₹{(c.price * c.quantity).toFixed(2)}</span>
+                    <div key={`c-${i}`} className="flex justify-between items-center">
+                      <span className="font-bold text-gray-500 uppercase tracking-tight text-xs">{c.name} × {c.quantity}</span>
+                      <span className="font-bold text-gray-900 text-sm">₹{(c.price * c.quantity).toFixed(2)}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-[10px] text-gray-400 font-black uppercase tracking-widest pt-4 border-t border-dashed border-black/[0.05]">
+                  <div className="flex justify-between text-[10px] text-gray-400 font-black uppercase tracking-widest pt-4 border-t border-dashed border-gray-100">
                     <span>Asset Tax (18%)</span>
-                    <span>₹{partsGST.toFixed(2)}</span>
+                    <span className="text-gray-900">₹{partsGST.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -873,37 +836,37 @@ export default function BookingDetails() {
 
           {/* Master Net Earnings Analytics */}
           {(booking.status === 'completed' || booking.status === 'work_done' || booking.cashCollected) ? (
-            <div className="bg-teal-600/5 px-8 py-8 border-t border-teal-600/10">
+            <div className="bg-blue-50 px-8 py-8 border-t border-gray-100">
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">Core Provision Split ({bill?.payoutConfig?.serviceSplitPercentage || 70}%)</span>
-                  <span className="font-[1000] text-teal-800 text-sm">₹{(bill?.vendorServiceEarning || (booking.vendorEarnings || 0)).toFixed(2)}</span>
+                  <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Core Provision Split ({bill?.payoutConfig?.serviceSplitPercentage || 70}%)</span>
+                  <span className="font-bold text-blue-900 text-sm">₹{(bill?.vendorServiceEarning || (booking.vendorEarnings || 0)).toFixed(2)}</span>
                 </div>
                 {(parts.length > 0 || customItems.length > 0 || bill?.vendorPartsEarning > 0) && (
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-teal-800/60 uppercase tracking-widest">Asset Logistics Split ({bill?.payoutConfig?.partsSplitPercentage || 10}%)</span>
-                    <span className="font-[1000] text-teal-800 text-sm">₹{(bill?.vendorPartsEarning || 0).toFixed(2)}</span>
+                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Asset Logistics Split ({bill?.payoutConfig?.partsSplitPercentage || 10}%)</span>
+                    <span className="font-bold text-blue-900 text-sm">₹{(bill?.vendorPartsEarning || 0).toFixed(2)}</span>
                   </div>
                 )}
               </div>
-              <div className="flex justify-between items-center pt-5 border-t border-teal-600/20">
+              <div className="flex justify-between items-end pt-6 border-t border-blue-100">
                 <div className="flex flex-col">
-                  <span className="text-teal-900 font-[1000] text-[10px] uppercase tracking-[0.2em]">
+                  <span className="text-gray-900 font-black text-[10px] uppercase tracking-widest">
                     Net Operational Intel
                   </span>
-                  <span className="text-[8px] font-black text-teal-600 uppercase tracking-widest mt-1">
+                  <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest mt-1">
                     {(booking?.paymentStatus === 'SUCCESS' || booking?.paymentStatus === 'paid' || booking?.cashCollected) ? 'Settled Value' : 'Projected Value'}
                   </span>
                 </div>
-                <span className="text-teal-600 font-[1000] text-3xl tracking-tighter">
+                <span className="text-blue-600 font-black text-3xl tracking-tighter">
                   ₹{(bill?.vendorTotalEarning || booking.vendorEarnings || 0).toFixed(2)}
                 </span>
               </div>
             </div>
           ) : (
-            <div className="bg-gray-50 px-8 py-6 border-t border-black/[0.02] text-center">
-              <p className="text-[9px] font-[1000] text-gray-400 uppercase tracking-[0.3em] flex items-center justify-center gap-3">
-                <FiAlertCircle className="w-4 h-4 opacity-50" />
+            <div className="bg-gray-50 px-8 py-6 border-t border-gray-100 text-center">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-center gap-3">
+                <FiAlertCircle className="w-4 h-4 opacity-40" />
                 Earnings data locked until completion
               </p>
             </div>
@@ -914,44 +877,44 @@ export default function BookingDetails() {
         <div className="space-y-6 pb-20">
           {/* Worker Context Card */}
           {booking.assignedTo && booking.assignedTo?.name !== 'You (Self)' && (
-            <div className="bg-white/70 backdrop-blur-md rounded-[44px] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
-              <div className="flex justify-between items-center mb-8 pb-6 border-b border-black/[0.03]">
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 mb-6 shadow-sm">
+              <div className="flex justify-between items-center mb-6 pb-6 border-b border-gray-100">
                 <div className="flex items-center gap-5">
-                  <div className="w-16 h-16 rounded-[28px] bg-gray-50 flex items-center justify-center border border-black/[0.02] shadow-inner">
-                    <FiUser className="w-7 h-7 text-gray-400" />
+                  <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center">
+                    <FiUser className="w-8 h-8 text-gray-300" />
                   </div>
                   <div>
-                    <h3 className="font-[1000] text-gray-900 text-base tracking-tight">{booking?.assignedTo?.name || 'Assigned Agent'}</h3>
-                    <p className="text-[10px] font-black text-teal-600 uppercase tracking-widest mt-1">Operational Field Agent</p>
+                    <h3 className="font-black text-gray-900 text-lg tracking-tight uppercase">{booking?.assignedTo?.name || 'Assigned Agent'}</h3>
+                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">Operational Field Agent</p>
                   </div>
                 </div>
                 {booking?.assignedTo?.phone && (
                   <motion.a 
                     whileTap={{ scale: 0.9 }}
                     href={`tel:${booking.assignedTo.phone}`} 
-                    className="w-14 h-14 rounded-[24px] bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100/50 shadow-xl shadow-emerald-900/5"
+                    className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all"
                   >
-                    <FiPhone className="w-6 h-6" />
+                    <FiPhone className="w-5 h-5 text-white" />
                   </motion.a>
                 )}
               </div>
 
               {/* Status Visualization */}
               {!booking.workerResponse || booking.workerResponse === 'PENDING' ? (
-                <div className="flex items-center gap-5 text-amber-600 bg-amber-50/50 backdrop-blur-md p-6 rounded-[32px] border border-amber-100 shadow-sm">
-                  <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-inner">
-                    <FiClock className="w-7 h-7 animate-pulse" />
+                <div className="flex items-center gap-5 text-amber-600 bg-amber-50 p-6 rounded-2xl border border-amber-100">
+                  <div className="w-12 h-12 rounded-xl bg-white border border-amber-100 flex items-center justify-center shrink-0">
+                    <FiClock className="w-6 h-6 animate-pulse text-amber-500" />
                   </div>
                   <div>
-                    <p className="font-[1000] text-sm text-gray-900 tracking-tight">Signal Pending</p>
-                    <p className="text-[10px] text-amber-700/80 font-black uppercase tracking-widest mt-1">Awaiting Agent Acknowledgement</p>
+                    <p className="font-black text-base text-gray-900 tracking-tight">Signal Pending</p>
+                    <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest mt-1">Awaiting Agent Acknowledgement</p>
                   </div>
                 </div>
               ) : booking.workerResponse === 'ACCEPTED' ? (
                 <div className="space-y-8">
                   {/* Deployment Pipeline Visual */}
                   <div className="relative px-2">
-                    <div className="absolute left-8 right-8 top-[18px] h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                    <div className="absolute left-8 right-8 top-[18px] h-2 bg-gray-100 rounded-full overflow-hidden">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ 
@@ -959,7 +922,7 @@ export default function BookingDetails() {
                                  booking.status === 'in_progress' || booking.status === 'visited' ? '66%' :
                                  booking.status === 'journey_started' ? '33%' : '0%' 
                         }}
-                        className="h-full bg-teal-600 rounded-full shadow-[0_0_20px_rgba(13,148,136,0.3)]"
+                        className="h-full bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.3)]"
                       />
                     </div>
 
@@ -971,34 +934,34 @@ export default function BookingDetails() {
                         { icon: FiCheckCircle, label: 'Done', active: ['work_done', 'completed'].includes(booking.status) }
                       ].map((step, idx) => (
                         <div key={idx} className="flex flex-col items-center gap-3">
-                          <div className={`w-10 h-10 rounded-[14px] flex items-center justify-center transition-all duration-700 shadow-xl ring-4 ring-white ${step.active ? 'bg-teal-600 text-white' : 'bg-white text-gray-200 border-2 border-dashed border-gray-100'}`}>
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-700 shadow-lg ring-6 ring-white ${step.active ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400 border border-gray-200'}`}>
                             <step.icon className="w-5 h-5" />
                           </div>
-                          <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${step.active ? 'text-teal-900' : 'text-gray-300'}`}>{step.label}</span>
+                          <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${step.active ? 'text-blue-600' : 'text-gray-400'}`}>{step.label}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   {/* Primary Status Readout */}
-                  <div className="bg-white/60 backdrop-blur-md rounded-[32px] p-6 border border-black/[0.02] flex items-center gap-6 shadow-xl shadow-black/[0.02]">
-                    <div className={`w-16 h-16 rounded-[22px] flex items-center justify-center shadow-inner ${
-                      booking.status === 'journey_started' ? 'bg-blue-50 text-blue-600' :
-                      booking.status === 'in_progress' ? 'bg-orange-50 text-orange-600' :
-                      ['work_done', 'completed'].includes(booking.status) ? 'bg-emerald-50 text-emerald-600' :
-                      'bg-gray-100 text-gray-400'
+                  <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 flex items-center gap-5">
+                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center bg-white border border-gray-200 ${
+                      booking.status === 'journey_started' ? 'text-blue-600' :
+                      booking.status === 'in_progress' ? 'text-amber-600' :
+                      ['work_done', 'completed'].includes(booking.status) ? 'text-green-600' :
+                      'text-gray-400'
                     }`}>
-                      <FiActivity className="w-8 h-8 opacity-80" />
+                      <FiActivity className="w-7 h-7 opacity-80" />
                     </div>
                     <div>
-                      <p className="font-[1000] text-gray-900 text-lg tracking-tight mb-1">
+                      <p className="font-black text-gray-900 text-lg tracking-tight mb-1 uppercase">
                         {booking.status === 'journey_started' ? 'In Transit' :
                          booking.status === 'visited' ? 'On Site' :
                          booking.status === 'in_progress' ? 'Ops Active' :
                          ['work_done', 'completed'].includes(booking.status) ? 'Ops Complete' :
                          'Agent Ready'}
                       </p>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest opacity-70">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                         {booking.status === 'journey_started' ? 'Live Geospatial Tracking Active' :
                          booking.status === 'visited' ? 'Awaiting Access Verification' :
                          booking.status === 'in_progress' ? 'Service Deployment in Progress' :
@@ -1009,16 +972,16 @@ export default function BookingDetails() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-5 text-rose-600 bg-rose-50/50 backdrop-blur-md p-6 rounded-[32px] border border-rose-100 shadow-sm">
+                <div className="flex items-center gap-5 text-rose-600 bg-rose-50 p-6 rounded-2xl border border-rose-100">
                   <FiXCircle className="w-8 h-8 opacity-60" />
                   <div className="flex-1">
-                    <p className="font-[1000] text-sm text-gray-900 tracking-tight">Signal Rejected</p>
-                    <p className="text-[10px] text-rose-700/80 font-black uppercase tracking-widest mt-1">Agent Declined Deployment</p>
+                    <p className="font-black text-base text-gray-900 tracking-tight uppercase">Signal Rejected</p>
+                    <p className="text-[10px] text-rose-600 font-bold uppercase tracking-widest mt-1">Agent Declined Deployment</p>
                   </div>
                   <motion.button 
                     whileTap={{ scale: 0.95 }}
                     onClick={handleAssignWorker} 
-                    className="px-5 py-2.5 bg-white border border-rose-200 rounded-2xl text-[10px] font-[1000] uppercase tracking-widest text-rose-600 shadow-xl shadow-rose-900/5"
+                    className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
                   >
                     Recalibrate
                   </motion.button>
@@ -1027,95 +990,111 @@ export default function BookingDetails() {
             </div>
           )}
 
-          {/* Unassigned / Recalibration Hub */}
-          {(!booking.assignedTo || (booking.assignedTo?.name === 'You (Self)' && booking.status === 'assigned')) && (
-            <div className="bg-white/70 backdrop-blur-md rounded-[44px] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] border border-white/60">
+          {/* Service Deployment Protocol (Simplified Flow) */}
+          {booking.offeringType !== 'PRODUCT' && !['completed', 'cancelled', 'rejected'].includes(booking.status) && (
+            <div className="bg-white rounded-3xl p-8 border border-gray-100 mb-6 shadow-sm">
               <div className="text-center mb-8">
-                <div className="w-20 h-20 bg-teal-50 rounded-[32px] flex items-center justify-center mx-auto mb-4 border border-teal-100 shadow-inner">
-                  <FiUsers className="w-10 h-10 text-teal-600" />
-                </div>
-                <h3 className="text-xl font-[1000] text-gray-900 tracking-tight">Deployment Required</h3>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Standing by for Resource Allocation</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleAssignWorker}
-                  className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[32px] transition-all group ${
-                    booking.assignedTo?.name === 'You (Self)' 
-                    ? 'bg-white border border-black/[0.05] text-gray-900 shadow-xl shadow-black/[0.02]' 
-                    : 'bg-teal-600 text-white shadow-2xl shadow-teal-900/20'
-                  }`}
-                >
-                  <FiUsers className={`w-6 h-6 group-hover:scale-110 transition-transform ${booking.assignedTo?.name === 'You (Self)' ? 'text-teal-600' : 'text-white'}`} />
-                  <span className="text-[9px] font-black uppercase tracking-widest">Assign Worker</span>
-                </motion.button>
-
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={booking.assignedTo?.name === 'You (Self)' ? handleStartJourney : handleAssignToSelf}
-                  className={`flex flex-col items-center justify-center gap-3 p-6 rounded-[32px] transition-all group ${
-                    booking.assignedTo?.name === 'You (Self)'
-                    ? 'bg-teal-600 text-white shadow-2xl shadow-teal-900/20'
-                    : 'bg-white border border-black/[0.05] text-gray-900 shadow-xl shadow-black/[0.02]'
-                  }`}
-                >
-                  {booking.assignedTo?.name === 'You (Self)' ? (
-                    <>
-                      <FiNavigation className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                      <span className="text-[9px] font-black uppercase tracking-widest">Begin Deployment</span>
-                    </>
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border shadow-md ${
+                  ['requested', 'searching'].includes(booking.status) ? 'bg-blue-50 border-blue-100' : 'bg-emerald-50 border-emerald-100'
+                }`}>
+                  {['requested', 'searching'].includes(booking.status) ? (
+                    <FiNavigation className="w-8 h-8 text-blue-600" />
                   ) : (
-                    <>
-                      <FiUser className="w-6 h-6 text-teal-600 group-hover:scale-110 transition-transform" />
-                      <span className="text-[9px] font-black uppercase tracking-widest">Do It Myself</span>
-                    </>
+                    <FiTool className="w-8 h-8 text-emerald-600" />
                   )}
-                </motion.button>
+                </div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight uppercase">
+                  {['requested', 'searching'].includes(booking.status) ? 'New Request' : 'Active Operation'}
+                </h3>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">
+                  {['requested', 'searching'].includes(booking.status) ? 'Awaiting Your Acceptance' : 'Perform work and mark as completed'}
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center gap-3">
+                {['requested', 'searching'].includes(booking.status) ? (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleStatusChange('confirmed')}
+                    className="w-full max-w-sm py-5 rounded-2xl bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 transition-all flex items-center justify-center gap-3"
+                  >
+                    <FiCheck className="w-5 h-5" />
+                    Accept Booking Request
+                  </motion.button>
+                ) : !['work_done', 'completed'].includes(booking.status) ? (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsWorkDoneModalOpen(true)}
+                    className="w-full max-w-sm py-5 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-3"
+                  >
+                    <FiCheckCircle className="w-5 h-5" />
+                    Work Done
+                  </motion.button>
+                ) : booking.status === 'work_done' ? (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleCollectCashClick}
+                    className="w-full max-w-sm py-5 rounded-2xl bg-amber-600 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-amber-500/20 hover:bg-amber-700 transition-all flex items-center justify-center gap-3"
+                  >
+                    <FiDollarSign className="w-5 h-5" />
+                    Finalize Billing
+                  </motion.button>
+                ) : null}
               </div>
             </div>
           )}
 
-          {/* Master Operational Buttons */}
-          <div className="space-y-4 pt-10 px-1">
-            {/* Payment & Settlement Triggers */}
-            {canCollectCash(booking) && (
+          {/* Product Fulfillment Hub */}
+          {booking.offeringType === 'PRODUCT' && (
+            <div className="bg-white rounded-3xl p-8 border border-gray-100 mb-6 shadow-sm">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100 shadow-md">
+                  <FiPackage className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight uppercase">Fulfillment Hub</h3>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Current Status: {booking.status.replace('_', ' ')}</p>
+              </div>
+
+              <div className="flex flex-col items-center gap-3">
+                {getAvailableStatuses(booking.status, booking).map((nextStatus) => (
+                  <motion.button
+                    key={nextStatus}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleStatusChange(nextStatus)}
+                    className="w-full max-w-sm py-5 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-3"
+                  >
+                    <FiActivity className="w-5 h-5" />
+                    {(nextStatus === 'confirmed' || nextStatus === 'accepted') && 'Accept & Confirm Order'}
+                    {nextStatus === 'packed' && 'Pack Product'}
+                    {nextStatus === 'shipped' && 'Ship Order'}
+                    {nextStatus === 'out_for_delivery' && 'Mark Out for Delivery'}
+                    {nextStatus === 'delivered' && 'Mark Delivered'}
+                  </motion.button>
+                ))}
+                
+                {booking.status === 'delivered' && (
+                  <div className="flex items-center gap-3 text-emerald-600 bg-emerald-50 px-6 py-3 rounded-xl border border-emerald-100">
+                    <FiCheckCircle className="w-4 h-4" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Order Delivered Successfully</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Cancellation Protocol */}
+          {booking.offeringType !== 'PRODUCT' && !['completed', 'cancelled', 'rejected'].includes(booking.status) && (
+            <div className="px-1">
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={() => navigate(`/vendor/booking/${booking.id || id}/billing`)}
-                className="w-full py-6 rounded-[32px] font-[1000] text-[11px] uppercase tracking-[0.25em] text-white bg-teal-600 shadow-2xl shadow-teal-900/30 flex items-center justify-center gap-4 border border-white/20"
+                onClick={handleCancelJob}
+                className="w-full py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-4 mt-2"
               >
-                <FiDollarSign className="w-5 h-5" />
-                {booking.paymentMethod === 'plan_benefit' ? 'Finalize Operational Bill' : 'Initiate Settlement'}
+                <FiXCircle className="w-5 h-5" />
+                Cancel Payment
               </motion.button>
-            )}
-
-            {canDoFinalSettlement(booking) && (
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleFinalSettlement}
-                className="w-full py-6 rounded-[32px] font-[1000] text-[11px] uppercase tracking-[0.25em] text-white bg-black shadow-2xl shadow-black/20 flex items-center justify-center gap-4"
-              >
-                <FiCheckCircle className="w-5 h-5 text-teal-400" />
-                Finalize & Archive Job
-              </motion.button>
-            )}
-
-
-
-            {/* Evidence Submission */}
-            {booking.assignedTo?.name === 'You (Self)' && (booking.status === 'visited' || booking.status === 'in_progress') && (
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsWorkDoneModalOpen(true)}
-                className="w-full py-6 rounded-[32px] font-[1000] text-[11px] uppercase tracking-[0.25em] text-white bg-black shadow-2xl shadow-black/20 flex items-center justify-center gap-4"
-              >
-                <FiCheckCircle className="w-5 h-5 text-teal-400" />
-                Submit Evidence & Close
-              </motion.button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </main>
 
@@ -1125,7 +1104,7 @@ export default function BookingDetails() {
         title={confirmDialog.title}
         message={confirmDialog.message}
         onConfirm={confirmDialog.onConfirm}
-        onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
         type={confirmDialog.type}
       />
 
@@ -1140,9 +1119,8 @@ export default function BookingDetails() {
       <VisitVerificationModal
         isOpen={isVisitModalOpen}
         onClose={() => setIsVisitModalOpen(false)}
-        onVerify={handleVerifyVisit}
-        loading={actionLoading}
         bookingId={id}
+        onSuccess={handleVerifySuccess}
       />
 
       <WorkCompletionModal
@@ -1160,7 +1138,8 @@ export default function BookingDetails() {
         booking={booking}
       />
 
-      <BottomNav />
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

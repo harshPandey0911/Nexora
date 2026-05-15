@@ -50,6 +50,33 @@ const vendorService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  updateCategory: async (categoryId, data) => {
+    try {
+      const response = await api.put(`/vendors/update-category/${categoryId}`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getServiceById: async (id) => {
+    try {
+      const response = await api.get(`/vendors/services/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateService: async (id, data) => {
+    try {
+      const response = await api.put(`/vendors/services/${id}`, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

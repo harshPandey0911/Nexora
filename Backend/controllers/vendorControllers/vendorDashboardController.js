@@ -1,8 +1,10 @@
+const mongoose = require('mongoose');
 const Booking = require('../../models/Booking');
 const VendorBill = require('../../models/VendorBill');
 const Worker = require('../../models/Worker');
 const Service = require('../../models/UserService');
 const Settings = require('../../models/Settings');
+const Vendor = require('../../models/Vendor');
 const { BOOKING_STATUS, PAYMENT_STATUS, WORKER_STATUS } = require('../../utils/constants');
 
 /**
@@ -11,7 +13,6 @@ const { BOOKING_STATUS, PAYMENT_STATUS, WORKER_STATUS } = require('../../utils/c
 const getDashboardStats = async (req, res) => {
   try {
     const vendorId = req.user.id;
-    const mongoose = require('mongoose');
     const vId = new mongoose.Types.ObjectId(vendorId);
 
     // ── Get categories from req.user (from auth middleware) ──
@@ -44,31 +45,21 @@ const getDashboardStats = async (req, res) => {
                 $group: {
                   _id: null,
                   total: { $sum: 1 },
-                  completed: { $sum: { $cond: [{ $eq: ['$status', BOOKING_STATUS.COMPLETED] }, 1, 0] } },
-                  inProgress: {
-                    $sum: {
+                  completed: { $sum: { $cond: [{ $in: ['$status', [BOOKING_STATUS.COMPLETED, BOOKING_STATUS.DELIVERED]] }, 1, 0] } },
+                  confirmedCount: { $sum: { $cond: [{ $in: ['$status', [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.ACCEPTED]] }, 1, 0] } },
+                  cancelledCount: { $sum: { $cond: [{ $in: ['$status', [BOOKING_STATUS.CANCELLED, BOOKING_STATUS.REJECTED]] }, 1, 0] } },
+                  processingCount: { 
+                    $sum: { 
                       $cond: [
-                        {
-                          $in: ['$status', [
-                            BOOKING_STATUS.ACCEPTED, BOOKING_STATUS.ASSIGNED, BOOKING_STATUS.CONFIRMED,
-                            BOOKING_STATUS.JOURNEY_STARTED, BOOKING_STATUS.VISITED, BOOKING_STATUS.IN_PROGRESS,
-                            BOOKING_STATUS.WORK_DONE, 'started', 'reached', 'on_the_way'
-                          ]]
-                        }, 1, 0
-                      ]
-                    }
-                  },
-                  pending: {
-                    $sum: {
-                      $cond: [
-                        {
-                          $or: [
-                            { $and: [{ $eq: ['$vendorId', vId] }, { $eq: ['$status', BOOKING_STATUS.REQUESTED] }] },
-                            { $and: [{ $eq: ['$vendorId', null] }, { $in: ['$status', [BOOKING_STATUS.REQUESTED, BOOKING_STATUS.SEARCHING]] }] }
-                          ]
-                        }, 1, 0
-                      ]
-                    }
+                        { $in: ['$status', [
+                          BOOKING_STATUS.REQUESTED, BOOKING_STATUS.SEARCHING, BOOKING_STATUS.PACKED,
+                          BOOKING_STATUS.SHIPPED, BOOKING_STATUS.OUT_FOR_DELIVERY,
+                          BOOKING_STATUS.ASSIGNED, BOOKING_STATUS.JOURNEY_STARTED, BOOKING_STATUS.VISITED, 
+                          BOOKING_STATUS.IN_PROGRESS, BOOKING_STATUS.WORK_DONE, BOOKING_STATUS.PENDING,
+                          'started', 'reached', 'on_the_way'
+                        ]] }, 1, 0
+                      ] 
+                    } 
                   }
                 }
               }
@@ -114,7 +105,8 @@ const getDashboardStats = async (req, res) => {
                   brandIcon: 1,
                   categoryIcon: 1,
                   createdAt: 1,
-                  expiresAt: 1
+                  expiresAt: 1,
+                  offeringType: 1
                 }
               }
             ]
@@ -155,7 +147,6 @@ const getDashboardStats = async (req, res) => {
     const globalSettings = await Settings.findOne({ type: 'global' }).lean();
 
     // 6. Fetch fresh vendor data for stats
-    const Vendor = require('../../models/Vendor');
     const vendorProfile = await Vendor.findById(vendorId).select('performanceScore level commissionRate isOnline availability');
 
     res.status(200).json({
@@ -167,14 +158,14 @@ const getDashboardStats = async (req, res) => {
         },
         stats: {
           totalBookings: counts.total,
-          pendingBookings: counts.pending,
           completedBookings: counts.completed,
-          inProgressBookings: counts.inProgress,
-          totalRevenue: vendorEarnings, // UI shows totalEarnings as sum
+          inProgressBookings: counts.processingCount || 0,
+          confirmedBookings: counts.confirmedCount || 0,
+          cancelledBookings: counts.cancelledCount || 0,
+          totalRevenue: vendorEarnings,
           vendorEarnings: vendorEarnings,
-          workersOnline,
           rating: parseFloat(rating.toFixed(1)),
-          isOnline: (vendorProfile?.availability === 'AVAILABLE') ?? (req.user.availability === 'AVAILABLE'),
+          isOnline: vendorProfile?.isOnline ?? req.user.isOnline,
           performanceScore: vendorProfile?.performanceScore || 0,
           level: vendorProfile?.level || 3,
           commissionRate: vendorProfile?.commissionRate || 15,
@@ -196,21 +187,23 @@ const getDashboardStats = async (req, res) => {
 const getRevenueAnalytics = async (req, res) => {
   try {
     const vendorId = req.user.id;
+    const vId = new mongoose.Types.ObjectId(vendorId);
     const { period = 'monthly' } = req.query; // daily, weekly, monthly
 
     let groupFormat = '%Y-%m-%d';
     if (period === 'weekly') {
-      groupFormat = '%Y-%W'; // Year-Week
+      groupFormat = '%Y-%U'; // Year-Week (U is 0-53)
     } else if (period === 'monthly') {
       groupFormat = '%Y-%m'; // Year-Month
     }
 
-    // Revenue analytics from VendorBill
+    // 1. Chart Data
     const revenueData = await VendorBill.aggregate([
       {
         $match: {
-          vendorId: vendorId,
-          status: 'paid'
+          vendorId: vId,
+          status: 'paid',
+          paidAt: { $ne: null }
         }
       },
       {
@@ -221,19 +214,58 @@ const getRevenueAnalytics = async (req, res) => {
               date: '$paidAt'
             }
           },
-          revenue: { $sum: '$grandTotal' },
-          earnings: { $sum: '$vendorTotalEarning' },
+          amount: { $sum: '$vendorTotalEarning' },
           bookings: { $sum: 1 }
         }
       },
-      { $sort: { _id: 1 } }
+      { $sort: { _id: 1 } },
+      { $project: { date: '$_id', amount: 1, bookings: 1, _id: 0 } }
     ]);
+
+    // 2. Totals
+    const now = new Date();
+    const startOfToday = new Date(now.setHours(0,0,0,0));
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [allTime, today, week, month] = await Promise.all([
+      VendorBill.aggregate([{ $match: { vendorId: vId, status: 'paid' } }, { $group: { _id: null, total: { $sum: '$vendorTotalEarning' } } }]),
+      VendorBill.aggregate([{ $match: { vendorId: vId, status: 'paid', paidAt: { $gte: startOfToday } } }, { $group: { _id: null, total: { $sum: '$vendorTotalEarning' } } }]),
+      VendorBill.aggregate([{ $match: { vendorId: vId, status: 'paid', paidAt: { $gte: startOfWeek } } }, { $group: { _id: null, total: { $sum: '$vendorTotalEarning' } } }]),
+      VendorBill.aggregate([{ $match: { vendorId: vId, status: 'paid', paidAt: { $gte: startOfMonth } } }, { $group: { _id: null, total: { $sum: '$vendorTotalEarning' } } }])
+    ]);
+
+    // 3. History
+    const history = await VendorBill.find({ vendorId: vId, status: 'paid' })
+      .sort({ paidAt: -1 })
+      .limit(10)
+      .lean();
+
+    const mappedHistory = history.map(h => ({
+      id: h._id,
+      description: h.bookingId ? `Job #${h.bookingId.toString().slice(-6)}` : 'Manual Adjustment',
+      type: 'earning',
+      date: h.paidAt,
+      amount: h.vendorTotalEarning,
+      isDeduction: false
+    }));
 
     res.status(200).json({
       success: true,
       data: {
-        period,
-        revenueData
+        totals: {
+          total: allTime[0]?.total || 0,
+          today: today[0]?.total || 0,
+          week: week[0]?.total || 0,
+          month: month[0]?.total || 0
+        },
+        breakdown: {
+          totalEarnings: allTime[0]?.total || 0,
+          totalDeductions: 0,
+          totalBonuses: 0
+        },
+        chartData: revenueData,
+        history: mappedHistory
       }
     });
   } catch (error) {

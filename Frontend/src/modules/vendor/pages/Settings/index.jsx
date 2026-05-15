@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiBell, FiVolume2, FiGlobe, FiInfo, FiLogOut, FiTrash2, FiMapPin } from 'react-icons/fi';
+import { FiBell, FiVolume2, FiGlobe, FiInfo, FiLogOut, FiTrash2, FiMapPin, FiChevronRight, FiSettings } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { vendorTheme as themeColors } from '../../../../theme';
 import { vendorAuthService } from '../../../../services/authService';
 import { registerFCMToken, removeFCMToken } from '../../../../services/pushNotificationService';
-import BottomNav from '../../components/layout/BottomNav';
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -15,22 +15,6 @@ const Settings = () => {
     language: 'en',
   });
 
-  useLayoutEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const root = document.getElementById('root');
-    const bgStyle = themeColors.backgroundGradient;
-
-    if (html) html.style.background = bgStyle;
-    if (body) body.style.background = bgStyle;
-    if (root) root.style.background = bgStyle;
-
-    return () => {
-      if (html) html.style.background = '';
-      if (body) body.style.background = '';
-      if (root) root.style.background = '';
-    };
-  }, []);
 
   useEffect(() => {
     const loadSettings = () => {
@@ -112,154 +96,163 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20" style={{ background: '#FFFFFF' }}>
-      <header className="px-6 py-5 flex items-center justify-between bg-transparent">
-        <h1 className="text-xl font-black text-gray-900">Settings</h1>
-        <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center border border-gray-100">
-          <FiBell className="w-5 h-5 text-black" />
+    <div className="space-y-8 pb-12">
+      {/* Header - White Style */}
+      <div className="bg-white p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between text-gray-900 border border-gray-100 gap-6">
+        <div>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none">
+            System Configuration
+          </h2>
+          <p className="text-gray-500 font-medium mt-2">
+            Customize your operational interface and alert protocols
+          </p>
         </div>
-      </header>
+        <div className="w-16 h-16 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center shadow-inner group transition-all">
+          <FiSettings className="w-8 h-8 text-blue-600" />
+        </div>
+      </div>
 
-      <main className="px-5">
-        {/* Notification Settings (Black Theme) */}
-        <div className="bg-white rounded-[32px] p-6 mb-6 shadow-sm border border-gray-100">
-          <h3 className="text-xs font-black text-gray-900 uppercase tracking-widest mb-5">Notifications</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Notification Settings */}
+        <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-8">Alerts & Signals</h3>
 
-          <div className="space-y-5">
+          <div className="space-y-8">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center">
-                  <FiBell className="w-5 h-5 text-black" />
+              <div className="flex items-center gap-5">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                  <FiBell className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="font-black text-sm text-gray-900">Push Notifications</p>
-                  <p className="text-[10px] font-bold text-gray-400">Receive booking alerts</p>
+                  <p className="font-bold text-gray-800 tracking-tight uppercase text-sm">Push Notifications</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Real-time deployment alerts</p>
                 </div>
               </div>
               <button
                 onClick={() => handleToggle('notifications')}
-                className={`relative w-12 h-6 rounded-full transition-colors ${settings.notifications ? 'bg-black' : 'bg-gray-200'}`}
+                className={`relative w-14 h-7 rounded-full transition-all duration-300 p-1 ${settings.notifications ? 'bg-blue-600 shadow-lg shadow-blue-200' : 'bg-gray-200'}`}
               >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${settings.notifications ? 'translate-x-6' : ''}`}
+                <motion.span
+                  animate={{ x: settings.notifications ? 28 : 0 }}
+                  className="block w-5 h-5 bg-white rounded-full shadow-sm"
                 />
               </button>
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center">
-                  <FiVolume2 className="w-5 h-5 text-black" />
+              <div className="flex items-center gap-5">
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                  <FiVolume2 className="w-5 h-5 text-indigo-600" />
                 </div>
                 <div>
-                  <p className="font-black text-sm text-gray-900">Sound Alerts</p>
-                  <p className="text-[10px] font-bold text-gray-400">Play sound for new bookings</p>
+                  <p className="font-bold text-gray-800 tracking-tight uppercase text-sm">Auditory Feedback</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Operational sound signals</p>
                 </div>
               </div>
               <button
                 onClick={() => handleToggle('soundAlerts')}
-                className={`relative w-12 h-6 rounded-full transition-colors ${settings.soundAlerts ? 'bg-black' : 'bg-gray-200'}`}
+                className={`relative w-14 h-7 rounded-full transition-all duration-300 p-1 ${settings.soundAlerts ? 'bg-blue-600 shadow-lg shadow-blue-200' : 'bg-gray-200'}`}
               >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${settings.soundAlerts ? 'translate-x-6' : ''}`}
+                <motion.span
+                  animate={{ x: settings.soundAlerts ? 28 : 0 }}
+                  className="block w-5 h-5 bg-white rounded-full shadow-sm"
                 />
               </button>
             </div>
           </div>
         </div>
 
-        <div className="space-y-4 mb-6">
+        {/* Quick Links */}
+        <div className="space-y-4">
           <button
             onClick={() => navigate('/vendor/address-management')}
-            className="w-full bg-white rounded-[28px] p-5 shadow-sm border border-gray-100 flex items-center justify-between active:scale-98 transition-all"
+            className="w-full bg-white rounded-[24px] p-6 border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all shadow-sm"
           >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center">
-                <FiMapPin className="w-5 h-5 text-black" />
+            <div className="flex items-center gap-5">
+              <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                <FiMapPin className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
               </div>
               <div className="text-left">
-                <p className="font-black text-sm text-gray-900">Manage Address</p>
-                <p className="text-[10px] font-bold text-gray-400">Set your business location</p>
+                <p className="font-bold text-gray-800 tracking-tight uppercase text-sm">Operational Base</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Manage business location</p>
               </div>
             </div>
-            <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            <FiChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 group-hover:translate-x-1 transition-all" />
           </button>
 
           <button
             onClick={() => navigate('/vendor/support')}
-            className="w-full bg-white rounded-[28px] p-5 shadow-sm border border-gray-100 flex items-center justify-between active:scale-98 transition-all"
+            className="w-full bg-white rounded-[24px] p-6 border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all shadow-sm"
           >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-black">
-                <FiInfo className="w-5 h-5" />
+            <div className="flex items-center gap-5">
+              <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
+                <FiInfo className="w-5 h-5 text-gray-400 group-hover:text-indigo-600" />
               </div>
               <div className="text-left">
-                <p className="font-black text-sm text-gray-900">Helpdesk & Support</p>
-                <p className="text-[10px] font-bold text-gray-400">Raise a ticket or view status</p>
+                <p className="font-bold text-gray-800 tracking-tight uppercase text-sm">Deployment Support</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Direct uplink to helpdesk</p>
               </div>
             </div>
-            <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            <FiChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 group-hover:translate-x-1 transition-all" />
           </button>
         </div>
+      </div>
 
-        <div className="bg-white rounded-[32px] p-6 mb-6 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center">
-              <FiGlobe className="w-5 h-5 text-black" />
-            </div>
-            <h3 className="font-black text-sm text-gray-900 uppercase tracking-wider">Language</h3>
+      <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-5 mb-8">
+          <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center">
+            <FiGlobe className="w-5 h-5 text-purple-600" />
           </div>
-
-          <div className="space-y-2">
-            {[
-              { code: 'en', name: 'English' },
-              { code: 'hi', name: 'हिंदी' },
-            ].map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => handleLanguageChange(lang.code)}
-                className={`w-full py-3 px-4 rounded-2xl text-left font-black text-sm transition-all ${
-                  settings.language === lang.code
-                    ? 'bg-black text-white shadow-lg shadow-gray-200'
-                    : 'bg-gray-50 text-gray-500'
-                }`}
-              >
-                {lang.name}
-              </button>
-            ))}
-          </div>
+          <h3 className="font-bold text-gray-800 tracking-tight uppercase text-sm">Protocol Language</h3>
         </div>
 
-        <div className="bg-white rounded-[32px] p-5 mb-6 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center">
-              <FiInfo className="w-5 h-5 text-black" />
-            </div>
-            <h3 className="font-black text-sm text-gray-900 uppercase tracking-wider">About</h3>
-          </div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-14">Version 1.0.0 · Vendor App</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            { code: 'en', name: 'English (US)' },
+            { code: 'hi', name: 'हिंदी (India)' },
+          ].map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => handleLanguageChange(lang.code)}
+              className={`py-5 px-8 rounded-2xl text-center font-bold text-[10px] uppercase tracking-widest transition-all duration-300 ${
+                settings.language === lang.code
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                  : 'bg-gray-50 text-gray-500 border border-gray-100 hover:bg-gray-100'
+              }`}
+            >
+              {lang.name}
+            </button>
+          ))}
         </div>
+      </div>
 
-        <div className="space-y-4 mb-10">
-          <button
-            onClick={handleLogout}
-            className="w-full py-5 rounded-[28px] bg-black text-white font-black text-sm shadow-lg shadow-gray-400 flex items-center justify-center gap-2 active:scale-95 transition-all"
-          >
-            <FiLogOut className="w-5 h-5" />
-            LOGOUT
-          </button>
-
-          <button
-            onClick={handleDeleteAccount}
-            className="w-full py-5 rounded-[28px] bg-red-50 border border-red-100 text-red-500 font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
-          >
-            <FiTrash2 className="w-5 h-5" />
-            DELETE ACCOUNT
-          </button>
+      <div className="bg-gray-100/50 rounded-[28px] p-6 border border-gray-100 flex items-center gap-5">
+        <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+          <FiInfo className="w-5 h-5 text-gray-400" />
         </div>
-      </main>
+        <div>
+          <h3 className="font-bold text-[10px] text-gray-400 uppercase tracking-widest">System Architecture</h3>
+          <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-1">v2.4.0-PREMIUM · ENCRYPTED BUILD 2026</p>
+        </div>
+      </div>
 
-      <BottomNav />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <button
+          onClick={handleLogout}
+          className="py-5 rounded-3xl bg-white border border-gray-200 text-gray-600 font-bold text-[11px] uppercase tracking-widest hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center gap-4 shadow-sm group"
+        >
+          <FiLogOut className="w-5 h-5 text-gray-400 group-hover:text-gray-900 group-hover:-translate-x-1 transition-all" />
+          Logout Secure Session
+        </button>
+
+        <button
+          onClick={handleDeleteAccount}
+          className="py-5 rounded-3xl bg-rose-50 border border-rose-100 text-rose-600 font-bold text-[11px] uppercase tracking-widest hover:bg-rose-100 transition-all active:scale-95 flex items-center justify-center gap-4 shadow-sm group"
+        >
+          <FiTrash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+          De-authorize Identity
+        </button>
+      </div>
     </div>
   );
 };

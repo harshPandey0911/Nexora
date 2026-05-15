@@ -1,14 +1,9 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiArrowLeft, FiSend, FiUpload, FiCheck, FiCreditCard, FiSmartphone, FiDollarSign, FiX } from 'react-icons/fi';
-import { vendorTheme as themeColors } from '../../../../theme';
-import Header from '../../components/layout/Header';
-import BottomNav from '../../components/layout/BottomNav';
+import { FiArrowLeft, FiSend, FiUpload, FiCheck, FiCreditCard, FiSmartphone, FiDollarSign, FiX, FiCamera } from 'react-icons/fi';
 import vendorWalletService from '../../../../services/vendorWalletService';
 import { toast } from 'react-hot-toast';
 import flutterBridge from '../../../../utils/flutterBridge';
-import { FiCamera } from 'react-icons/fi';
 
 const SettlementRequest = () => {
   const navigate = useNavigate();
@@ -23,23 +18,6 @@ const SettlementRequest = () => {
     notes: ''
   });
   const [proofPreview, setProofPreview] = useState(null);
-
-  useLayoutEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const root = document.getElementById('root');
-    const bgStyle = themeColors.backgroundGradient;
-
-    if (html) html.style.background = bgStyle;
-    if (body) body.style.background = bgStyle;
-    if (root) root.style.background = bgStyle;
-
-    return () => {
-      if (html) html.style.background = '';
-      if (body) body.style.background = '';
-      if (root) root.style.background = '';
-    };
-  }, []);
 
   useEffect(() => {
     loadWallet();
@@ -70,7 +48,7 @@ const SettlementRequest = () => {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        const MAX_WIDTH = 1200; // Increased slightly for better text legibility in receipts
+        const MAX_WIDTH = 1200;
         const MAX_HEIGHT = 1200;
 
         if (width > height) {
@@ -97,17 +75,16 @@ const SettlementRequest = () => {
             type: 'image/jpeg',
             lastModified: Date.now()
           }));
-        }, 'image/jpeg', 0.85); // Slightly higher quality for reference numbers
+        }, 'image/jpeg', 0.85);
       };
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        resolve(file); // Fallback to original if canvas fails
+        resolve(file);
       };
     });
   };
 
   const uploadToCloudinary = async (file) => {
-    // 1. Get Signature from Backend
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const sigRes = await fetch(`${apiUrl}/api/upload/sign-signature`);
     const sigData = await sigRes.json();
@@ -118,7 +95,6 @@ const SettlementRequest = () => {
 
     const { signature, timestamp, cloudName, apiKey, folder } = sigData;
 
-    // 2. Upload to Cloudinary
     const formData = new FormData();
     formData.append('file', file);
     formData.append('api_key', apiKey);
@@ -172,13 +148,8 @@ const SettlementRequest = () => {
     let loadingToast;
     try {
       loadingToast = toast.loading('Optimizing & Uploading...');
-
-      // Compress client-side
       const file = await compressImage(originalFile);
-
-      // Upload
       const secureUrl = await uploadToCloudinary(file);
-
       setFormData(prev => ({ ...prev, paymentProof: secureUrl }));
       toast.dismiss(loadingToast);
       toast.success('Proof uploaded successfully');
@@ -236,247 +207,231 @@ const SettlementRequest = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: themeColors.backgroundGradient }}>
-        <div className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: `${themeColors.button} transparent ${themeColors.button} ${themeColors.button}` }}></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-28 relative" style={{ background: '#FFFFFF' }}>
-      {/* Premium Background Pattern */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.1) 0%, transparent 70%),
-              radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.05) 0%, transparent 75%),
-              #F8FAFC
-            `
-          }}
-        />
-      </div>
-
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-5 flex items-center justify-between relative z-10">
+    <div className="min-h-screen bg-gray-50 pb-20 relative overflow-x-hidden">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100 px-10 py-6 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-4">
-          <motion.button 
-            whileTap={{ scale: 0.9 }}
+          <button 
             onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-xl bg-white shadow-sm border border-black/[0.02] flex items-center justify-center"
+            className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-all"
           >
-            <FiArrowLeft className="w-5 h-5 text-gray-900" />
-          </motion.button>
-          <h1 className="text-xl font-[1000] text-gray-900 tracking-tight">Admin Settlement</h1>
+            <FiArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-black text-gray-900 tracking-tight uppercase">Audit Logs</h1>
         </div>
-        <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-black/[0.02] flex items-center justify-center">
-          <FiSend className="w-5 h-5 text-teal-600" />
+        <div className="w-12 h-12 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center">
+          <FiSend className="w-6 h-6 text-blue-600" />
         </div>
       </header>
 
-      <main className="px-5 pt-8 relative z-10 max-w-lg mx-auto">
-        {/* Amount Due Banner (High Impact) */}
-        <div
-          className="rounded-[40px] p-8 mb-8 relative overflow-hidden group shadow-[0_20px_50px_rgba(220,38,38,0.15)]"
-          style={{
-            background: 'linear-gradient(135deg, #E11D48 0%, #BE123C 100%)',
-          }}
-        >
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000" />
-          
-          <div className="relative z-10 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-[1000] text-rose-100/60 uppercase tracking-[0.2em] mb-1">Outstanding Liability</p>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-xl font-[1000] text-rose-200">₹</span>
-                <p className="text-4xl font-[1000] text-white tracking-tighter leading-none">
-                  {wallet.amountDue?.toLocaleString() || 0}
-                </p>
+      <main className="px-8 pt-8 relative z-10 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* Left Column: Liability & Magnitude */}
+          <div className="space-y-6">
+            {/* Amount Due Banner */}
+            <div className="bg-gradient-to-br from-rose-600 to-rose-700 rounded-3xl p-8 relative overflow-hidden group shadow-lg shadow-rose-900/10">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -mr-32 -mt-32 group-hover:scale-125 transition-transform duration-1000" />
+
+              <div className="relative z-10 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-black text-rose-100 uppercase tracking-[0.4em] mb-1.5 opacity-80">Operational Liability</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl font-black text-rose-200">₹</span>
+                    <p className="text-4xl font-black text-white tracking-tighter leading-none">
+                      {wallet.amountDue?.toLocaleString() || 0}
+                    </p>
+                  </div>
+                </div>
+                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-xl">
+                  <FiDollarSign className="w-7 h-7" />
+                </div>
+              </div>
+
+              <div className="relative z-10 mt-6 pt-5 border-t border-white/10 flex items-center gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-300 animate-pulse" />
+                <p className="text-[8px] font-black text-rose-100 uppercase tracking-[0.3em] opacity-80">Critical Settlement Required</p>
               </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/50">
-              <FiDollarSign className="w-7 h-7" />
-            </div>
-          </div>
-          
-          <div className="relative z-10 mt-6 pt-5 border-t border-white/5 flex items-center gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-rose-300 animate-pulse" />
-            <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Action Required for Account Health</p>
-          </div>
-        </div>
 
-        {/* Settlement Form (Premium Theme) */}
-        <div className="bg-white/70 backdrop-blur-md rounded-[36px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 space-y-8">
-          {/* Amount */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] ml-1">
-              Payment Amount
-            </label>
-            <div className="relative">
-              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-[1000] text-lg">₹</span>
-              <input
-                type="number"
-                value={formData.amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                className="w-full pl-10 pr-6 py-4.5 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-lg font-[1000] text-gray-900 transition-all placeholder:text-gray-200"
-                placeholder="0.00"
-                max={wallet.amountDue}
-              />
-            </div>
-            <div className="flex justify-between items-center px-1">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Max Payable: ₹{wallet.amountDue?.toLocaleString()}</p>
-              <motion.button 
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setFormData(prev => ({ ...prev, amount: wallet.amountDue.toString() }))}
-                className="text-[9px] font-[1000] text-teal-600 uppercase tracking-widest"
-              >
-                Clear All
-              </motion.button>
-            </div>
-          </div>
-
-          {/* Payment Method */}
-          <div className="space-y-4">
-            <label className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] ml-1">
-              Transfer Mode
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { id: 'upi', label: 'UPI / GPay', icon: FiSmartphone },
-                { id: 'bank_transfer', label: 'Wire Transfer', icon: FiCreditCard },
-              ].map(method => (
-                <motion.button
-                  key={method.id}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setFormData(prev => ({ ...prev, paymentMethod: method.id }))}
-                  className={`p-5 rounded-[24px] border transition-all flex flex-col items-center gap-3 ${formData.paymentMethod === method.id
-                    ? 'border-teal-500 bg-teal-50 shadow-lg shadow-teal-900/5'
-                    : 'border-gray-100 bg-gray-50/50'
-                    }`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${formData.paymentMethod === method.id ? 'bg-teal-600 text-white' : 'bg-white text-gray-400'}`}>
-                    <method.icon className="w-5 h-5" />
-                  </div>
-                  <span className={`text-[10px] font-[1000] uppercase tracking-widest ${formData.paymentMethod === method.id ? 'text-teal-700' : 'text-gray-400'}`}>
-                    {method.label}
-                  </span>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          {/* Payment Reference */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] ml-1">
-              Transaction ID
-            </label>
-            <input
-              type="text"
-              value={formData.paymentReference}
-              onChange={(e) => setFormData(prev => ({ ...prev, paymentReference: e.target.value }))}
-              className="w-full px-5 py-4.5 bg-gray-50/50 rounded-[20px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-xs font-[1000] text-gray-900 uppercase tracking-widest transition-all placeholder:text-gray-200"
-              placeholder="ENTER REF OR TXN ID"
-            />
-          </div>
-
-          {/* Payment Proof */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] ml-1">
-              Transaction Proof
-            </label>
-            {proofPreview ? (
-              <div className="relative group">
-                <img
-                  src={proofPreview}
-                  alt="Payment Proof"
-                  className="w-full h-64 object-cover bg-gray-50 rounded-[28px] border border-gray-100 shadow-inner"
-                />
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => {
-                    setProofPreview(null);
-                    setFormData(prev => ({ ...prev, paymentProof: '' }));
-                  }}
-                  className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
-                >
-                  <FiX className="w-5 h-5" />
-                </motion.button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {flutterBridge.isFlutter && (
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleNativeCamera}
-                    className="w-full py-5 bg-gray-900 text-white rounded-[24px] flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-[1000] text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-black/10"
-                  >
-                    <FiCamera className="w-5 h-5" />
-                    Snap Receipt
-                  </motion.button>
-                )}
-
-                <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-100 rounded-[32px] cursor-pointer hover:bg-gray-50/50 hover:border-teal-200 transition-all bg-gray-50/20">
-                  <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4 text-teal-600 border border-black/[0.02]">
-                    <FiUpload className="w-5 h-5" />
-                  </div>
-                  <span className="text-[10px] font-[1000] text-gray-900 uppercase tracking-[0.15em]">
-                    {flutterBridge.isFlutter ? 'Library Access' : 'Attach Screenshot'}
-                  </span>
-                  <span className="text-[8px] text-gray-400 mt-2 uppercase tracking-widest font-black opacity-50">HEIC, PNG, JPG (MAX 20MB)</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleProofUpload}
-                  />
+            {/* Settlement Form - Part 1 */}
+            <div className="bg-white rounded-3xl p-8 border border-gray-100 space-y-8 shadow-sm">
+              {/* Amount */}
+              <div className="space-y-3">
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em] ml-2">
+                  Transfer Magnitude
                 </label>
+                <div className="relative">
+                  <span className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 font-black text-lg">₹</span>
+                  <input
+                    type="number"
+                    value={formData.amount}
+                    onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    className="w-full pl-10 pr-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xl font-black text-gray-900 focus:outline-none focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-200"
+                    placeholder="0.00"
+                    max={wallet.amountDue}
+                  />
+                </div>
+                <div className="flex justify-between items-center px-2">
+                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-relaxed">System Limit: ₹{wallet.amountDue?.toLocaleString()}</p>
+                  <button
+                    onClick={() => setFormData(prev => ({ ...prev, amount: wallet.amountDue.toString() }))}
+                    className="text-[8px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-500 transition-colors"
+                  >
+                    Clear Liability
+                  </button>
+                </div>
               </div>
-            )}
+
+              {/* Transfer Mode */}
+              <div className="space-y-4">
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em] ml-2">
+                  Protocol Selection
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { id: 'upi', label: 'UPI INTEL', icon: FiSmartphone },
+                    { id: 'bank_transfer', label: 'WIRE TRANSFER', icon: FiCreditCard },
+                  ].map(method => (
+                    <button
+                      key={method.id}
+                      onClick={() => setFormData(prev => ({ ...prev, paymentMethod: method.id }))}
+                      className={`p-5 rounded-2xl border transition-all duration-500 flex flex-col items-center gap-3 ${formData.paymentMethod === method.id
+                        ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-900/5'
+                        : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
+                        }`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${formData.paymentMethod === method.id ? 'bg-blue-600 text-white' : 'bg-white text-gray-400 border border-gray-100'}`}>
+                        <method.icon className="w-5 h-5" />
+                      </div>
+                      <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${formData.paymentMethod === method.id ? 'text-blue-600' : 'text-gray-400'}`}>
+                        {method.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Notes */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-[1000] text-gray-400 uppercase tracking-[0.2em] ml-1">
-              Internal Notes
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="w-full px-5 py-4 bg-gray-50/50 rounded-[24px] border border-gray-100 focus:border-teal-500 focus:bg-white outline-none text-xs font-[1000] text-gray-900 transition-all placeholder:text-gray-200 resize-none"
-              rows={3}
-              placeholder="Any comments for the auditor..."
-            />
+          {/* Right Column: Evidence & Verification */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-3xl p-8 border border-gray-100 space-y-8 shadow-sm">
+              {/* Reference */}
+              <div className="space-y-3">
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em] ml-2">
+                  Verification Code (TXN ID)
+                </label>
+                <input
+                  type="text"
+                  value={formData.paymentReference}
+                  onChange={(e) => setFormData(prev => ({ ...prev, paymentReference: e.target.value }))}
+                  className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white text-xs font-black text-gray-900 uppercase tracking-widest transition-all placeholder:text-gray-200"
+                  placeholder="ENTER VECTOR REFERENCE..."
+                />
+              </div>
+
+              {/* Proof */}
+              <div className="space-y-3">
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em] ml-2">
+                  Visual Confirmation
+                </label>
+                {proofPreview ? (
+                  <div className="relative group">
+                    <img
+                      src={proofPreview}
+                      alt="Proof"
+                      className="w-full h-64 object-cover bg-gray-50 rounded-2xl border border-gray-100 shadow-lg"
+                    />
+                    <button
+                      onClick={() => {
+                        setProofPreview(null);
+                        setFormData(prev => ({ ...prev, paymentProof: '' }));
+                      }}
+                      className="absolute top-4 right-4 w-10 h-10 bg-white/90 hover:bg-red-600 hover:text-white text-gray-700 rounded-xl flex items-center justify-center backdrop-blur-xl transition-all border border-gray-100 shadow-md"
+                    >
+                      <FiX className="w-5 h-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {flutterBridge.isFlutter && (
+                      <button
+                        type="button"
+                        onClick={handleNativeCamera}
+                        className="w-full py-4 bg-gray-50 border border-gray-100 text-gray-700 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-100 transition-all font-black text-[10px] uppercase tracking-[0.3em] shadow-sm"
+                      >
+                        <FiCamera className="w-5 h-5 text-blue-600" />
+                        INTEL CAPTURE
+                      </button>
+                    )}
+
+                    <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-200 rounded-3xl cursor-pointer hover:bg-gray-50 hover:border-blue-500/50 transition-all bg-gray-50/50">
+                      <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center mb-3 text-blue-600 shadow-sm">
+                        <FiUpload className="w-5 h-5" />
+                      </div>
+                      <span className="text-[9px] font-black text-gray-900 uppercase tracking-[0.2em]">
+                        {flutterBridge.isFlutter ? 'AUTHORIZE LIBRARY' : 'ATTACH EVIDENCE'}
+                      </span>
+                      <span className="text-[7px] text-gray-400 mt-1 uppercase tracking-[0.4em] font-black">PNG / JPG / HEIC</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleProofUpload}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-3">
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em] ml-2">
+                  Operational Commentary
+                </label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white text-xs font-black text-gray-900 uppercase tracking-widest transition-all placeholder:text-gray-200 resize-none"
+                  rows={3}
+                  placeholder="OPTIONAL LOG ENTRIES..."
+                />
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || !formData.amount || !formData.paymentReference || !formData.paymentProof}
+              className="w-full py-6 rounded-3xl font-black text-white text-[11px] uppercase tracking-[0.5em] flex items-center justify-center gap-4 transition-all active:scale-95 disabled:opacity-50 bg-blue-600 shadow-xl shadow-blue-900/40 group relative overflow-hidden"
+            >
+              {submitting ? (
+                <div className="w-5 h-5 border-3 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  AUTHORIZE AUDIT
+                  <FiSend className="w-5 h-5 group-hover:translate-x-1.5 transition-transform duration-500" />
+                </>
+              )}
+            </button>
           </div>
         </div>
-
-        {/* Submit Execution */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={handleSubmit}
-          disabled={submitting || !formData.amount || !formData.paymentReference || !formData.paymentProof}
-          className="w-full mt-10 py-6 rounded-[32px] font-[1000] text-white text-[12px] uppercase tracking-[0.35em] flex items-center justify-center gap-4 transition-all active:scale-95 disabled:opacity-20 bg-teal-600 shadow-2xl shadow-teal-900/20 group relative overflow-hidden"
-        >
-          {submitting ? (
-            <div className="w-6 h-6 border-3 border-white/20 border-t-white rounded-full animate-spin" />
-          ) : (
-            <>
-              Submit Audit Logs
-              <FiSend className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
-            </>
-          )}
-        </motion.button>
 
         {/* Audit Disclaimer */}
-        <div className="mt-12 mb-12 flex flex-col items-center gap-3 px-8 opacity-40">
-          <FiCheck className="w-4 h-4 text-gray-400" />
-          <p className="text-center text-[8px] text-gray-400 font-black uppercase tracking-[0.2em] leading-relaxed">
-            Payment verification is performed by our financial audit team.<br />
-            Balance updates are finalized within 24 operational hours.
+        <div className="mt-12 mb-16 flex flex-col items-center gap-3 px-10">
+          <FiCheck className="w-4 h-4 text-gray-300" />
+          <p className="text-center text-[8px] text-gray-400 font-black uppercase tracking-[0.3em] leading-loose opacity-80">
+            Audit logs are processed via secure financial nodes.<br />
+            Verification protocols finalize within 24 operational hours.
           </p>
         </div>
       </main>
-
-      <BottomNav />
     </div>
   );
 };

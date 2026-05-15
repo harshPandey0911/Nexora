@@ -15,7 +15,7 @@ import api from '../../../services/api';
  */
 export const getEarningsOverview = async (filters = {}) => {
   try {
-    const response = await api.get('/vendors/earnings/analytics', { params: filters });
+    const response = await api.get('/vendors/dashboard/revenue', { params: filters });
     return response.data;
   } catch (error) {
     console.error('Error fetching earnings overview:', error);

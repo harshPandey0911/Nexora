@@ -17,6 +17,7 @@ const categorySchema = z.object({
   homeBadge: z.string().optional(),
   hasSaleBadge: z.boolean(),
   showOnHome: z.boolean(),
+  offeringType: z.enum(['SERVICE', 'PRODUCT']),
 });
 
 import { useOutletContext } from "react-router-dom";
@@ -34,6 +35,7 @@ const CategoriesPage = () => {
     homeBadge: "",
     hasSaleBadge: false,
     showOnHome: true,
+    offeringType: "SERVICE",
   });
   const [uploadingIcon, setUploadingIcon] = useState(false);
   const [showReorderModal, setShowReorderModal] = useState(false);
@@ -63,6 +65,7 @@ const CategoriesPage = () => {
             hasSaleBadge: cat.hasSaleBadge || false,
             showOnHome: cat.showOnHome !== false,
             vendorId: cat.vendorId,
+            offeringType: cat.offeringType || "SERVICE",
           }));
 
           // Update catalog with fetched categories
@@ -101,6 +104,7 @@ const CategoriesPage = () => {
       homeBadge: safe.homeBadge || "",
       hasSaleBadge: Boolean(safe.hasSaleBadge),
       showOnHome: safe.showOnHome !== false,
+      offeringType: safe.offeringType || "SERVICE",
     });
   }, [editing]);
 
@@ -115,6 +119,7 @@ const CategoriesPage = () => {
       homeBadge: "",
       hasSaleBadge: false,
       showOnHome: true,
+      offeringType: "SERVICE",
     });
     setIsModalOpen(false);
   };
@@ -129,7 +134,8 @@ const CategoriesPage = () => {
       homeIconUrl: form.homeIconUrl.trim(),
       homeBadge: form.homeBadge.trim(),
       hasSaleBadge: Boolean(form.hasSaleBadge),
-      showOnHome: Boolean(form.showOnHome)
+      showOnHome: Boolean(form.showOnHome),
+      offeringType: form.offeringType
     });
 
     if (!validationResult.success) {
@@ -139,7 +145,7 @@ const CategoriesPage = () => {
       return;
     }
 
-    const { title, slug, homeIconUrl, homeBadge, hasSaleBadge, showOnHome } = validationResult.data;
+    const { title, slug, homeIconUrl, homeBadge, hasSaleBadge, showOnHome, offeringType } = validationResult.data;
 
     try {
       setLoading(true);
@@ -167,6 +173,7 @@ const CategoriesPage = () => {
         homeBadge: homeBadge || null,
         hasSaleBadge,
         showOnHome,
+        offeringType,
         homeOrder,
         cityIds: [],
       };
@@ -188,6 +195,7 @@ const CategoriesPage = () => {
             hasSaleBadge: response.category.hasSaleBadge || false,
             showOnHome: response.category.showOnHome !== false,
             homeOrder: response.category.homeOrder || 0,
+            offeringType: response.category.offeringType || "SERVICE",
           };
         } else {
           throw new Error(response.message || 'Failed to create category');
@@ -205,6 +213,7 @@ const CategoriesPage = () => {
             hasSaleBadge: response.category.hasSaleBadge || false,
             showOnHome: response.category.showOnHome !== false,
             homeOrder: response.category.homeOrder || 0,
+            offeringType: response.category.offeringType || "SERVICE",
           };
         } else {
           throw new Error(response.message || 'Failed to update category');
@@ -222,6 +231,7 @@ const CategoriesPage = () => {
             hasSaleBadge: response.category.hasSaleBadge || false,
             showOnHome: response.category.showOnHome !== false,
             homeOrder: response.category.homeOrder || 0,
+            offeringType: response.category.offeringType || "SERVICE",
           };
         } else {
           throw new Error(response.message || 'Failed to create category');
@@ -461,6 +471,7 @@ const CategoriesPage = () => {
                   </th>
                   <th className="text-center py-3 px-4 text-sm font-bold text-gray-700 w-32">Status</th>
                   <th className="text-left py-3 px-4 text-sm font-bold text-gray-700">Type</th>
+                  <th className="text-left py-3 px-4 text-sm font-bold text-gray-700">Offering</th>
                   <th className="text-center py-3 px-4 text-sm font-bold text-gray-700 w-32">Actions</th>
                 </tr>
               </thead>
@@ -528,6 +539,11 @@ const CategoriesPage = () => {
                           PLATFORM
                         </span>
                       )}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className={`inline-block px-2 py-1 text-[10px] font-bold rounded border ${c.offeringType === "PRODUCT" ? "bg-purple-100 text-purple-700 border-purple-200" : "bg-teal-100 text-teal-700 border-teal-200"}`}>
+                        {c.offeringType || "SERVICE"}
+                      </span>
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center justify-center gap-2">
@@ -654,6 +670,37 @@ const CategoriesPage = () => {
             <label htmlFor="showOnHome" className="text-base font-semibold text-gray-800">
               Show this category on home
             </label>
+          </div>
+
+          <div>
+            <label className="block text-base font-bold text-gray-900 mb-2">Offering Type</label>
+            <div className="flex gap-4">
+              <label className={`flex-1 flex items-center justify-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${form.offeringType === 'SERVICE' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300'}`}>
+                <input
+                  type="radio"
+                  name="offeringType"
+                  value="SERVICE"
+                  checked={form.offeringType === 'SERVICE'}
+                  onChange={(e) => setForm(p => ({ ...p, offeringType: e.target.value }))}
+                  className="hidden"
+                />
+                <span className="font-bold">SERVICE</span>
+              </label>
+              <label className={`flex-1 flex items-center justify-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${form.offeringType === 'PRODUCT' ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-200 hover:border-gray-300'}`}>
+                <input
+                  type="radio"
+                  name="offeringType"
+                  value="PRODUCT"
+                  checked={form.offeringType === 'PRODUCT'}
+                  onChange={(e) => setForm(p => ({ ...p, offeringType: e.target.value }))}
+                  className="hidden"
+                />
+                <span className="font-bold">PRODUCT</span>
+              </label>
+            </div>
+            <p className="mt-2 text-xs text-gray-500 font-medium italic">
+              * Services will show under "Our Services" and Products under "Our Products" on the homepage.
+            </p>
           </div>
 
           <div className="flex gap-3 pt-4">

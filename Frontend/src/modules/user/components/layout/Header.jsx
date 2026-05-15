@@ -43,6 +43,9 @@ const Header = ({ location: address, onLocationClick, navLinks: dynamicNavLinks,
     if (homeContent?.isCategoriesVisible !== false && !links.some(l => l.path.includes('services'))) {
       links.push({ name: 'Services', path: '/user/services' });
     }
+    if (homeContent?.isCategoriesVisible !== false && !links.some(l => l.path.includes('products'))) {
+      links.push({ name: 'Products', path: '/user/products' });
+    }
     if (homeContent?.isContactUsVisible !== false && homeContent?.contactUs && !links.some(l => l.path.includes('contact'))) {
       links.push({ name: 'Contact', path: '/user/contact' });
     }

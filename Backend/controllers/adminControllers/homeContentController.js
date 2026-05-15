@@ -148,15 +148,36 @@ const updateHomeContent = async (req, res) => {
     if (req.body.isOffersVisible !== undefined) homeContent.isOffersVisible = req.body.isOffersVisible;
     if (req.body.isContactUsVisible !== undefined) homeContent.isContactUsVisible = req.body.isContactUsVisible;
 
-    if (req.body.heroSection !== undefined) homeContent.heroSection = req.body.heroSection;
+    if (req.body.heroSection !== undefined) {
+      homeContent.heroSection = req.body.heroSection;
+      homeContent.markModified('heroSection');
+    }
     if (req.body.stats !== undefined) homeContent.stats = req.body.stats;
-    if (req.body.appDownload !== undefined) homeContent.appDownload = req.body.appDownload;
+    if (req.body.appDownload !== undefined) {
+      homeContent.appDownload = req.body.appDownload;
+      homeContent.markModified('appDownload');
+    }
     if (req.body.navLinks !== undefined) homeContent.navLinks = req.body.navLinks;
-    if (req.body.siteIdentity !== undefined) homeContent.siteIdentity = req.body.siteIdentity;
-    if (req.body.howItWorks !== undefined) homeContent.howItWorks = req.body.howItWorks;
-    if (req.body.aboutUs !== undefined) homeContent.aboutUs = req.body.aboutUs;
-    if (req.body.offers !== undefined) homeContent.offers = req.body.offers;
-    if (req.body.contactUs !== undefined) homeContent.contactUs = req.body.contactUs;
+    if (req.body.siteIdentity !== undefined) {
+      homeContent.siteIdentity = req.body.siteIdentity;
+      homeContent.markModified('siteIdentity');
+    }
+    if (req.body.howItWorks !== undefined) {
+      homeContent.howItWorks = req.body.howItWorks;
+      homeContent.markModified('howItWorks');
+    }
+    if (req.body.aboutUs !== undefined) {
+      homeContent.aboutUs = req.body.aboutUs;
+      homeContent.markModified('aboutUs');
+    }
+    if (req.body.offers !== undefined) {
+      homeContent.offers = req.body.offers;
+      homeContent.markModified('offers');
+    }
+    if (req.body.contactUs !== undefined) {
+      homeContent.contactUs = req.body.contactUs;
+      homeContent.markModified('contactUs');
+    }
 
     await homeContent.save();
 

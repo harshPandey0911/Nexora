@@ -42,6 +42,18 @@ const categorySchema = new mongoose.Schema({
     default: 0,
     index: true
   },
+  group: {
+    type: String,
+    enum: ['Delivery', 'Needs', 'Home', 'Health', 'More', 'None'],
+    default: 'None',
+    index: true
+  },
+  offeringType: {
+    type: String,
+    enum: ['SERVICE', 'PRODUCT'],
+    default: 'SERVICE',
+    index: true
+  },
   // Cities where this category is available
   cityIds: [{
     type: mongoose.Schema.Types.ObjectId,

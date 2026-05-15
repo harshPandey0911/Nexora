@@ -513,6 +513,51 @@ const deleteVendor = async (req, res) => {
   }
 };
 
+/**
+ * Update vendor permissions
+ */
+const updateVendorPermissions = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { permissions } = req.body; // Array of strings
+
+    if (!Array.isArray(permissions)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Permissions must be an array'
+      });
+    }
+
+    const vendor = await Vendor.findByIdAndUpdate(
+      id,
+      { permissions },
+      { new: true, runValidators: true }
+    );
+
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vendor not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Vendor permissions updated successfully',
+      data: {
+        id: vendor._id,
+        permissions: vendor.permissions
+      }
+    });
+  } catch (error) {
+    console.error('Update vendor permissions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update vendor permissions'
+    });
+  }
+};
+
 module.exports = {
   getAllVendors,
   getVendorDetails,
@@ -524,6 +569,7 @@ module.exports = {
   getAllVendorBookings,
   getVendorPaymentsSummary,
   toggleVendorStatus,
-  deleteVendor
+  deleteVendor,
+  updateVendorPermissions
 };
 

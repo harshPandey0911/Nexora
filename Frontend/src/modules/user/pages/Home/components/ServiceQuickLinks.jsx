@@ -16,21 +16,21 @@ import {
 } from 'react-icons/fi';
 import Logo from '../../../../../components/common/Logo';
 
-const ServiceQuickLinks = ({ categories = [], onCategoryClick }) => {
+const ServiceQuickLinks = ({ categories = [], onCategoryClick, title = "Our Services" }) => {
   // Mapping of category slugs/titles to icons
   const getCategoryIcon = (category) => {
-    const title = category.title?.toLowerCase() || '';
+    const titleText = category.title?.toLowerCase() || '';
     const slug = category.slug?.toLowerCase() || '';
     
-    if (title.includes('electric') || slug.includes('electric')) return <FiZap />;
-    if (title.includes('plumb') || slug.includes('plumb') || title.includes('water')) return <FiDroplet />;
-    if (title.includes('clean') || slug.includes('clean')) return <FiBox />; // Box as placeholder for cleaning stuff
-    if (title.includes('repair') || title.includes('fix') || slug.includes('fix')) return <FiTool />;
-    if (title.includes('ac') || title.includes('air') || slug.includes('ac')) return <FiWind />;
-    if (title.includes('security') || title.includes('guard')) return <FiShield />;
-    if (title.includes('salon') || title.includes('beauty')) return <FiScissors />;
-    if (title.includes('cook') || title.includes('food')) return <FiCoffee />;
-    if (title.includes('shift') || title.includes('pack')) return <FiTruck />;
+    if (titleText.includes('electric') || slug.includes('electric')) return <FiZap />;
+    if (titleText.includes('plumb') || slug.includes('plumb') || titleText.includes('water')) return <FiDroplet />;
+    if (titleText.includes('clean') || slug.includes('clean')) return <FiBox />; // Box as placeholder for cleaning stuff
+    if (titleText.includes('repair') || titleText.includes('fix') || slug.includes('fix')) return <FiTool />;
+    if (titleText.includes('ac') || titleText.includes('air') || slug.includes('ac')) return <FiWind />;
+    if (titleText.includes('security') || titleText.includes('guard')) return <FiShield />;
+    if (titleText.includes('salon') || titleText.includes('beauty')) return <FiScissors />;
+    if (titleText.includes('cook') || titleText.includes('food')) return <FiCoffee />;
+    if (titleText.includes('shift') || titleText.includes('pack')) return <FiTruck />;
     
     return <FiLayout />; // Default
   };
@@ -41,7 +41,7 @@ const ServiceQuickLinks = ({ categories = [], onCategoryClick }) => {
     <section className="max-w-[1400px] mx-auto px-5 relative z-20 mt-12 mb-16">
       <div className="flex items-center justify-between mb-8 px-1">
         <h2 className="text-2xl font-[1000] text-[#0F1B73] tracking-tight">
-          Our Services
+          {title}
         </h2>
         <button
           onClick={() => onCategoryClick?.(categories[0])}

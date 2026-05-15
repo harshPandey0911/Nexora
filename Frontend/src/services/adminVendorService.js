@@ -90,6 +90,14 @@ const adminVendorService = {
   },
 
   /**
+   * Update vendor permissions
+   */
+  updatePermissions: async (id, permissions) => {
+    const response = await api.patch(`/admin/vendors/${id}/permissions`, { permissions });
+    return response.data;
+  },
+
+  /**
    * Get vendor report/analytics (reusing report endpoint if needed, or separate)
    */
   getVendorAnalytics: async (params = {}) => {

@@ -12,23 +12,6 @@ const WorkersList = () => {
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
-  useLayoutEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const root = document.getElementById('root');
-    const bgStyle = themeColors.backgroundGradient;
-
-    if (html) html.style.background = bgStyle;
-    if (body) body.style.background = bgStyle;
-    if (root) root.style.background = bgStyle;
-
-    return () => {
-      if (html) html.style.background = '';
-      if (body) body.style.background = '';
-      if (root) root.style.background = '';
-    };
-  }, []);
-
   useEffect(() => {
     const loadWorkers = async () => {
       try {
@@ -84,158 +67,149 @@ const WorkersList = () => {
   });
 
   return (
-    <div className="min-h-screen pb-24 relative bg-white">
-      {/* Premium Background Pattern */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(at 0% 0%, rgba(var(--brand-teal-rgb), 0.15) 0%, transparent 70%),
-              radial-gradient(at 100% 0%, rgba(var(--brand-yellow-rgb), 0.10) 0%, transparent 70%),
-              radial-gradient(at 100% 100%, rgba(var(--brand-orange-rgb), 0.05) 0%, transparent 75%),
-              radial-gradient(at 0% 100%, rgba(var(--brand-teal-rgb), 0.08) 0%, transparent 70%),
-              #F8FAFC
-            `
-          }}
-        />
-      </div>
-
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-black/[0.03] px-6 py-5 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-black/[0.02] flex items-center justify-center">
-            <FiUsers className="w-5 h-5 text-teal-600" />
-          </div>
-          <h1 className="text-xl font-[1000] text-gray-900 tracking-tight">Our Fleet</h1>
+    <div className="space-y-8 pb-12">
+      {/* Header - White Style */}
+      <div className="bg-white p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between text-gray-900 border border-gray-100 gap-6">
+        <div>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none">
+            Team Management
+          </h2>
+          <p className="text-gray-500 font-medium mt-2">
+            Monitor and coordinate your field operatives and deployment fleet
+          </p>
         </div>
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate('/vendor/workers/add')}
-          className="w-10 h-10 rounded-xl bg-teal-600 text-white shadow-lg shadow-teal-600/20 flex items-center justify-center"
+          className="px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 flex items-center gap-2"
         >
           <FiPlus className="w-5 h-5" />
+          Add Operative
         </motion.button>
-      </header>
+      </div>
 
-      <main className="px-5 pt-6 relative z-10">
-        {/* Search Bar (Premium Theme) */}
-        <div className="mb-6">
-          <div className="relative group">
-            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-teal-600 transition-colors" />
-            <input
-              type="text"
-              placeholder="Search team members..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white rounded-[28px] py-4.5 pl-14 pr-6 text-[13px] font-black text-gray-900 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-100/50 focus:border-teal-500/30 outline-none transition-all placeholder:text-gray-300"
-            />
-          </div>
-        </div>
-
-        {/* Filter Buttons (Premium Theme) */}
-        <div className="flex gap-2.5 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+      {/* Controls Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="flex items-center gap-1 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto scrollbar-hide">
           {[
             { id: 'all', label: 'All Fleet' },
-            { id: 'online', label: 'Online' },
-            { id: 'offline', label: 'Offline' },
+            { id: 'online', label: 'Active' },
+            { id: 'offline', label: 'Standby' },
           ].map((option) => (
             <button
               key={option.id}
               onClick={() => setFilter(option.id)}
-              className={`px-7 py-3 rounded-full font-[1000] text-[10px] uppercase tracking-widest whitespace-nowrap transition-all duration-500 ${filter === option.id
-                ? 'bg-teal-600 text-white shadow-xl shadow-teal-900/20 scale-105'
-                : 'bg-white/60 backdrop-blur-md text-gray-500 border border-white/60 shadow-sm hover:bg-gray-50'
-                }`}
+              className={`
+                px-6 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap
+                ${filter === option.id
+                  ? 'bg-[#2874F0] text-white shadow-lg shadow-blue-200 translate-y-[-1px]'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                }
+              `}
             >
               {option.label}
             </button>
           ))}
         </div>
 
-        {/* Workers List */}
-        {loading ? (
-          <div className="space-y-5">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white/60 backdrop-blur-md rounded-[32px] p-6 border border-white shadow-sm animate-pulse h-24" />
-            ))}
-          </div>
-        ) : filteredWorkers.length === 0 ? (
-          <div className="bg-white/40 backdrop-blur-md rounded-[40px] p-16 text-center border border-white/60">
-            <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner">
-              👥
-            </div>
-            <h3 className="text-xl font-[1000] text-gray-900 mb-2">No workers found</h3>
-            <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest opacity-60 mb-8">
-              Start by adding team members to manage jobs better
-            </p>
-            <button
-              onClick={() => navigate('/vendor/workers/add')}
-              className="w-full py-5 text-white rounded-[24px] font-[1000] text-[11px] uppercase tracking-[0.25em] bg-black shadow-2xl shadow-black/10 active:scale-95 transition-all"
-            >
-              Authorize Worker
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-5 pb-10">
-            {filteredWorkers.map((worker) => {
-              const statusRaw = (worker.status || 'OFFLINE').toUpperCase();
-              const isOnline = statusRaw === 'ONLINE';
+        <div className="relative group flex-1 max-w-md">
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-500 transition-colors" />
+          <input
+            type="text"
+            placeholder="Search operative name or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white border border-gray-200 rounded-2xl py-3 pl-11 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+          />
+        </div>
+      </div>
 
-              return (
-                <motion.div
-                  key={worker.id}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate(`/vendor/workers/${worker.id}/edit`)}
-                  className="bg-white/70 backdrop-blur-md rounded-[36px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 flex items-center gap-4 relative active:scale-98 transition-all hover:shadow-xl hover:shadow-teal-500/5"
-                >
+      {/* Workers Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-[32px] p-8 border border-gray-100 animate-pulse h-48 shadow-sm" />
+          ))}
+        </div>
+      ) : filteredWorkers.length === 0 ? (
+        <div className="bg-white rounded-[48px] p-20 text-center border border-gray-100 shadow-sm">
+          <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-gray-100">
+            <FiUsers className="w-10 h-10 text-gray-300" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2 uppercase tracking-tight">Empty Fleet</h3>
+          <p className="text-sm text-gray-400 font-medium max-w-xs mx-auto mb-8">
+            You haven't authorized any team members for field deployments yet.
+          </p>
+          <button
+            onClick={() => navigate('/vendor/workers/add')}
+            className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-blue-100 active:scale-95 transition-all hover:bg-blue-700"
+          >
+            Register Operative
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6 pb-12">
+          {filteredWorkers.map((worker) => {
+            const statusRaw = (worker.status || 'OFFLINE').toUpperCase();
+            const isOnline = statusRaw === 'ONLINE';
+
+            return (
+              <motion.div
+                key={worker.id}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate(`/vendor/workers/${worker.id}/edit`)}
+                className="bg-white border border-gray-100 rounded-[32px] p-6 flex flex-col gap-6 relative group hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden shadow-sm"
+              >
+                {/* Status indicator bar */}
+                <div className={`absolute top-0 left-0 w-full h-1 ${isOnline ? 'bg-emerald-500' : 'bg-gray-200'}`} />
+
+                <div className="flex items-center gap-5">
                   {/* Photo */}
                   <div className="relative shrink-0">
-                    <div className="w-16 h-16 rounded-[24px] overflow-hidden bg-white shadow-sm border border-black/[0.03] group-hover:border-teal-500/20 transition-all">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 border border-gray-100 group-hover:border-blue-500/50 transition-all duration-300 shadow-sm">
                       {worker.profilePhoto ? (
                         <img src={worker.profilePhoto} alt={worker.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-teal-100">
-                          <FiUser className="w-8 h-8" />
+                        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-300">
+                          <FiUser className="w-10 h-10" />
                         </div>
                       )}
                     </div>
-                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${isOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse' : 'bg-gray-300'
-                      }`} />
+                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-white ${isOnline ? 'bg-emerald-500 shadow-lg shadow-emerald-200' : 'bg-gray-400'}`} />
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <h3 className="text-[15px] font-[1000] text-gray-900 truncate tracking-tight">{worker.name}</h3>
-                      <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-lg font-bold text-gray-800 truncate tracking-tight">{worker.name}</h3>
+                      <div className="flex items-center gap-1.5 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
                         <FiStar className="w-3 h-3 text-amber-500 fill-amber-500" />
-                        <span className="text-[10px] font-black text-amber-700">{worker.rating || '4.5'}</span>
+                        <span className="text-[11px] font-bold text-amber-600">{worker.rating || '4.5'}</span>
                       </div>
                     </div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{worker.phone}</p>
+                  </div>
+                </div>
 
-                    <p className="text-[11px] font-black text-gray-400 mb-3 tracking-tight opacity-70">{worker.phone}</p>
-
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5 text-[9px] font-[1000] uppercase tracking-wider text-teal-600 bg-teal-50 px-2.5 py-1.5 rounded-xl border border-teal-100/50">
-                        <FiBriefcase className="w-3 h-3" />
-                        <span>{worker.completedJobs || 0} Jobs</span>
-                      </div>
-                      <span className={`text-[9px] font-[1000] uppercase tracking-widest ${isOnline ? 'text-green-500' : 'text-gray-300'
-                        }`}>
-                        {isOnline ? 'Available' : 'Offline'}
-                      </span>
+                <div className="flex items-center justify-between pt-5 border-t border-gray-50">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-3 py-2 rounded-xl border border-blue-100">
+                      <FiBriefcase className="w-3.5 h-3.5" />
+                      <span>{worker.completedJobs || 0} Jobs</span>
                     </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest ${isOnline ? 'text-emerald-600' : 'text-gray-400'}`}>
+                      {isOnline ? 'Active' : 'Standby'}
+                    </span>
                   </div>
-
-                  {/* Arrow */}
-                  <div className="w-11 h-11 rounded-2xl bg-gray-50/50 flex items-center justify-center shrink-0 border border-black/[0.02]">
-                    <FiChevronRight className="w-5 h-5 text-gray-300" />
+                  <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                    <FiChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </main>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

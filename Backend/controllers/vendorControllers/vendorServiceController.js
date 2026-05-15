@@ -73,6 +73,10 @@ const getMyServices = async (req, res) => {
 
       const catStats = stats[0] || { totalJobs: 0, completedJobs: 0, totalRating: 0, ratingCount: 0 };
 
+      // Fetch all services for this category by this vendor to get offeringType
+      const categoryServices = await Service.find({ categoryId: cat._id, vendorId: vendor._id }).select('offeringType').lean();
+      const offeringType = categoryServices.length > 0 ? categoryServices[0].offeringType : 'SERVICE';
+
       return {
         id: cat._id,
         title: cat.title,
@@ -81,6 +85,7 @@ const getMyServices = async (req, res) => {
         iconUrl: cat.homeIconUrl,
         description: cat.description,
         status: 'Active', // Authorized by admin
+        offeringType,
         stats: {
           totalJobs: catStats.totalJobs,
           completedJobs: catStats.completedJobs,
@@ -155,11 +160,12 @@ const addVendorCategory = async (req, res) => {
       title,
       description,
       imageUrl,
-      homeIconUrl: homeIconUrl || imageUrl, // Use imageUrl as fallback for home icon
+      homeIconUrl: homeIconUrl || imageUrl,
       vendorId,
       cityIds,
+      offeringType: req.body.offeringType || 'SERVICE', // New: Allow vendor to set type
       status: 'active',
-      showOnHome: true // Show on home page so user can see it
+      showOnHome: true
     });
 
     res.status(201).json({
@@ -176,24 +182,69 @@ const addVendorCategory = async (req, res) => {
 /**
  * Add a custom service/product by vendor
  */
-const addVendorService = async (req, res) => {
+  const addVendorService = async (req, res) => {
   try {
-    const { title, description, basePrice, categoryId, iconUrl } = req.body;
+    const { title, description, basePrice, categoryId, iconUrl, detailedDescription, features, benefits, images, offeringType } = req.body;
     const vendorId = req.user.id;
 
     if (!title || !basePrice || !categoryId) {
       return res.status(400).json({ success: false, message: 'Title, price, and category are required' });
     }
 
+    let finalCategoryId = categoryId;
+
+    // Handle Platform Groups (Needs, Delivery, Home, etc.)
+    const platformGroups = ['Needs', 'Delivery', 'Home', 'Health', 'More'];
+    if (platformGroups.includes(categoryId)) {
+      const groupLabels = {
+        'Needs': 'Daily Needs',
+        'Delivery': 'Delivery Services',
+        'Home': 'Home Services',
+        'Health': 'Health & Care',
+        'More': 'More Services'
+      };
+
+      // Find or create a vendor category for this group
+      let vendorCat = await Category.findOne({ 
+        vendorId, 
+        group: categoryId,
+        status: 'active'
+      });
+
+      if (!vendorCat) {
+        const vendor = await Vendor.findById(vendorId).select('cityId');
+        vendorCat = await Category.create({
+          title: groupLabels[categoryId],
+          group: categoryId,
+          vendorId,
+          offeringType: offeringType || 'SERVICE',
+          status: 'active',
+          showOnHome: true,
+          cityIds: vendor?.cityId ? [vendor.cityId] : []
+        });
+      }
+      finalCategoryId = vendorCat._id;
+    }
+
     const service = await Service.create({
       title,
       description,
       basePrice,
-      categoryId,
+      categoryId: finalCategoryId,
       vendorId,
       iconUrl,
+      detailedDescription,
+      features,
+      benefits,
+      images,
+      offeringType: offeringType || 'SERVICE',
       status: 'active'
     });
+
+    // New: Sync offeringType to parent category so it shows in correct section on Home Page
+    if (offeringType) {
+      await Category.findByIdAndUpdate(finalCategoryId, { offeringType });
+    }
 
     res.status(201).json({
       success: true,
@@ -211,15 +262,39 @@ const addVendorService = async (req, res) => {
  */
 const removeVendorService = async (req, res) => {
   try {
-    const { categoryId } = req.params;
+    const { categoryId } = req.params; // This can be a category ID or a service/product ID
     const vendorId = req.user.id;
 
-    console.log(`[removeVendorService] Removing category ${categoryId} for vendor ${vendorId}`);
+    // Check if valid ObjectId to prevent CastError/Server Crash
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      console.warn(`[removeVendorService] Invalid ID received: ${categoryId}`);
+      return res.status(400).json({ success: false, message: 'Invalid Item ID' });
+    }
 
-    // 1. Find the category to get its title
+    console.log(`[removeVendorService] Removing item ${categoryId} for vendor ${vendorId}`);
+
+    // 1. Try finding it in Category first
     const category = await Category.findById(categoryId);
+    
     if (!category) {
-      return res.status(404).json({ success: false, message: 'Category not found' });
+      // 2. If not a category, try finding it in Service (for custom products/services)
+      const service = await Service.findById(categoryId);
+      if (!service) {
+        return res.status(404).json({ success: false, message: 'Item not found' });
+      }
+
+      // Check ownership
+      if (service.vendorId && service.vendorId.toString() === vendorId.toString()) {
+        service.status = 'inactive';
+        await service.save();
+        return res.status(200).json({
+          success: true,
+          message: `Product "${service.title}" removed`
+        });
+      } else {
+        return res.status(403).json({ success: false, message: 'Not authorized to remove this item' });
+      }
     }
 
     const vendor = await Vendor.findById(vendorId);
@@ -227,15 +302,22 @@ const removeVendorService = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Vendor not found' });
     }
 
-    // 2. If it's a custom category created by THIS vendor
+    // 3. If it's a custom category created by THIS vendor
     if (category.vendorId && category.vendorId.toString() === vendorId.toString()) {
       // Option A: Set to inactive so it doesn't show up but history is preserved
       category.status = 'inactive';
       await category.save();
-      console.log(`[removeVendorService] Custom category ${category.title} marked inactive`);
+
+      // NEW: Also mark all products/services under this category as inactive
+      await Service.updateMany(
+        { categoryId: category._id, vendorId: vendorId },
+        { status: 'inactive' }
+      );
+      
+      console.log(`[removeVendorService] Custom category ${category.title} and its items marked inactive`);
     }
 
-    // 3. Always remove from the vendor's assigned list (handles both platform and custom)
+    // 4. Always remove from the vendor's assigned list (handles both platform and custom)
     const categoryTitle = category.title;
 
     // Remove from 'service' array
@@ -257,7 +339,112 @@ const removeVendorService = async (req, res) => {
 
   } catch (error) {
     console.error('Remove Vendor Service error:', error);
-    res.status(500).json({ success: false, message: 'Failed to remove service' });
+    res.status(500).json({ success: false, message: 'Failed to remove item' });
+  }
+};
+
+/**
+ * Get all custom content (categories and services) created by this vendor
+ */
+const getMyCustomContent = async (req, res) => {
+  try {
+    const vendorId = req.user.id;
+    console.log('[getMyCustomContent] vendorId:', vendorId);
+
+    const categories = await Category.find({ vendorId, status: 'active' });
+    
+    // Find all services created by this vendor
+    const services = await Service.find({ vendorId, status: 'active' });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        categories,
+        services
+      }
+    });
+  } catch (error) {
+    console.error('Get My Custom Content error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch your custom content'
+    });
+  }
+};
+
+/**
+ * Update a custom category by vendor
+ */
+const updateVendorCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { title, description, imageUrl, homeIconUrl } = req.body;
+    const vendorId = req.user.id;
+
+    const category = await Category.findOne({ _id: categoryId, vendorId: vendorId });
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found or not owned by you' });
+    }
+
+    if (title) category.title = title;
+    if (description) category.description = description;
+    if (imageUrl) category.imageUrl = imageUrl;
+    if (homeIconUrl) category.homeIconUrl = homeIconUrl;
+
+    await category.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Category updated successfully',
+      data: category
+    });
+  } catch (error) {
+    console.error('Update Vendor Category error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Get a specific service by ID
+ */
+const getVendorServiceById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vendorId = req.user.id;
+
+    const service = await Service.findOne({ _id: id, vendorId });
+    if (!service) {
+      return res.status(404).json({ success: false, message: 'Item not found' });
+    }
+
+    res.status(200).json({ success: true, data: service });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Update a specific service by ID
+ */
+const updateVendorService = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vendorId = req.user.id;
+    const updates = req.body;
+
+    const service = await Service.findOneAndUpdate(
+      { _id: id, vendorId },
+      { $set: updates },
+      { new: true }
+    );
+
+    if (!service) {
+      return res.status(404).json({ success: false, message: 'Item not found' });
+    }
+
+    res.status(200).json({ success: true, message: 'Updated successfully', data: service });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -268,5 +455,9 @@ module.exports = {
   setServicePricing,
   addVendorCategory,
   addVendorService,
-  removeVendorService
+  getMyCustomContent,
+  removeVendorService,
+  updateVendorCategory,
+  getVendorServiceById,
+  updateVendorService
 };
