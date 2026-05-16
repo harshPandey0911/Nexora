@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   FiSearch, 
   FiGrid, 
@@ -33,6 +33,8 @@ const ProductsPage = () => {
   const navigate = useNavigate();
   const { addToCart, cartCount } = useCart();
   const { currentCity } = useCity();
+  const [searchParams] = useSearchParams();
+  const categoryIdParam = searchParams.get('categoryId');
   
   const [categories, setCategories] = useState([]);
   const [services, setServices] = useState([]); // These are the actual products
@@ -81,10 +83,33 @@ const ProductsPage = () => {
 
     fetchData();
   }, [currentCity]);
+  
+  // Set active tab from URL param
+  useEffect(() => {
+    if (categoryIdParam && categories.length > 0) {
+      const cat = categories.find(c => c._id === categoryIdParam || c.id === categoryIdParam);
+      if (cat && cat.group && cat.group !== 'None') {
+        setActiveTab(cat.group);
+      } else {
+        setActiveTab(categoryIdParam);
+      }
+    }
+  }, [categoryIdParam, categories]);
+
+  const uniqueGroups = [...new Set(categories.filter(c => c.group && c.group !== 'None').map(c => c.group))];
 
   const tabs = [
     { id: 'All', label: 'All Products', icon: <FiPackage /> },
-    // Only Custom/Dynamic Categories created by vendors
+    // Groups
+    ...uniqueGroups.map(group => ({
+      id: group,
+      label: group,
+      icon: group.toLowerCase().includes('home') ? <FiHome /> : 
+            group.toLowerCase().includes('delivery') ? <FiTruck /> :
+            group.toLowerCase().includes('needs') ? <FiShoppingBag /> :
+            group.toLowerCase().includes('health') ? <FiPlusSquare /> : <FiGrid />
+    })),
+    // Categories without groups
     ...categories
       .filter(cat => !cat.group || cat.group === 'None')
       .map(cat => ({
@@ -101,16 +126,20 @@ const ProductsPage = () => {
     
     if (activeTab === 'All') return matchesSearch;
 
-    // Find the category for this item to check its group
-    const cat = categories.find(c => c._id === svc.categoryId || c.id === svc.categoryId);
+    // Find the category for this item
+    const cat = categories.find(c => c._id === (svc.categoryId?._id || svc.categoryId) || c.id === (svc.categoryId?.id || svc.categoryId));
     
-    // Check for explicit group assignment
-    if (cat && cat.group && cat.group !== 'None') {
-      return matchesSearch && cat.group === activeTab;
+    if (!cat) return false;
+
+    // It matches if:
+    // 1. The active tab is the group this category belongs to
+    if (cat.group && cat.group !== 'None' && cat.group === activeTab) {
+      return matchesSearch;
     }
 
-    // Fallback: If no group, but ID matches (for custom categories)
-    return matchesSearch && (svc.categoryId === activeTab || svc.categoryId?._id === activeTab);
+    // 2. The active tab is the category ID itself
+    const svcCatId = svc.categoryId?._id || svc.categoryId?.id || svc.categoryId;
+    return matchesSearch && svcCatId === activeTab;
   });
 
   const handleAddToCart = async (service) => {

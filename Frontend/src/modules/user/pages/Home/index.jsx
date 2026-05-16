@@ -379,8 +379,7 @@ const Home = () => {
     if (category.offeringType === 'PRODUCT') {
       navigate(`/user/products?categoryId=${category.id || category._id}&type=PRODUCT`);
     } else {
-      setSelectedCategory(category);
-      setIsCategoryModalOpen(true);
+      navigate(`/user/services?categoryId=${category.id || category._id}&type=SERVICE`);
     }
   };
 
@@ -592,6 +591,7 @@ const Home = () => {
                   title="Our Services"
                   categories={serviceCategories} 
                   onCategoryClick={handleCategoryClick} 
+                  onSeeAllClick={() => navigate('/user/services')}
                 />
               </motion.section>
             )}
@@ -603,6 +603,7 @@ const Home = () => {
                   title="Our Products"
                   categories={productCategories} 
                   onCategoryClick={handleCategoryClick} 
+                  onSeeAllClick={() => navigate('/user/products')}
                 />
               </motion.section>
             )}
