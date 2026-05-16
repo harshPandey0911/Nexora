@@ -16,7 +16,7 @@ import {
 } from 'react-icons/fi';
 import Logo from '../../../../../components/common/Logo';
 
-const ServiceQuickLinks = ({ categories = [], onCategoryClick, title = "Our Services" }) => {
+const ServiceQuickLinks = ({ categories = [], onCategoryClick, onSeeAllClick, title = "Our Services" }) => {
   // Mapping of category slugs/titles to icons
   const getCategoryIcon = (category) => {
     const titleText = category.title?.toLowerCase() || '';
@@ -43,12 +43,14 @@ const ServiceQuickLinks = ({ categories = [], onCategoryClick, title = "Our Serv
         <h2 className="text-2xl font-[1000] text-[#0F1B73] tracking-tight">
           {title}
         </h2>
-        <button
-          onClick={() => onCategoryClick?.(categories[0])}
-          className="text-sm font-black text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1 group"
-        >
-          See All <HiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </button>
+        {categories.length > 6 && (
+          <button
+            onClick={onSeeAllClick}
+            className="text-sm font-black text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1 group"
+          >
+            See All <HiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 sm:gap-8">
