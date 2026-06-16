@@ -36,7 +36,7 @@ const getPublicCategories = async (req, res) => {
       .sort({ homeOrder: 1, createdAt: -1 })
       .lean();
 
-    // Filter categories based on online vendor availability
+    // Filter categories based on vendor availability (regardless of online status)
     const filteredCategories = await Promise.all(allCategories.map(async (cat) => {
       // 1. If it's a platform category (no vendorId), always return it so vendors can see and join
       if (!cat.vendorId) {
@@ -45,13 +45,12 @@ const getPublicCategories = async (req, res) => {
 
       // 2. If it's a vendor-specific category
       if (cat.vendorId) {
-        // Show vendor category if vendor is Online (even if BUSY)
-        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true }).select('address status');
+        const ownerVendor = await Vendor.findById(cat.vendorId).select('address status');
         if (!ownerVendor) return null;
 
         // NEW: If offeringType filter is provided, check if the vendor has items of that type in this category
         if (req.query.offeringType) {
-          const Service = require('../../models/UserService'); // It's named UserService but exported as Service in models/UserService.js
+          const Service = require('../../models/UserService');
           const hasMatchingItems = await Service.exists({
             categoryId: cat._id,
             vendorId: cat.vendorId,
@@ -155,8 +154,7 @@ const getPublicBrands = async (req, res) => {
       })
         .populate({
           path: 'vendorId',
-          select: 'name businessName profilePhoto isOnline availability',
-          match: { isOnline: true }
+          select: 'name businessName profilePhoto isOnline availability'
         })
         .lean();
 
@@ -376,37 +374,7 @@ const getPublicServices = async (req, res) => {
       .sort({ createdAt: 1 })
       .lean();
 
-    // Filter services based on vendor availability
-    const filteredServices = await Promise.all(services.map(async (svc) => {
-      // 1. If it's a vendor-specific service
-      if (svc.vendorId) {
-        return svc.vendorId.isOnline === true ? svc : null;
-      }
-
-      // 2. If it's a platform service (no vendorId)
-      // Check if any online/available vendor in the city supports this service's category
-      const { findNearbyVendors } = require('../../services/locationService');
-      const City = require('../../models/City');
-      const { cityId } = req.query;
-      
-      let cityName = '';
-      if (cityId) {
-        const cityDoc = await City.findById(cityId).select('name').lean();
-        cityName = cityDoc ? cityDoc.name : '';
-      }
-
-      const vendors = await findNearbyVendors(null, 10, {
-        service: svc.categoryTitle || svc.title,
-        city: cityName
-      });
-
-      return vendors.length > 0 ? svc : null;
-    }));
-
-    const finalServices = filteredServices.filter(svc => {
-      if (!svc) return false;
-      // Ensure parent category is active (populated categoryId should exist and have status active if we populated it)
-      // Since we populated categoryId, we can check svc.categoryId
+    const finalServices = services.filter(svc => {
       if (svc.categoryId && svc.categoryId.status === 'inactive') return false;
       return true;
     });
@@ -629,7 +597,7 @@ const getPublicHomeData = async (req, res) => {
     const { findNearbyVendors } = require('../../services/locationService');
     const Vendor = require('../../models/Vendor');
 
-    // Filter categories based on nearby vendor availability
+    // Filter categories based on city assignment (regardless of vendor online status)
     const nearbyCategories = await Promise.all(allCategories.map(async (cat) => {
       // 1. If it's a platform category (no vendorId)
       if (!cat.vendorId) {
@@ -637,36 +605,17 @@ const getPublicHomeData = async (req, res) => {
         if (cityId && cat.cityIds && !cat.cityIds.some(id => id.toString() === cityId)) {
           return null;
         }
-
-        const vendors = await findNearbyVendors(userLocation, 10, {
-          service: cat.title,
-          city: cityName
-        });
-
-        return vendors.length > 0 ? cat : null;
+        return cat;
       }
 
       // 2. If it's a vendor-specific category
       if (cat.vendorId) {
-        const ownerVendor = await Vendor.findOne({ _id: cat.vendorId, isOnline: true }).select('geoLocation address name');
+        const ownerVendor = await Vendor.findById(cat.vendorId).select('address name');
         if (!ownerVendor) {
           return null;
         }
 
-        if (userLocation) {
-          const { calculateDistance } = require('../../services/locationService');
-          const vLoc = ownerVendor.geoLocation?.coordinates
-            ? { lat: ownerVendor.geoLocation.coordinates[1], lng: ownerVendor.geoLocation.coordinates[0] }
-            : { lat: ownerVendor.address?.lat, lng: ownerVendor.address?.lng };
-
-          if (vLoc.lat && vLoc.lng) {
-            const distance = calculateDistance(userLocation, vLoc);
-            const isNearby = distance <= 10;
-            return isNearby ? cat : null;
-          }
-        }
-
-        // Fallback: If no user location provided, show if vendor is online and in the city (if city filter applied)
+        // Fallback: If city filter applied, verify vendor matches city
         if (cityName && ownerVendor.address?.city) {
           const isMatch = new RegExp(cityName, 'i').test(ownerVendor.address.city);
           return isMatch ? cat : null;

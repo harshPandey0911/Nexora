@@ -148,7 +148,7 @@ const verifyLogin = async (req, res) => {
 };
 
 /**
- * Register user with Verification Token (No OTP required again)
+ * Register user with Phone and Password
  */
 const register = async (req, res) => {
   try {
@@ -161,44 +161,23 @@ const register = async (req, res) => {
       });
     }
 
-    const { name, email, verificationToken } = req.body;
-    let phone = req.body.phone;
-
-    // Verify token if provided (New Flow)
-    if (verificationToken) {
-      const verifiedPhone = verifyVerificationToken(verificationToken);
-      if (!verifiedPhone) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid or expired verification session. Please verify phone again.'
-        });
-      }
-      phone = verifiedPhone; // Trust the token's phone number
-    } else {
-      // Fallback to legacy OTP flow (if needed, but discouraged)
-      if (!req.body.otp) {
-        return res.status(400).json({ success: false, message: 'Verification token or OTP required.' });
-      }
-      const verification = await verifyOTP(phone, req.body.otp);
-      if (!verification.success) {
-        return res.status(400).json({ success: false, message: verification.message });
-      }
-    }
+    const { name, phone, password, email } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ phone });
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User already exists. Please login.'
+        message: 'User already exists with this phone number. Please login.'
       });
     }
 
     // Create user
     const user = await User.create({
       name,
-      email: email || null,
       phone,
+      password,
+      email: email || null,
       isPhoneVerified: true,
       isEmailVerified: email ? false : true
     });
@@ -254,23 +233,23 @@ const login = async (req, res) => {
       });
     }
 
-    const { phone, otp } = req.body;
+    const { phone, password } = req.body;
 
-    // Verify OTP (checks Redis first, falls back to MongoDB)
-    const verification = await verifyOTP(phone, otp);
-    if (!verification.success) {
-      return res.status(400).json({
-        success: false,
-        message: verification.message
-      });
-    }
-
-    // Find user
-    const user = await User.findOne({ phone });
+    // Find user and select password field
+    const user = await User.findOne({ phone }).select('+password');
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found. Please sign up first.'
+      });
+    }
+
+    // Compare Password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid phone number or password'
       });
     }
 

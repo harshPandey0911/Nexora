@@ -128,9 +128,17 @@ const UserRoutes = () => {
                 {/* Public routes */}
                 <Route path="/login" element={<PublicRoute userType="user"><Login /></PublicRoute>} />
                 <Route path="/signup" element={<PublicRoute userType="user"><Signup /></PublicRoute>} />
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/product/:id" element={<ProductDetails />} />
+                <Route path="/service/:id" element={<ServiceDetails />} />
+                <Route path="/help-support" element={<HelpSupport />} />
+                <Route path="/cancellation-policy" element={<CancellationPolicy />} />
 
                 {/* Protected routes (auth required) */}
-                <Route path="/" element={<ProtectedRoute userType="user"><Home /></ProtectedRoute>} />
                 <Route path="/native" element={<ProtectedRoute userType="user"><Native /></ProtectedRoute>} />
 
                 <Route path="/rewards" element={<ProtectedRoute userType="user"><Rewards /></ProtectedRoute>} />
@@ -151,14 +159,6 @@ const UserRoutes = () => {
                 <Route path="/about-cleaning-expert" element={<ProtectedRoute userType="user"><AboutCleaningExpert /></ProtectedRoute>} />
                 <Route path="/update-profile" element={<ProtectedRoute userType="user"><UpdateProfile /></ProtectedRoute>} />
                 <Route path="/notifications" element={<ProtectedRoute userType="user"><Notifications /></ProtectedRoute>} />
-                <Route path="/about" element={<ProtectedRoute userType="user"><About /></ProtectedRoute>} />
-                <Route path="/contact" element={<ProtectedRoute userType="user"><Contact /></ProtectedRoute>} />
-                <Route path="/services" element={<ProtectedRoute userType="user"><Services /></ProtectedRoute>} />
-                <Route path="/products" element={<ProtectedRoute userType="user"><Products /></ProtectedRoute>} />
-                <Route path="/product/:id" element={<ProtectedRoute userType="user"><ProductDetails /></ProtectedRoute>} />
-                <Route path="/service/:id" element={<ProtectedRoute userType="user"><ServiceDetails /></ProtectedRoute>} />
-                <Route path="/help-support" element={<ProtectedRoute userType="user"><HelpSupport /></ProtectedRoute>} />
-                <Route path="/cancellation-policy" element={<ProtectedRoute userType="user"><CancellationPolicy /></ProtectedRoute>} />
               </Routes>
             </PageTransition>
           </Suspense>

@@ -58,6 +58,16 @@ export const CartProvider = ({ children }) => {
 
   // Add item to cart - instant update + server sync
   const addToCart = useCallback(async (itemData) => {
+    // Guest access check
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      const confirmLogin = window.confirm('Please login first to book services. Would you like to login now?');
+      if (confirmLogin) {
+        window.location.href = '/user/login';
+      }
+      return { success: false, message: 'Authentication required' };
+    }
+
     // Optimistic Update
     const tempId = `temp-${Date.now()}`;
     const tempItem = { ...itemData, _id: tempId, id: tempId };

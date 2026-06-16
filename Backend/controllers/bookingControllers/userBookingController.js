@@ -169,6 +169,14 @@ const createBooking = async (req, res) => {
     console.log(`[CreateBooking] Found ${nearbyVendors.length} nearby vendors for booking`);
     // --- END VENDOR SEARCH BLOCK ---
 
+    if (nearbyVendors.length === 0) {
+      return res.status(400).json({
+        success: false,
+        noVendorsOnline: true,
+        message: 'NO vendor online'
+      });
+    }
+
     // Calculate pricing - use amount from frontend if provided, otherwise calculate
     let basePrice, discount, tax, finalAmount;
     let bookingStatus = BOOKING_STATUS.SEARCHING;
