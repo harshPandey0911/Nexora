@@ -205,6 +205,17 @@ const Login = () => {
               </button>
             </div>
 
+            <div className="text-center text-xs text-gray-500 mt-4 select-none">
+              By signing in, you agree to our{' '}
+              <Link to="/user/terms" className="font-semibold hover:underline" style={{ color: brandColor }}>
+                Terms & Conditions
+              </Link>{' '}
+              and{' '}
+              <Link to="/user/privacy" className="font-semibold hover:underline" style={{ color: brandColor }}>
+                Privacy Policy
+              </Link>
+            </div>
+
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">

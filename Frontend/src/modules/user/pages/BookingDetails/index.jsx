@@ -787,12 +787,19 @@ const BookingDetails = () => {
 
                 {/* Quick Call Action */}
                 {(booking.workerId?.phone || booking.assignedTo?.phone || booking.vendorId?.phone) && (
-                  <a
-                    href={`tel:${booking.workerId?.phone || booking.assignedTo?.phone || booking.vendorId?.phone}`}
-                    className="w-10 h-10 bg-green-50 text-green-600 rounded-full flex items-center justify-center hover:bg-green-100 transition-colors active:scale-95 border border-green-100"
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const rawPhone = booking.workerId?.phone || booking.assignedTo?.phone || booking.vendorId?.phone;
+                      if (rawPhone) {
+                        const cleanPhone = rawPhone.replace(/[^\d+]/g, '');
+                        window.location.href = `tel:${cleanPhone}`;
+                      }
+                    }}
+                    className="w-10 h-10 bg-green-50 text-green-600 rounded-full flex items-center justify-center hover:bg-green-100 transition-colors active:scale-95 border border-green-100 cursor-pointer"
                   >
                     <FiPhone className="w-5 h-5" />
-                  </a>
+                  </button>
                 )}
               </div>
             </div>

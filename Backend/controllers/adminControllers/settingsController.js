@@ -52,7 +52,9 @@ exports.updateSettings = async (req, res, next) => {
       // Payment Control
       isOnlinePaymentEnabled,
       // Commission & Platform Fees
-      commissionRates, platformFeeRates
+      commissionRates, platformFeeRates,
+      // Configurable Policies
+      termsAndConditions, privacyPolicy
     } = req.body;
 
     let settings = await Settings.findOne({ type: 'global' });
@@ -74,7 +76,9 @@ exports.updateSettings = async (req, res, next) => {
         razorpayWebhookSecret,
         cloudinaryCloudName,
         cloudinaryApiKey,
-        cloudinaryApiSecret
+        cloudinaryApiSecret,
+        termsAndConditions,
+        privacyPolicy
       });
     } else {
       // Update fields if provided
@@ -124,6 +128,10 @@ exports.updateSettings = async (req, res, next) => {
       if (commissionRates !== undefined) settings.commissionRates = commissionRates;
       if (platformFeeRates !== undefined) settings.platformFeeRates = platformFeeRates;
 
+      // Policy updates
+      if (termsAndConditions !== undefined) settings.termsAndConditions = termsAndConditions;
+      if (privacyPolicy !== undefined) settings.privacyPolicy = privacyPolicy;
+
       await settings.save();
     }
 
@@ -161,7 +169,7 @@ exports.updateSettings = async (req, res, next) => {
 // Get Public Settings (Visited Charges, GST)
 exports.getPublicSettings = async (req, res, next) => {
   try {
-    let settings = await Settings.findOne({ type: 'global' }).select('visitedCharges serviceGstPercentage partsGstPercentage supportEmail supportPhone supportWhatsapp cancellationPenalty companyName companyAddress companyCity companyState companyPincode companyPhone companyEmail isOnlinePaymentEnabled');
+    let settings = await Settings.findOne({ type: 'global' }).select('visitedCharges serviceGstPercentage partsGstPercentage supportEmail supportPhone supportWhatsapp cancellationPenalty companyName companyAddress companyCity companyState companyPincode companyPhone companyEmail isOnlinePaymentEnabled termsAndConditions privacyPolicy');
 
     // Default if not found (fallback values)
     if (!settings) {

@@ -499,6 +499,14 @@ const Home = () => {
     }
   };
 
+  const hasTopLevelInfo = (homeContent?.isHowItWorksVisible !== false && homeContent?.howItWorks?.items?.length > 0) ||
+                          (homeContent?.isOffersVisible !== false && homeContent?.offers?.items?.length > 0);
+
+  const hasAnySection = (homeContent?.curated?.length > 0 && homeContent?.isCuratedVisible !== false) ||
+                        (homeContent?.noteworthy?.length > 0 && homeContent?.isNoteworthyVisible !== false) ||
+                        (homeContent?.booked?.length > 0 && homeContent?.isBookedVisible !== false) ||
+                        ((homeContent?.categorySections || []).length > 0 && homeContent?.isCategorySectionsVisible !== false);
+
   if (loading) {
     return <LogoLoader />;
   }
@@ -560,23 +568,25 @@ const Home = () => {
 
 
         {/* Top-level Info Sections (Requested at Top) */}
-        <div className="space-y-4 lg:space-y-6 mt-4 lg:mt-6">
-          {homeContent?.isHowItWorksVisible !== false && homeContent?.howItWorks?.items?.length > 0 && (
-            <Suspense fallback={<div className="h-40 bg-gray-50 animate-pulse rounded-xl mx-4" />}>
-              <div id="how-it-works">
-                <HowItWorks data={homeContent?.howItWorks} />
-              </div>
-            </Suspense>
-          )}
+        {hasTopLevelInfo && (
+          <div className="space-y-4 lg:space-y-6 mt-4 lg:mt-6">
+            {homeContent?.isHowItWorksVisible !== false && homeContent?.howItWorks?.items?.length > 0 && (
+              <Suspense fallback={<div className="h-40 bg-gray-50 animate-pulse rounded-xl mx-4" />}>
+                <div id="how-it-works">
+                  <HowItWorks data={homeContent?.howItWorks} />
+                </div>
+              </Suspense>
+            )}
 
-          {homeContent?.isOffersVisible !== false && homeContent?.offers?.items?.length > 0 && (
-            <Suspense fallback={<div className="h-40 bg-gray-50 animate-pulse rounded-xl mx-4" />}>
-              <div id="offers">
-                <OffersSection data={homeContent?.offers} />
-              </div>
-            </Suspense>
-          )}
-        </div>
+            {homeContent?.isOffersVisible !== false && homeContent?.offers?.items?.length > 0 && (
+              <Suspense fallback={<div className="h-40 bg-gray-50 animate-pulse rounded-xl mx-4" />}>
+                <div id="offers">
+                  <OffersSection data={homeContent?.offers} />
+                </div>
+              </Suspense>
+            )}
+          </div>
+        )}
 
         {/* Services & Products Sections */}
         {homeContent?.isCategoriesVisible !== false && (
@@ -612,7 +622,7 @@ const Home = () => {
 
 
         {/* Hero Section - Promo Carousel */}
-        {homeContent?.isPromosVisible !== false && (
+        {homeContent?.isPromosVisible !== false && homeContent?.promos?.length > 0 && (
           <motion.section variants={itemVariants} className="relative z-0">
             <PromoCarousel
               promos={(homeContent?.promos || []).sort((a, b) => (a.order || 0) - (b.order || 0)).map(promo => ({
@@ -632,14 +642,14 @@ const Home = () => {
           </motion.section>
         )}
 
-        <main className="pt-4 lg:pt-6 space-y-4 lg:space-y-6 pb-20 lg:pb-24 max-w-[1400px] mx-auto w-full">
+        <main className="pt-4 lg:pt-6 space-y-4 lg:space-y-6 pb-6 lg:pb-8 max-w-[1400px] mx-auto w-full">
               {/* All Categories Section (Optional/Secondary) */}
               {/* Categories Section removed as redundant with QuickLinks */}
 
 
 
               {/* Curated Services */}
-              {homeContent?.isCuratedVisible !== false && (
+              {homeContent?.isCuratedVisible !== false && homeContent?.curated?.length > 0 && (
                 <motion.div variants={itemVariants}>
                   <Suspense fallback={<div className="h-40 bg-gray-50 animate-pulse rounded-xl mx-4" />}>
                     <CuratedServices
@@ -657,7 +667,7 @@ const Home = () => {
               )}
 
               {/* New & Noteworthy */}
-              {homeContent?.isNoteworthyVisible !== false && (
+              {homeContent?.isNoteworthyVisible !== false && homeContent?.noteworthy?.length > 0 && (
                 <motion.div variants={itemVariants}>
                   <Suspense fallback={<div className="h-40 bg-gray-50 animate-pulse rounded-xl mx-4" />}>
                     <NewAndNoteworthy
@@ -675,7 +685,7 @@ const Home = () => {
               )}
 
               {/* Most Booked */}
-              {homeContent?.isBookedVisible !== false && (
+              {homeContent?.isBookedVisible !== false && homeContent?.booked?.length > 0 && (
                 <motion.div variants={itemVariants}>
                   <Suspense fallback={<div className="h-40 bg-gray-50 animate-pulse rounded-xl mx-4" />}>
                     <MostBookedServices
@@ -740,7 +750,7 @@ const Home = () => {
 
 
               {/* Footer Space */}
-              <div className="h-10" />
+              {hasAnySection && <div className="h-10" />}
 
               {!isSearchOpen && homeContent?.isAppDownloadVisible !== false && (
                 <Suspense fallback={<div className="h-32 bg-gray-50 animate-pulse rounded-xl mx-4" />}>

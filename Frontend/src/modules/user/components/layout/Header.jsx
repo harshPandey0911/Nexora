@@ -111,8 +111,8 @@ const Header = ({ location: address, onLocationClick, navLinks: dynamicNavLinks,
               onClick={onLocationClick}
             >
               <HiLocationMarker className="w-4 h-4 text-gray-400" />
-              <span className="text-[11px] font-bold text-gray-600 truncate max-w-[100px]">
-                {address && address !== '...' ? address.split(',')[0] : 'Location'}
+              <span className="text-[11px] font-bold text-gray-600 truncate max-w-[200px]">
+                {address && address !== '...' ? address : 'Location'}
               </span>
             </div>
 
@@ -138,8 +138,8 @@ const Header = ({ location: address, onLocationClick, navLinks: dynamicNavLinks,
             {/* Profile / Account Link */}
             <Link to="/user/account" className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-xl transition-all duration-200 group border border-transparent hover:border-black/[0.03]">
               <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:text-blue-600 transition-all duration-300 shadow-sm overflow-hidden border border-black/[0.03]">
-                {user?.photo ? (
-                  <img src={user.photo} alt="Profile" className="w-full h-full object-cover" />
+                {user?.profilePhoto || user?.photo ? (
+                  <img src={user.profilePhoto || user.photo} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <HiOutlineUser className="w-5 h-5" />
                 )}

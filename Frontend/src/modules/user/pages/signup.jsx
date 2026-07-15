@@ -28,6 +28,7 @@ const Signup = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [errors, setErrors] = useState({});
 
   // Refs for auto-focus
@@ -77,6 +78,12 @@ const Signup = () => {
         toast.error(err.message);
       });
       setErrors(errMsgs);
+      return;
+    }
+
+    if (!agreeToTerms) {
+      setErrors(prev => ({ ...prev, agreeToTerms: 'You must agree to the Terms & Conditions and Privacy Policy' }));
+      toast.error('You must agree to the Terms & Conditions and Privacy Policy');
       return;
     }
     setErrors({});
@@ -248,6 +255,40 @@ const Signup = () => {
                   placeholder="you@example.com"
                   style={{ '--tw-ring-color': brandColor }}
                 />
+              </div>
+            </div>
+
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="agreeToTerms"
+                  name="agreeToTerms"
+                  type="checkbox"
+                  checked={agreeToTerms}
+                  onChange={(e) => {
+                    setAgreeToTerms(e.target.checked);
+                    if (errors.agreeToTerms) {
+                      setErrors(prev => ({ ...prev, agreeToTerms: null }));
+                    }
+                  }}
+                  className="h-4 w-4 rounded cursor-pointer"
+                  style={{ accentColor: brandColor }}
+                />
+              </div>
+              <div className="ml-3 text-xs">
+                <label htmlFor="agreeToTerms" className="text-gray-500 cursor-pointer select-none">
+                  I agree to the{' '}
+                  <Link to="/user/terms" className="font-semibold hover:underline" style={{ color: brandColor }}>
+                    Terms & Conditions
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/user/privacy" className="font-semibold hover:underline" style={{ color: brandColor }}>
+                    Privacy Policy
+                  </Link>
+                </label>
+                {errors.agreeToTerms && (
+                  <p className="text-red-500 text-xs mt-1">{errors.agreeToTerms}</p>
+                )}
               </div>
             </div>
 
