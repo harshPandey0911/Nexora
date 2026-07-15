@@ -1578,7 +1578,7 @@ const Checkout = () => {
                 <input
                   type="text"
                   value={contactDetails.name}
-                  onChange={(e) => setContactDetails(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setContactDetails(prev => ({ ...prev, name: e.target.value.replace(/[^a-zA-Z\s]/g, '').replace(/\b\w/g, c => c.toUpperCase()) }))}
                   className="w-full mt-1 p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
                   placeholder="Enter name"
                 />

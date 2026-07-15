@@ -196,9 +196,10 @@ const AdminSettings = () => {
 
   const handleFinancialChange = (e) => {
     const { name, value } = e.target;
+    const numValue = Number(value);
     setFinancialSettings(prev => ({
       ...prev,
-      [name]: Number(value)
+      [name]: numValue < 0 ? 0 : numValue
     }));
   };
 
@@ -223,9 +224,33 @@ const AdminSettings = () => {
   // Handle billing settings change
   const handleBillingChange = (e) => {
     const { name, value } = e.target;
-    // Auto-uppercase for specific fields
-    const upperFields = ['companyGSTIN', 'companyPAN', 'invoicePrefix'];
-    const newValue = upperFields.includes(name) ? value.toUpperCase() : value;
+    let newValue = value;
+
+    // Auto-uppercase for GSTIN, PAN, invoicePrefix
+    if (['companyGSTIN', 'companyPAN', 'invoicePrefix'].includes(name)) {
+      newValue = value.toUpperCase();
+    }
+
+    // Company Email — auto-lowercase
+    if (name === 'companyEmail') {
+      newValue = value.toLowerCase();
+    }
+
+    // Company Phone — digits only, max 10
+    if (name === 'companyPhone') {
+      newValue = value.replace(/\D/g, '').slice(0, 10);
+    }
+
+    // City & State — letters and spaces only, title case format
+    if (name === 'companyCity' || name === 'companyState') {
+      newValue = value.replace(/[^a-zA-Z\s]/g, '').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    // Pincode — digits only, max 6
+    if (name === 'companyPincode') {
+      newValue = value.replace(/\D/g, '').slice(0, 6);
+    }
+
     setBillingSettings(prev => ({ ...prev, [name]: newValue }));
   };
 
@@ -271,7 +296,10 @@ const AdminSettings = () => {
     e.preventDefault();
 
     const error = validateBilling();
-    if (error) return toast.error(error);
+    if (error) {
+      toast.dismiss();
+      return toast.error(error);
+    }
 
     setBillingLoading(true);
     try {
@@ -287,7 +315,19 @@ const AdminSettings = () => {
   // Handle support settings change
   const handleSupportChange = (e) => {
     const { name, value } = e.target;
-    setSupportSettings(prev => ({ ...prev, [name]: value }));
+    let newValue = value;
+
+    // Support Email — auto-lowercase
+    if (name === 'supportEmail') {
+      newValue = value.toLowerCase();
+    }
+
+    // Support Phone & WhatsApp — digits only, max 10
+    if (name === 'supportPhone' || name === 'supportWhatsapp') {
+      newValue = value.replace(/\D/g, '').slice(0, 10);
+    }
+
+    setSupportSettings(prev => ({ ...prev, [name]: newValue }));
   };
 
   // Save support settings
@@ -582,11 +622,13 @@ const AdminSettings = () => {
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Visit Charges (₹)</label>
                       <input type="number" name="visitedCharges" value={financialSettings.visitedCharges} onChange={handleFinancialChange}
+                        min="0"
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Vendor Cash Limit (₹)</label>
                       <input type="number" name="vendorCashLimit" value={financialSettings.vendorCashLimit} onChange={handleFinancialChange}
+                        min="0"
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
                     </div>
                     <div>
@@ -620,17 +662,20 @@ const AdminSettings = () => {
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">TDS Percentage (%)</label>
                       <input type="number" name="tdsPercentage" value={financialSettings.tdsPercentage} onChange={handleFinancialChange}
+                        min="0" max="100"
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Platform Fee (%)</label>
                       <input type="number" name="platformFeePercentage" value={financialSettings.platformFeePercentage} onChange={handleFinancialChange}
+                        min="0" max="100"
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
                       <p className="text-[10px] text-gray-400 mt-1">Fee charged on vendor withdrawals</p>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Cancellation Penalty (₹)</label>
                       <input type="number" name="cancellationPenalty" value={financialSettings.cancellationPenalty} onChange={handleFinancialChange}
+                        min="0"
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
                     </div>
                     <div className="pt-4 border-t border-gray-100 md:col-span-2">
@@ -639,18 +684,21 @@ const AdminSettings = () => {
                         <div>
                           <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Max Global Search Time (Mins)</label>
                           <input type="number" name="maxSearchTime" value={financialSettings.maxSearchTime} onChange={handleFinancialChange}
+                            min="0"
                             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
                           <p className="text-[10px] text-gray-400 mt-1">Total time to find a vendor before search is auto-cancelled</p>
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Wave Alert Threshold (Secs)</label>
                           <input type="number" name="waveDuration" value={financialSettings.waveDuration} onChange={handleFinancialChange}
+                            min="0"
                             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
                           <p className="text-[10px] text-gray-400 mt-1">Time waited before alerting the next batch of vendors</p>
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Global Search Radius (Km)</label>
                           <input type="number" name="searchRadius" value={financialSettings.searchRadius} onChange={handleFinancialChange}
+                            min="0"
                             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-green-500 transition-all" />
                           <p className="text-[10px] text-gray-400 mt-1">Default distance to hunt for vendors around booking location</p>
                         </div>
@@ -691,11 +739,13 @@ const AdminSettings = () => {
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">GSTIN</label>
                         <input type="text" name="companyGSTIN" value={billingSettings.companyGSTIN} onChange={handleBillingChange}
+                          maxLength={15} placeholder="e.g. 27ABCDE1234F1Z5"
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-500 uppercase" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">PAN</label>
                         <input type="text" name="companyPAN" value={billingSettings.companyPAN} onChange={handleBillingChange}
+                          maxLength={10} placeholder="e.g. ABCDE1234F"
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-500 uppercase" />
                       </div>
                     </div>
@@ -709,12 +759,14 @@ const AdminSettings = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Company Email</label>
-                        <input type="email" name="companyEmail" value={billingSettings.companyEmail} onChange={handleBillingChange}
+                        <input type="text" name="companyEmail" value={billingSettings.companyEmail} onChange={handleBillingChange}
+                          placeholder="company@example.com"
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-500" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Company Phone</label>
                         <input type="text" name="companyPhone" value={billingSettings.companyPhone} onChange={handleBillingChange}
+                          maxLength={10} placeholder="10-digit mobile number"
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-500" />
                       </div>
                     </div>
@@ -723,16 +775,19 @@ const AdminSettings = () => {
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">City</label>
                         <input type="text" name="companyCity" value={billingSettings.companyCity} onChange={handleBillingChange}
+                          placeholder="e.g. Mumbai"
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-500" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">State</label>
                         <input type="text" name="companyState" value={billingSettings.companyState} onChange={handleBillingChange}
+                          placeholder="e.g. Maharashtra"
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-500" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Pincode</label>
                         <input type="text" name="companyPincode" value={billingSettings.companyPincode} onChange={handleBillingChange}
+                          maxLength={6} placeholder="6-digit pincode"
                           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-indigo-500" />
                       </div>
                     </div>
@@ -826,7 +881,8 @@ const AdminSettings = () => {
                     <label className="block text-xs font-medium text-gray-500 mb-1">Support Email</label>
                     <div className="relative">
                       <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input type="email" name="supportEmail" value={supportSettings.supportEmail} onChange={handleSupportChange}
+                      <input type="text" name="supportEmail" value={supportSettings.supportEmail} onChange={handleSupportChange}
+                        placeholder="support@example.com"
                         className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-blue-500 transition-all" />
                     </div>
                   </div>
@@ -834,7 +890,8 @@ const AdminSettings = () => {
                     <label className="block text-xs font-medium text-gray-500 mb-1">Support Phone</label>
                     <div className="relative">
                       <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input type="tel" name="supportPhone" value={supportSettings.supportPhone} onChange={handleSupportChange}
+                      <input type="text" name="supportPhone" value={supportSettings.supportPhone} onChange={handleSupportChange}
+                        maxLength={10} placeholder="10-digit number"
                         className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-blue-500 transition-all" />
                     </div>
                   </div>
@@ -842,7 +899,8 @@ const AdminSettings = () => {
                     <label className="block text-xs font-medium text-gray-500 mb-1">WhatsApp Support</label>
                     <div className="relative">
                       <FiMessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input type="tel" name="supportWhatsapp" value={supportSettings.supportWhatsapp} onChange={handleSupportChange}
+                      <input type="text" name="supportWhatsapp" value={supportSettings.supportWhatsapp} onChange={handleSupportChange}
+                        maxLength={10} placeholder="10-digit number"
                         className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-blue-500 transition-all" />
                     </div>
                   </div>

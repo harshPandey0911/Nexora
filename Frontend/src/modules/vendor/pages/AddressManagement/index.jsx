@@ -5,7 +5,6 @@ import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { toast } from 'react-hot-toast';
 import { vendorTheme as themeColors } from '../../../../theme';
 import vendorService from '../../../../services/vendorService';
-import vendorService from '../../../../services/vendorService';
 import LocationPicker from '../../../user/pages/Checkout/components/LocationPicker';
 
 const libraries = ['places', 'geometry'];

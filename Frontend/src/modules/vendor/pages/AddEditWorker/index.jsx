@@ -13,19 +13,25 @@ import { z } from "zod";
 
 // Zod schemas
 const addWorkerSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  phone: z.string().regex(/^\d{10}$/, "Enter valid 10-digit phone number"),
+  name: z.string().trim().min(2, "Name is required"),
+  phone: z.string().regex(/^[6-9]\d{9}$/, "Enter valid 10-digit phone number starting with 6, 7, 8, or 9"),
+  email: z.string().trim().email("Enter a valid email address"),
   serviceCategories: z.array(z.string()).min(1, "Select at least one category"),
   aadhar: z.object({
     number: z.string().regex(/^\d{12}$/, "Aadhar must be 12 digits"),
-    // document: z.any() 
   }),
-  // address: z.any().optional() // Make address optional or strict as needed
+  address: z.object({
+    addressLine1: z.string().trim().min(1, "Please set location coordinates"),
+    city: z.string().trim().min(1, "City is required"),
+    state: z.string().trim().min(1, "State is required"),
+    pincode: z.string().regex(/^\d{6}$/, "Pincode must be 6 digits")
+  })
 });
 
 const editWorkerSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  phone: z.string().regex(/^\d{10}$/, "Enter valid 10-digit phone number"),
+  name: z.string().trim().min(2, "Name is required"),
+  phone: z.string().regex(/^[6-9]\d{9}$/, "Enter valid 10-digit phone number starting with 6, 7, 8, or 9"),
+  email: z.string().trim().email("Enter a valid email address"),
   serviceCategories: z.array(z.string()).min(1, "Select at least one category"),
 });
 
@@ -182,14 +188,27 @@ const AddEditWorker = () => {
   };
 
   const handleInputChange = (field, value) => {
+    let filteredValue = value;
+    if (field === 'name') {
+      filteredValue = value.replace(/[^a-zA-Z\s]/g, '').replace(/\b\w/g, c => c.toUpperCase());
+    } else if (field === 'phone') {
+      const digits = value.replace(/\D/g, '');
+      if (digits.length > 0 && !['6', '7', '8', '9'].includes(digits[0])) {
+        filteredValue = formData.phone;
+      } else {
+        filteredValue = digits.slice(0, 10);
+      }
+    } else if (field === 'email') {
+      filteredValue = value.toLowerCase();
+    }
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
       setFormData(prev => ({
         ...prev,
-        [parent]: { ...prev[parent], [child]: value }
+        [parent]: { ...prev[parent], [child]: filteredValue }
       }));
     } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
+      setFormData(prev => ({ ...prev, [field]: filteredValue }));
     }
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }));
   };
@@ -248,8 +267,17 @@ const AddEditWorker = () => {
     const validationData = {
       name: formData.name,
       phone: formData.phone,
+      email: formData.email,
       serviceCategories: formData.serviceCategories,
-      ...(isEdit ? {} : { aadhar: { number: formData.aadhar.number } })
+      ...(isEdit ? { email: formData.email } : { 
+        aadhar: { number: formData.aadhar.number },
+        address: {
+          addressLine1: formData.address.addressLine1,
+          city: formData.address.city,
+          state: formData.address.state,
+          pincode: formData.address.pincode
+        }
+      })
     };
 
     const validationResult = schema.safeParse(validationData);
@@ -428,7 +456,13 @@ const AddEditWorker = () => {
               <input
                 type="tel"
                 value={linkPhone}
-                onChange={(e) => setLinkPhone(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  if (val.length > 0 && !['6', '7', '8', '9'].includes(val[0])) {
+                    return;
+                  }
+                  setLinkPhone(val.slice(0, 10));
+                }}
                 placeholder="0000000000"
                 className="w-full px-8 py-6 bg-white/50 border border-gray-100 rounded-[28px] focus:border-teal-500/30 focus:bg-white outline-none text-center text-3xl font-[1000] tracking-[0.2em] text-gray-900 shadow-inner"
                 maxLength={10}
@@ -511,12 +545,12 @@ const AddEditWorker = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest ml-1">Email Contact</label>
+                  <label className="text-[9px] font-[1000] text-gray-400 uppercase tracking-widest ml-1">Email Contact *</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="OPTIONAL"
+                    placeholder="Enter email address"
                     className="w-full px-6 py-4.5 bg-white border border-black/[0.03] rounded-2xl focus:border-teal-500/30 focus:ring-4 focus:ring-teal-500/5 outline-none text-[13px] font-black text-gray-900 uppercase tracking-widest transition-all"
                   />
                 </div>

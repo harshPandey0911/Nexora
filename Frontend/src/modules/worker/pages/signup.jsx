@@ -76,9 +76,15 @@ const WorkerSignup = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    let filteredValue = value;
+    if (name === 'name') {
+      filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    } else if (name === 'email') {
+      filteredValue = value.toLowerCase();
+    }
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: filteredValue
     }));
   };
 

@@ -122,8 +122,9 @@ const ServicesPage = () => {
   ];
 
   const filteredItems = services.filter(svc => {
-    const matchesSearch = svc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          svc.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const trimmedQuery = searchQuery.trim().toLowerCase();
+    const matchesSearch = svc.title.toLowerCase().includes(trimmedQuery) ||
+                          svc.description?.toLowerCase().includes(trimmedQuery);
     
     if (activeTab === 'All') return matchesSearch;
 
@@ -208,7 +209,11 @@ const ServicesPage = () => {
                     type="text" 
                     placeholder="Search services..." 
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val.startsWith(' ')) return;
+                      setSearchQuery(val);
+                    }}
                     className="w-full pl-12 pr-4 py-4 bg-white border-none rounded-2xl text-sm font-bold shadow-xl shadow-blue-900/5 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
                 </div>

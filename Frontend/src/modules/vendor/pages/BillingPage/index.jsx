@@ -903,14 +903,15 @@ const BillingPage = () => {
 
             <div className="space-y-6">
               {customItems.map((item, idx) => {
-                re                  <div key={idx} className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm relative animate-in slide-in-from-bottom-4 duration-500">
+                return (
+                  <div key={idx} className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm relative animate-in slide-in-from-bottom-4 duration-500">
                     <button
                       onClick={() => removeCustomItem(idx)}
                       className="absolute top-6 right-6 w-12 h-12 bg-gray-50 text-rose-500 rounded-2xl border border-gray-100 flex items-center justify-center hover:bg-rose-50 transition-all shadow-inner z-10"
                     >
                       <FiTrash2 className="w-5 h-5" />
                     </button>
- 
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="flex flex-col gap-3">
                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Intel Designation</label>
@@ -921,7 +922,7 @@ const BillingPage = () => {
                           className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-base font-black text-gray-900 outline-none focus:border-blue-500/50 transition-all placeholder:text-gray-200"
                         />
                       </div>
- 
+
                       <div className="flex flex-col gap-3">
                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Classification Code</label>
                         <input
@@ -930,26 +931,29 @@ const BillingPage = () => {
                           onChange={e => updateCustomItem(idx, 'hsnCode', e.target.value)}
                           className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-base font-black text-gray-900 outline-none focus:border-blue-500/50 transition-all placeholder:text-gray-200 uppercase"
                         />
-                      </div>  </                      <div className="grid grid-cols-2 gap-6">
-                        <div className="flex flex-col gap-3">
-                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Unit Valuation (₹)</label>
-                          <input
-                            type="number"
-                            placeholder="0"
-                            value={item.price || ''}
-                            onChange={e => updateCustomItem(idx, 'price', Number(e.target.value))}
-                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-base font-black text-gray-900 outline-none focus:border-blue-500/50 transition-all"
-                          />
-                        </div>
- 
-                        <div className="flex flex-col gap-3">
-                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Quantum</label>
-                          <input
-                            type="number"
-                            value={item.quantity}
-                        </div>
                       </div>
-                    </div>
+
+                      <div className="flex flex-col gap-3">
+                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Unit Valuation (₹)</label>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={item.price || ''}
+                          onChange={e => updateCustomItem(idx, 'price', Number(e.target.value))}
+                          className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-base font-black text-gray-900 outline-none focus:border-blue-500/50 transition-all"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Quantum</label>
+                        <input
+                          type="number"
+                          placeholder="1"
+                          value={item.quantity}
+                          onChange={e => updateCustomItem(idx, 'quantity', Number(e.target.value))}
+                          className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-base font-black text-gray-900 outline-none focus:border-blue-500/50 transition-all"
+                        />
+                      </div>
 
                       <div className="flex items-center justify-between pt-6 border-t border-gray-100 mt-4 md:col-span-2">
                         <div className="flex items-center gap-4">
@@ -981,7 +985,8 @@ const BillingPage = () => {
               )}
             </div>
           </div>
-          {currentStep === 4 && (
+        )}
+        {currentStep === 4 && (
           <div className="animate-in fade-in slide-in-from-right-8 duration-500">
             <div className="bg-white p-16 rounded-[48px] border border-gray-100 flex flex-col items-center text-center shadow-sm relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-[80px]" />
@@ -1049,7 +1054,6 @@ const BillingPage = () => {
                     </div>
                   </div>
                 </div>
-                </div>
                 {(selectedParts.length > 0 || customItems.length > 0) && (
                   <div className="animate-in slide-in-from-bottom-4 duration-700 delay-200">
                     <h4 className="font-black text-gray-900 uppercase tracking-widest text-xs flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
@@ -1110,7 +1114,8 @@ const BillingPage = () => {
                       </div>
                     </div>
                   </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-gray-100">
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-gray-100">
                   {booking.visitingCharges > 0 && (
                     <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
@@ -1128,7 +1133,6 @@ const BillingPage = () => {
                       <p className="text-2xl font-black text-gray-900 tracking-tighter">₹{Number(transportCharges).toFixed(2)}</p>
                     </div>
                   )}
-                </div>
                 </div>
 
                 {/* Wallet Limit Warning */}
