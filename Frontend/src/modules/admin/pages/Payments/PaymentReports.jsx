@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { CustomDateInput } from '../../../../components/common';
 import {
   FiFileText,
   FiDownload,
@@ -566,21 +567,23 @@ const PaymentReports = () => {
           {/* Date Range Filter */}
           <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-2">
             <div className="flex items-center gap-2">
-              <FiCalendar className="text-gray-400" />
-              <input
-                type="date"
+              <CustomDateInput
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="border-0 bg-transparent text-sm focus:ring-0 text-gray-700"
+                max={endDate || new Date().toISOString().split('T')[0]}
+                onChange={(val) => setStartDate(val)}
+                inputClassName="text-sm font-semibold text-gray-700 w-[78px]"
               />
             </div>
             <span className="text-gray-400">to</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="border-0 bg-transparent text-sm focus:ring-0 text-gray-700"
-            />
+            <div className="flex items-center gap-2">
+              <CustomDateInput
+                value={endDate}
+                min={startDate}
+                max={new Date().toISOString().split('T')[0]}
+                onChange={(val) => setEndDate(val)}
+                inputClassName="text-sm font-semibold text-gray-700 w-[78px]"
+              />
+            </div>
             <button
               onClick={() => { fetchOverview(); fetchReportData(); }}
               className="p-2 bg-white rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"

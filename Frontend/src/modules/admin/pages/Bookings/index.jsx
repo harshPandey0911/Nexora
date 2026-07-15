@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
+import { CustomDateInput } from '../../../../components/common';
 import {
   FiSearch, FiCalendar, FiDownload, FiMoreVertical,
   FiClock, FiCheckCircle, FiBox, FiTruck, FiXCircle, FiRefreshCw, FiShoppingBag,
@@ -17,69 +18,7 @@ import Modal from '../UserCategories/components/Modal';
  * - Calendar icon: opens native date picker, which also fires onChange.
  * - Uses uncontrolled text input (key resets it when value changes externally).
  */
-const isoToDisplay = (iso) => {
-  if (!iso) return '';
-  const parts = iso.split('-');
-  if (parts.length !== 3) return '';
-  return `${parts[2]}/${parts[1]}/${parts[0]}`;
-};
 
-const CustomDateInput = ({ value, onChange, max, min, placeholder }) => {
-  const nativeRef = useRef(null);
-
-  const handleTextChange = (e) => {
-    const raw = e.target.value.replace(/[^0-9/]/g, '');
-    // Fire onChange only when a complete dd/mm/yyyy is typed
-    const match = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (match) {
-      const [, d, m, y] = match;
-      const parsed = new Date(`${y}-${m}-${d}`);
-      if (!isNaN(parsed.getTime())) {
-        onChange(`${y}-${m}-${d}`);
-      }
-    } else if (!raw) {
-      onChange('');
-    }
-  };
-
-  return (
-    <span className="relative inline-flex items-center gap-0.5">
-      {/*
-        key={value} resets the uncontrolled input whenever the
-        value changes from the native picker, showing dd/mm/yyyy.
-      */}
-      <input
-        key={value}
-        type="text"
-        defaultValue={isoToDisplay(value)}
-        onChange={handleTextChange}
-        placeholder={placeholder || 'dd/mm/yyyy'}
-        maxLength={10}
-        className="bg-transparent text-[11px] text-gray-600 focus:outline-none w-[76px] placeholder:text-gray-400"
-      />
-      <button
-        type="button"
-        onClick={() => nativeRef.current?.showPicker?.()}
-        className="text-gray-400 hover:text-gray-600 transition-colors"
-        title="Open calendar"
-      >
-        <FiCalendar className="w-3 h-3" />
-      </button>
-      {/* Hidden native date input — provides calendar picker only */}
-      <input
-        ref={nativeRef}
-        type="date"
-        defaultValue={value}
-        min={min}
-        max={max}
-        onChange={(e) => onChange(e.target.value)}
-        tabIndex={-1}
-        className="absolute opacity-0 pointer-events-none w-0 h-0 overflow-hidden"
-        aria-hidden="true"
-      />
-    </span>
-  );
-};
 
 const BookingStatsCard = ({ title, count, icon: Icon, colorClass, bgClass, onClick }) => (
   <div
